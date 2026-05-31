@@ -1,0 +1,29 @@
+# 植人大树自媒体工具集 - 发布版 .gitignore
+
+# ── 开发脚本（不属于用户工具）──────────────────────
+finalize_A.js
+fix-position.js
+fix_html.js
+refactor_index.js
+refactor_spotify.js
+refactor_spotify.py
+generate_AB.js
+translate.py
+
+# ── 同步/发布脚本 ──────────────────────────────────
+Sync-Release.ps1
+一键同步发布版.bat
+
+# ── Node.js 后端（单独部署，不在此 repo）──────────
+gemini-node-app/
+
+# ── 参考资料文件夹 ──────────────────────────────────
+awesome-design-md/
+GitHub美学配色库参考/
+Gemini-Remover-Origin/
+
+# ── 系统文件 ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
