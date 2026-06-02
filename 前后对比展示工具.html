@@ -153,6 +153,7 @@
             cursor: ew-resize;
             transition: none;
         }
+        /* 圈形按鈕：白底 + 著色细边框 */
         .split-handle::after {
             content: "";
             position: absolute;
@@ -164,6 +165,7 @@
             box-shadow: 0 2px 14px rgba(0,0,0,0.4);
             border: 2.5px solid var(--accent);
         }
+        /* 方向符号：层叠在圈上面 */
         .split-handle::before {
             content: "‹ ›";
             position: absolute;
@@ -729,12 +731,15 @@
             const totalFrames = fps * duration;
 
             // ✅ 修复：根据导出质量 + 当前画布比例（state.ratio）自动计算分辨率
+            // state.ratio = width / height，比如 3:4 竖屏 = 0.75
             const baseSize = { '720p': 1280, '1080p': 1920, '2k': 2560, '4k': 3840 }[format] || 1920;
             let rW, rH;
             if (state.ratio >= 1) {
+                // 横屏或正方形：宽边为基准
                 rW = baseSize;
                 rH = Math.round(baseSize / state.ratio);
             } else {
+                // 竖屏：高边为基准
                 rH = baseSize;
                 rW = Math.round(baseSize * state.ratio);
             }
@@ -824,6 +829,8 @@
             };
 
             // ✅ 修复：After（精修图）作为底图铺满，Before（原图）剪贴到右侧
+            // splitPos=0 → 右侧=整屏 → 全是 Before（原图）✅
+            // splitPos=1 → 右侧=空   → 全是 After（精修图）✅
             cover(sA); ctx.save();
             if (state.mode === 'V') {
                 const x = W * state.splitPos; ctx.beginPath(); ctx.rect(x, 0, W-x, H); ctx.clip();
@@ -860,11 +867,15 @@
                 const aTxt = state.lang === 'en' ? 'AFTER' : '精修';
                 const pad = W * 0.03;
                 
-                // ✅ 左上角 = AFTER（精修图在左），右上角 = BEFORE（原图在右）
+                // ✅ 修复水印位置：左侧=After（精修），右侧=Before（原图）
                 ctx.fillStyle = 'rgba(255,255,255,0.8)';
                 ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+
+                // After 标识 → 左上角（左侧是精修图）
                 ctx.textAlign = 'left';
                 ctx.fillText(aTxt, pad, pad + 20);
+
+                // Before 标识 → 右上角（右侧是原图）
                 ctx.textAlign = 'right';
                 ctx.fillText(bTxt, W - pad, pad + 20);
                 ctx.restore();
