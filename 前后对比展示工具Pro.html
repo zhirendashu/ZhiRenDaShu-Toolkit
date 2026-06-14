@@ -1,0 +1,2438 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>前后对比展示工具 Pro · 植人大树</title>
+  <meta name="description" content="专业的前后对比展示工具，支持渐变切换和分割线两种模式，适合自媒体内容创作者">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+/* === RESET & BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple: #a855f7;
+  --purple-dark: #7c3aed;
+  --cyan: #06b6d4;
+  --blue: #3b82f6;
+  --bg: #080b14;
+  --bg-2: #0d1120;
+  --bg-3: #111827;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --text: #f1f5f9;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 25px 80px rgba(0,0,0,0.6);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* === ANIMATED BACKGROUND ORBS === */
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 8s ease-in-out infinite;
+}
+.orb-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%);
+  top: -200px; left: -150px;
+  animation-delay: 0s;
+}
+.orb-2 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
+  bottom: -100px; right: -100px;
+  animation-delay: -3s;
+}
+.orb-3 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  animation-delay: -5s;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  33% { transform: translateY(-30px) scale(1.05); }
+  66% { transform: translateY(20px) scale(0.97); }
+}
+
+/* === HEADER === */
+.header {
+  position: relative;
+  z-index: 10;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  background: rgba(8,11,20,0.7);
+}
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-icon {
+  width: 42px; height: 42px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.logo-pro {
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-left: 4px;
+}
+.header-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+  border: 1px solid rgba(168,85,247,0.3);
+  color: #c4b5fd;
+  letter-spacing: 0.5px;
+}
+
+/* === MAIN === */
+.main {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 50px 24px 80px;
+}
+
+/* === UPLOAD SECTION === */
+.upload-section { display: flex; flex-direction: column; align-items: center; gap: 40px; }
+.upload-title { text-align: center; }
+.upload-title h1 {
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #fff 20%, #a855f7 50%, #06b6d4 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+.upload-title p {
+  color: var(--text-dim);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.upload-grid {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 860px;
+}
+
+.upload-card {
+  flex: 1;
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+}
+.upload-zone {
+  position: relative;
+  min-height: 280px;
+  background: var(--glass);
+  border: 1.5px dashed var(--glass-border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+.upload-zone:hover {
+  background: rgba(255,255,255,0.07);
+  transform: translateY(-2px);
+}
+.before-card .upload-zone:hover { border-color: rgba(168,85,247,0.5); }
+.after-card .upload-zone:hover { border-color: rgba(6,182,212,0.5); }
+
+.upload-card-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: -1;
+}
+.before-glow { box-shadow: 0 0 40px rgba(168,85,247,0.3); }
+.after-glow { box-shadow: 0 0 40px rgba(6,182,212,0.3); }
+.upload-card:hover .upload-card-glow { opacity: 1; }
+
+.upload-label { text-align: center; z-index: 1; }
+.upload-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+.before-tag {
+  background: rgba(168,85,247,0.18);
+  color: #d8b4fe;
+  border: 1px solid rgba(168,85,247,0.4);
+  letter-spacing: 4px;
+  font-size: 13px;
+  text-shadow: 0 0 20px rgba(168,85,247,0.6);
+}
+.after-tag {
+  background: rgba(6,182,212,0.18);
+  color: #67e8f9;
+  border: 1px solid rgba(6,182,212,0.4);
+  letter-spacing: 4px;
+  font-size: 13px;
+  text-shadow: 0 0 20px rgba(6,182,212,0.6);
+}
+
+.upload-hint {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.upload-hint span { color: var(--text-dim); font-weight: 500; }
+
+.file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-preview {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  z-index: 2;
+  display: none;
+}
+.upload-preview img, .upload-preview video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.upload-preview::after {
+  content: '✓ 已上传';
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.upload-arrow {
+  flex-shrink: 0;
+  opacity: 0.6;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+/* === START BUTTON === */
+.start-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 40px;
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #7c3aed, #a855f7 40%, #06b6d4);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+.start-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #06b6d4, #a855f7 60%, #7c3aed);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.start-btn:hover::before { opacity: 1; }
+.start-btn > * { position: relative; z-index: 1; }
+.start-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.start-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 20px 60px rgba(168,85,247,0.5); }
+.start-btn-icon { font-size: 14px; animation: spin 4s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* === COMPARE SECTION === */
+.compare-section { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+.hidden { display: none !important; }
+
+/* === MODE SWITCHER === */
+.mode-switcher {
+  display: flex;
+  gap: 8px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 50px;
+  padding: 6px;
+}
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+.mode-btn:hover { color: var(--text-dim); }
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(6,182,212,0.25));
+  color: white;
+  box-shadow: 0 4px 20px rgba(168,85,247,0.2);
+}
+.mode-btn-icon { display: flex; align-items: center; }
+
+/* === STAGE === */
+.stage-wrapper { width: 100%; max-width: 900px; }
+.stage {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  position: relative;
+  box-shadow: var(--shadow), 0 0 0 1px var(--glass-border);
+}
+
+/* === FADE MODE === */
+.fade-mode { width: 100%; height: 100%; position: relative; }
+.fade-canvas { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.fade-layer {
+  position: absolute;
+  inset: 0;
+}
+.fade-layer img, .fade-layer video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.before-layer { z-index: 1; }
+.after-layer { z-index: 2; opacity: 0; transition: opacity 0.05s linear; }
+
+.fade-label {
+  position: absolute;
+  z-index: 10;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  top: 20px;
+  transition: opacity 0.4s;
+}
+.before-fade-label {
+  left: 20px;
+  background: rgba(168,85,247,0.25);
+  border: 1px solid rgba(168,85,247,0.5);
+  color: #e9d5ff;
+  letter-spacing: 4px;
+  font-size: 14px;
+  text-shadow: 0 0 15px rgba(168,85,247,0.7);
+}
+.after-fade-label {
+  right: 20px;
+  background: rgba(6,182,212,0.25);
+  border: 1px solid rgba(6,182,212,0.5);
+  color: #cffafe;
+  letter-spacing: 4px;
+  font-size: 14px;
+  text-shadow: 0 0 15px rgba(6,182,212,0.7);
+}
+
+.fade-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  cursor: pointer;
+}
+.fade-progress-fill {
+  height: 4px;
+  background: linear-gradient(90deg, #a855f7, #06b6d4);
+  border-radius: 2px;
+  flex: 0 0 0%;
+  transition: flex-basis 0.05s linear;
+  position: relative;
+}
+.fade-progress-bar::before {
+  content: '';
+  position: absolute;
+  left: 20px; right: 20px;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+}
+.fade-progress-thumb {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 10px rgba(168,85,247,0.8);
+  flex-shrink: 0;
+  margin-left: -7px;
+  cursor: grab;
+  position: relative;
+  z-index: 5;
+}
+
+.fade-controls {
+  position: absolute;
+  bottom: 50px;
+  right: 20px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* === SLIDER MODE === */
+.slider-mode { width: 100%; height: 100%; position: relative; }
+.slider-canvas { width: 100%; height: 100%; position: relative; overflow: hidden; cursor: ew-resize; }
+.slider-canvas.vertical-mode { cursor: ns-resize; }
+.slider-layer {
+  position: absolute;
+  inset: 0;
+}
+.slider-layer img, .slider-layer video,
+.slider-inner-after img, .slider-inner-after video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+.before-slider-layer { z-index: 1; }
+.after-slider-layer { z-index: 2; }
+.slider-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.slider-inner-after { position: absolute; inset: 0; }
+
+/* Divider */
+.divider {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.divider-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  background: linear-gradient(180deg, transparent, #a855f7 20%, #06b6d4 80%, transparent);
+  box-shadow: 0 0 15px rgba(168,85,247,0.6);
+}
+.divider-handle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px; height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 20px rgba(168,85,247,0.6));
+  transition: transform 0.2s;
+}
+.divider:hover .divider-handle { transform: translateY(-50%) scale(1.15); }
+.divider-label-before, .divider-label-after {
+  position: absolute;
+  top: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  transition: opacity 0.3s;
+}
+.divider-label-before {
+  right: calc(100% + 8px);
+  background: rgba(168,85,247,0.25);
+  border: 1px solid rgba(168,85,247,0.5);
+  color: #e9d5ff;
+  letter-spacing: 4px;
+  font-size: 12px;
+  text-shadow: 0 0 12px rgba(168,85,247,0.7);
+}
+.divider-label-after {
+  left: calc(100% + 8px);
+  background: rgba(6,182,212,0.25);
+  border: 1px solid rgba(6,182,212,0.5);
+  color: #cffafe;
+  letter-spacing: 4px;
+  font-size: 12px;
+  text-shadow: 0 0 12px rgba(6,182,212,0.7);
+}
+
+/* Vertical divider adjustments */
+.divider.vertical {
+  width: 100%;
+  height: 44px;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: row;
+  cursor: ns-resize;
+}
+.divider.vertical .divider-line {
+  width: 100%;
+  height: 3px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+.divider.vertical .divider-label-before {
+  right: auto;
+  left: 20px;
+  top: calc(100% + 8px);
+}
+.divider.vertical .divider-label-after {
+  left: auto;
+  right: 20px;
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+/* === CONTROLS === */
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 40px;
+  padding: 8px 16px;
+  backdrop-filter: blur(10px);
+}
+.control-group label {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.speed-btns { display: flex; gap: 4px; }
+.speed-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.speed-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+.speed-btn.active {
+  background: linear-gradient(135deg, rgba(168,85,247,0.35), rgba(6,182,212,0.35));
+  color: white;
+  border-color: rgba(168,85,247,0.4);
+}
+.play-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed, #06b6d4);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.play-btn:hover { transform: scale(1.04); box-shadow: 0 6px 25px rgba(168,85,247,0.5); }
+
+/* Toggle switch */
+.toggle-switch { display: flex; align-items: center; cursor: pointer; }
+.toggle-switch input { display: none; }
+.toggle-track {
+  width: 40px; height: 22px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 11px;
+  position: relative;
+  transition: background 0.3s;
+}
+.toggle-switch input:checked ~ .toggle-track {
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.toggle-switch input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); }
+
+/* Controls positioning for slider */
+.slider-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* === STAGE INFO === */
+.stage-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 4px;
+}
+.mode-info-badge {
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+.drag-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* === BOTTOM ACTIONS === */
+.bottom-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 28px;
+  border-radius: 50px;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+}
+.action-btn.secondary {
+  background: var(--glass);
+  color: var(--text-dim);
+  border: 1px solid var(--glass-border);
+}
+.action-btn.secondary:hover { background: rgba(255,255,255,0.08); color: white; transform: translateY(-1px); }
+.action-btn.primary {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: white;
+  box-shadow: 0 8px 30px rgba(220,38,38,0.35);
+}
+.action-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(220,38,38,0.5); }
+.action-btn.recording {
+  background: linear-gradient(135deg, #7f1d1d, #dc2626) !important;
+  animation: recPulse 1s ease-in-out infinite;
+}
+@keyframes recPulse {
+  0%, 100% { box-shadow: 0 8px 30px rgba(220,38,38,0.4); }
+  50% { box-shadow: 0 8px 50px rgba(220,38,38,0.8); }
+}
+
+/* === RECORDING OVERLAY === */
+.recording-overlay {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 100;
+}
+.recording-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15,15,25,0.95);
+  border: 1px solid rgba(220,38,38,0.4);
+  border-radius: 16px;
+  padding: 20px 28px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.rec-dot {
+  width: 14px; height: 14px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: blink 0.8s ease-in-out infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.recording-modal p {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fca5a5;
+}
+.recording-modal span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.stop-btn {
+  margin-top: 6px;
+  padding: 8px 20px;
+  border-radius: 30px;
+  border: 1px solid rgba(220,38,38,0.5);
+  background: rgba(220,38,38,0.2);
+  color: #fca5a5;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.stop-btn:hover { background: rgba(220,38,38,0.35); color: white; }
+
+/* === TOAST === */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(20,25,40,0.95);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 13px 26px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(20px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 200;
+  white-space: nowrap;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* === DRAG OVER === */
+.upload-zone.drag-over {
+  background: rgba(168,85,247,0.1);
+  border-color: rgba(168,85,247,0.6);
+}
+
+/* === ACTION BUTTONS === */
+.action-btn.screen-record {
+  background: var(--glass);
+  color: var(--text-dim);
+  border: 1px solid var(--glass-border);
+}
+.action-btn.screen-record:hover { background: rgba(255,255,255,0.08); color: white; transform: translateY(-1px); }
+.action-btn.screen-record.recording {
+  background: linear-gradient(135deg, #7f1d1d, #dc2626) !important;
+  color: white;
+  animation: recPulse 1s ease-in-out infinite;
+}
+.action-btn.export {
+  background: linear-gradient(135deg, #7c3aed, #a855f7 40%, #06b6d4);
+  color: white;
+  box-shadow: 0 8px 30px rgba(168,85,247,0.35);
+}
+.action-btn.export:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(168,85,247,0.55); }
+
+/* === EXPORT MODAL === */
+.export-modal-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(5,7,15,0.75);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeInBg 0.25s ease;
+}
+@keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+
+.export-modal {
+  background: linear-gradient(145deg, #0f1220, #141828);
+  border: 1px solid rgba(168,85,247,0.2);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(168,85,247,0.1);
+  animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.export-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.export-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 17px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.export-close {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.export-close:hover { background: rgba(255,255,255,0.1); color: white; }
+
+.export-body { padding: 20px 26px; display: flex; flex-direction: column; gap: 18px; }
+
+.export-section { display: flex; flex-direction: column; gap: 10px; }
+.export-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.export-option-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+}
+.export-option-row.wrap { flex-wrap: wrap; }
+
+/* Radio cards (fade/slider mode) */
+.export-radio-card {
+  flex: 1;
+  cursor: pointer;
+  position: relative;
+}
+.export-radio-card input { display: none; }
+.erc-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.export-radio-card:hover .erc-inner {
+  background: rgba(255,255,255,0.07);
+  color: var(--text-dim);
+}
+.export-radio-card input:checked ~ .erc-inner {
+  background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(6,182,212,0.18));
+  border-color: rgba(168,85,247,0.5);
+  color: white;
+  box-shadow: 0 4px 20px rgba(168,85,247,0.2);
+}
+
+/* Chip options */
+.export-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.export-chip:hover { background: rgba(255,255,255,0.08); color: var(--text-dim); }
+.export-chip input { display: none; }
+.export-chip:has(input:checked) {
+  background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(6,182,212,0.25));
+  border-color: rgba(168,85,247,0.5);
+  color: white;
+  box-shadow: 0 2px 12px rgba(168,85,247,0.2);
+}
+.export-chip em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+.export-chip:has(input:checked) em { opacity: 0.9; color: #c4b5fd; }
+
+/* Toggle row */
+.export-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 14px;
+  color: var(--text-dim);
+  cursor: pointer;
+  gap: 14px;
+}
+
+/* Info box */
+.export-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(168,85,247,0.08);
+  border: 1px solid rgba(168,85,247,0.2);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #c4b5fd;
+}
+
+/* Progress */
+.export-progress-wrap {
+  padding: 0 26px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.export-progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.export-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #a855f7, #06b6d4);
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+.export-progress-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Export actions */
+.export-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 26px 22px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.export-cancel-btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.export-cancel-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+.export-start-btn {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed, #a855f7 50%, #06b6d4);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.export-start-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #06b6d4, #a855f7 50%, #7c3aed);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.export-start-btn:hover::before { opacity: 1; }
+.export-start-btn > * { position: relative; z-index: 1; }
+.export-start-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 35px rgba(168,85,247,0.5); }
+.export-start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 700px) {
+  .upload-grid { flex-direction: column; }
+  .upload-arrow { transform: rotate(90deg); }
+  .header { padding: 16px 20px; }
+  .main { padding: 30px 16px 60px; }
+  .mode-btn { padding: 10px 18px; font-size: 14px; }
+  .bottom-actions { flex-direction: column; width: 100%; }
+  .action-btn { justify-content: center; }
+  .export-modal { border-radius: 16px; }
+  .export-option-row { flex-wrap: wrap; }
+}
+
+/* === 返回首页按钮 === */
+.back-home-btn {
+  display: flex; align-items: center; gap: 5px;
+  color: #94a3b8; text-decoration: none;
+  font-size: .84rem; font-weight: 500;
+  padding: 6px 14px; border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.04);
+  transition: all 0.3s ease;
+  margin-right: 16px;
+}
+.back-home-btn:hover { color: #f8fafc; border-color: rgba(255,255,255,0.18); }
+</style>
+</head>
+<body>
+  <!-- Animated background -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="./index.html" class="back-home-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>返回首页</a>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="0" y="0" width="12" height="28" rx="4" fill="url(#g1)"/>
+            <rect x="16" y="0" width="12" height="28" rx="4" fill="url(#g2)"/>
+            <rect x="10" y="4" width="8" height="20" rx="2" fill="white" opacity="0.9"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="12" y2="28" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#a855f7"/>
+                <stop offset="1" stop-color="#6366f1"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="12" y2="28" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#06b6d4"/>
+                <stop offset="1" stop-color="#3b82f6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">Before & After <span class="logo-pro">PRO</span></span>
+      </div>
+      <div class="header-badge">自媒体专业版</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Upload Section -->
+    <section class="upload-section" id="uploadSection">
+      <div class="upload-title">
+        <h1>前后对比展示神器</h1>
+        <p>上传前后两张图片，即刻生成专业对比展示效果</p>
+      </div>
+      <div class="upload-grid">
+        <div class="upload-card before-card" id="beforeCard">
+          <div class="upload-zone" id="beforeZone">
+            <div class="upload-icon before-icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                <path d="M24 16v16M16 24h16" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="upload-label">
+              <span class="upload-tag before-tag">原 片</span>
+              <p class="upload-hint">拖拽或点击上传<br><span>前期 / 原图</span></p>
+            </div>
+            <div class="upload-preview" id="beforePreview"></div>
+            <input type="file" id="beforeInput" accept="image/*,video/*" class="file-input">
+          </div>
+          <div class="upload-card-glow before-glow"></div>
+        </div>
+
+        <div class="upload-arrow">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M8 20h24M24 12l8 8-8 8" stroke="url(#ag)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="ag" x1="8" y1="20" x2="32" y2="20" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#a855f7"/>
+                <stop offset="1" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div class="upload-card after-card" id="afterCard">
+          <div class="upload-zone" id="afterZone">
+            <div class="upload-icon after-icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="rgba(6,182,212,0.15)" stroke="rgba(6,182,212,0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                <path d="M24 16v16M16 24h16" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="upload-label">
+              <span class="upload-tag after-tag">精 修</span>
+              <p class="upload-hint">拖拽或点击上传<br><span>后期 / 成片</span></p>
+            </div>
+            <div class="upload-preview" id="afterPreview"></div>
+            <input type="file" id="afterInput" accept="image/*,video/*" class="file-input">
+          </div>
+          <div class="upload-card-glow after-glow"></div>
+        </div>
+      </div>
+
+      <button class="start-btn" id="startBtn" disabled>
+        <span class="start-btn-icon">✦</span>
+        开始制作对比展示
+        <span class="start-btn-icon">✦</span>
+      </button>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="compare-section hidden" id="compareSection">
+
+      <!-- Mode Switcher -->
+      <div class="mode-switcher">
+        <button class="mode-btn active" id="fadeBtn" data-mode="fade">
+          <div class="mode-btn-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect x="1" y="4" width="9" height="14" rx="2.5" fill="currentColor" opacity="0.4"/>
+              <rect x="12" y="4" width="9" height="14" rx="2.5" fill="currentColor"/>
+              <rect x="7" y="4" width="8" height="14" rx="0" fill="url(#fadeG)" opacity="0.7"/>
+              <defs>
+                <linearGradient id="fadeG" x1="7" y1="11" x2="15" y2="11">
+                  <stop stop-color="currentColor" stop-opacity="0"/>
+                  <stop offset="1" stop-color="currentColor"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          渐变展示
+        </button>
+        <button class="mode-btn" id="sliderBtn" data-mode="slider">
+          <div class="mode-btn-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect x="1" y="4" width="9" height="14" rx="2.5" fill="currentColor" opacity="0.4"/>
+              <rect x="12" y="4" width="9" height="14" rx="2.5" fill="currentColor"/>
+              <rect x="10.5" y="2" width="1" height="18" rx="0.5" fill="currentColor"/>
+              <circle cx="11" cy="11" r="3" fill="currentColor"/>
+            </svg>
+          </div>
+          分割线展示
+        </button>
+      </div>
+
+      <!-- Comparison Stage -->
+      <div class="stage-wrapper">
+        <div class="stage" id="stage">
+
+          <!-- FADE MODE -->
+          <div class="fade-mode" id="fadeMode">
+            <div class="fade-canvas">
+              <div class="fade-layer before-layer" id="fadeBeforeLayer"></div>
+              <div class="fade-layer after-layer" id="fadeAfterLayer"></div>
+
+              <!-- Watermark labels -->
+              <div class="fade-label before-fade-label" id="beforeFadeLabel">原 片</div>
+              <div class="fade-label after-fade-label" id="afterFadeLabel">精 修</div>
+
+              <!-- Progress bar -->
+              <div class="fade-progress-bar" id="fadeProgressBar">
+                <div class="fade-progress-fill" id="fadeProgressFill"></div>
+                <div class="fade-progress-thumb" id="fadeProgressThumb"></div>
+              </div>
+            </div>
+
+            <!-- Fade Controls -->
+            <div class="fade-controls">
+              <div class="control-group">
+                <label>速度</label>
+                <div class="speed-btns">
+                  <button class="speed-btn" data-speed="3000">慢</button>
+                  <button class="speed-btn active" data-speed="1500">中</button>
+                  <button class="speed-btn" data-speed="800">快</button>
+                </div>
+              </div>
+              <div class="control-group">
+                <button class="play-btn" id="fadePlayBtn">
+                  <svg id="playIcon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M6 4l12 6-12 6V4z" fill="currentColor"/>
+                  </svg>
+                  <svg id="pauseIcon" width="20" height="20" viewBox="0 0 20 20" fill="none" class="hidden">
+                    <rect x="4" y="3" width="4" height="14" rx="1" fill="currentColor"/>
+                    <rect x="12" y="3" width="4" height="14" rx="1" fill="currentColor"/>
+                  </svg>
+                  播放循环
+                </button>
+              </div>
+              <div class="control-group">
+                <label>显示标签</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showLabels" checked>
+                  <span class="toggle-track">
+                    <span class="toggle-thumb"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- SLIDER MODE -->
+          <div class="slider-mode hidden" id="sliderMode">
+            <div class="slider-canvas" id="sliderCanvas">
+              <div class="slider-layer before-slider-layer" id="sliderBeforeLayer"></div>
+              <div class="slider-layer after-slider-layer" id="sliderAfterLayer">
+                <div id="sliderInnerAfter" style="position:absolute;inset:0;"></div>
+              </div>
+
+              <!-- Divider -->
+              <div class="divider" id="divider">
+                <div class="divider-line"></div>
+                <div class="divider-handle">
+                  <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                    <circle cx="13" cy="13" r="12" fill="url(#dg)" stroke="white" stroke-width="1.5"/>
+                    <path d="M9 13l-3.5-3.5v7L9 13zM17 13l3.5 3.5v-7L17 13z" fill="white"/>
+                    <defs>
+                      <linearGradient id="dg" x1="1" y1="1" x2="25" y2="25">
+                        <stop stop-color="#a855f7"/>
+                        <stop offset="1" stop-color="#06b6d4"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <div class="divider-label-before">◀ 原 片</div>
+                <div class="divider-label-after">精 修 ▶</div>
+              </div>
+            </div>
+
+            <!-- Slider Controls -->
+            <div class="slider-controls">
+              <div class="control-group">
+                <label>分割线方向</label>
+                <div class="speed-btns">
+                  <button class="speed-btn active" id="horizontalBtn" data-dir="horizontal">水平</button>
+                  <button class="speed-btn" id="verticalBtn" data-dir="vertical">垂直</button>
+                </div>
+              </div>
+              <div class="control-group">
+                <button class="play-btn" id="sliderAutoBtn">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M9 1C4.58 1 1 4.58 1 9s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm-1 11.5v-7l5.5 3.5-5.5 3.5z" fill="currentColor"/>
+                  </svg>
+                  自动扫描
+                </button>
+              </div>
+              <div class="control-group">
+                <label>显示标签</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showSliderLabels" checked>
+                  <span class="toggle-track">
+                    <span class="toggle-thumb"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage info -->
+        <div class="stage-info">
+          <span id="modeInfo" class="mode-info-badge">渐变模式</span>
+          <span class="drag-hint" id="dragHint">拖动进度条控制切换</span>
+        </div>
+      </div>
+
+      <!-- Bottom actions -->
+      <div class="bottom-actions">
+        <button class="action-btn secondary" id="reuploadBtn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3 9a6 6 0 016-6 5.98 5.98 0 014.24 1.76L15 7M3 3v4h4M15 9a6 6 0 01-6 6 5.98 5.98 0 01-4.24-1.76L3 11M15 15v-4h-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          重新上传
+        </button>
+        <button class="action-btn screen-record" id="recordBtn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="4" fill="currentColor"/>
+            <circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          屏幕录制
+        </button>
+        <button class="action-btn primary export" id="exportBtn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2v9M5 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 13v1a2 2 0 002 2h10a2 2 0 002-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          导出视频
+        </button>
+      </div>
+    </section>
+
+    <!-- Recording overlay -->
+    <div class="recording-overlay hidden" id="recordingOverlay">
+      <div class="recording-modal">
+        <div class="rec-dot"></div>
+        <p>正在录制...</p>
+        <span>请操作对比展示效果</span>
+        <button class="stop-btn" id="stopRecordBtn">停止录制</button>
+      </div>
+    </div>
+
+    <!-- Export Video Modal -->
+    <div class="export-modal-bg hidden" id="exportModalBg">
+      <div class="export-modal" id="exportModal">
+        <div class="export-modal-header">
+          <div class="export-modal-title">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M11 2v11M7 9l4 4 4-4" stroke="url(#eg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 16v1.5A1.5 1.5 0 004.5 19h13a1.5 1.5 0 001.5-1.5V16" stroke="url(#eg2)" stroke-width="2.2" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="eg" x1="11" y1="2" x2="11" y2="13" gradientUnits="userSpaceOnUse"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+                <linearGradient id="eg2" x1="3" y1="17.5" x2="19" y2="17.5" gradientUnits="userSpaceOnUse"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+              </defs>
+            </svg>
+            <span>导出对比视频</span>
+          </div>
+          <button class="export-close" id="exportClose">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="export-body">
+          <!-- Effect Mode -->
+          <div class="export-section">
+            <div class="export-section-label">效果模式</div>
+            <div class="export-option-row">
+              <label class="export-radio-card" id="expFadeCard">
+                <input type="radio" name="expMode" value="fade" id="expFade" checked>
+                <div class="erc-inner">
+                  <svg width="28" height="20" viewBox="0 0 28 20" fill="none"><rect x="0" y="0" width="12" height="20" rx="3" fill="#a855f7" opacity="0.35"/><rect x="16" y="0" width="12" height="20" rx="3" fill="#06b6d4"/><rect x="9" y="0" width="10" height="20" fill="url(#rfg)" opacity="0.7"/><defs><linearGradient id="rfg" x1="9" y1="10" x2="19" y2="10"><stop stop-color="#a855f7" stop-opacity="0"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
+                  <span>渐变淡入淡出</span>
+                </div>
+              </label>
+              <label class="export-radio-card" id="expSliderCard">
+                <input type="radio" name="expMode" value="slider" id="expSlider">
+                <div class="erc-inner">
+                  <svg width="28" height="20" viewBox="0 0 28 20" fill="none"><rect x="0" y="0" width="12" height="20" rx="3" fill="#a855f7" opacity="0.35"/><rect x="16" y="0" width="12" height="20" rx="3" fill="#06b6d4"/><rect x="13" y="0" width="2" height="20" fill="white"/><circle cx="14" cy="10" r="4" fill="url(#rsg)"/><defs><linearGradient id="rsg" x1="10" y1="10" x2="18" y2="10"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
+                  <span>分割线扫描</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Resolution -->
+          <div class="export-section">
+            <div class="export-section-label">分辨率</div>
+            <div class="export-option-row wrap">
+              <label class="export-chip">
+                <input type="radio" name="expRes" value="854x480"> 480p <em>854×480</em>
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expRes" value="1280x720" checked> 720p <em>1280×720</em>
+              </label>
+              <label class="export-chip active-default">
+                <input type="radio" name="expRes" value="1920x1080"> 1080p <em>1920×1080</em>
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expRes" value="2560x1440"> 2K <em>2560×1440</em>
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expRes" value="3840x2160"> 4K <em>3840×2160</em>
+              </label>
+            </div>
+          </div>
+
+          <!-- FPS -->
+          <div class="export-section">
+            <div class="export-section-label">帧率</div>
+            <div class="export-option-row">
+              <label class="export-chip">
+                <input type="radio" name="expFps" value="24"> 24 fps
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expFps" value="30" checked> 30 fps
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expFps" value="60"> 60 fps
+              </label>
+            </div>
+          </div>
+
+          <!-- Duration -->
+          <div class="export-section">
+            <div class="export-section-label">时长</div>
+            <div class="export-option-row">
+              <label class="export-chip">
+                <input type="radio" name="expDur" value="3"> 3 秒
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expDur" value="5" checked> 5 秒
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expDur" value="8"> 8 秒
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expDur" value="10"> 10 秒
+              </label>
+              <label class="export-chip">
+                <input type="radio" name="expDur" value="15"> 15 秒
+              </label>
+            </div>
+          </div>
+
+          <!-- Watermark Labels -->
+          <div class="export-section">
+            <div class="export-section-label">画面标签</div>
+            <div class="export-option-row">
+              <label class="export-toggle-row">
+                <span>显示「原片 / 精修」标签</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="expShowLabels" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </label>
+            </div>
+          </div>
+
+          <!-- Info box -->
+          <div class="export-info" id="exportInfo">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#a855f7" stroke-width="1.5"/><path d="M8 7v5M8 5v.5" stroke="#a855f7" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span id="exportInfoText">预计导出：30fps · 720p · 5秒 · 约 15MB</span>
+          </div>
+        </div>
+
+        <!-- Export progress -->
+        <div class="export-progress-wrap hidden" id="exportProgressWrap">
+          <div class="export-progress-bar">
+            <div class="export-progress-fill" id="exportProgressFill"></div>
+          </div>
+          <div class="export-progress-label" id="exportProgressLabel">正在渲染帧... 0%</div>
+        </div>
+
+        <div class="export-actions">
+          <button class="export-cancel-btn" id="exportCancelBtn">取消</button>
+          <button class="export-start-btn" id="exportStartBtn">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 2v9M5 8l4 4 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 13v1a2 2 0 002 2h10a2 2 0 002-2v-1" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            开始导出
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+// ===== STATE =====
+const state = {
+  beforeSrc: null,
+  afterSrc: null,
+  beforeType: null, // 'image' or 'video'
+  afterType: null,
+  mode: 'fade',       // 'fade' | 'slider'
+  fadeProgress: 0,    // 0 = full before, 1 = full after
+  fadeSpeed: 1500,    // ms per half-cycle
+  fadePlaying: false,
+  fadeRaf: null,
+  fadeStartTime: null,
+  fadeDir: 1,         // 1 = going to after, -1 = going to before
+  sliderPos: 0.5,     // 0-1
+  sliderDir: 'horizontal', // 'horizontal' | 'vertical'
+  sliderDragging: false,
+  sliderAuto: false,
+  sliderAutoRaf: null,
+  sliderAutoDir: 1,
+  showLabels: true,
+  showSliderLabels: true,
+  mediaRecorder: null,
+  recordingChunks: [],
+};
+
+// ===== DOM REFS =====
+const $ = id => document.getElementById(id);
+const uploadSection = $('uploadSection');
+const compareSection = $('compareSection');
+const beforeCard = $('beforeCard');
+const afterCard = $('afterCard');
+const beforePreview = $('beforePreview');
+const afterPreview = $('afterPreview');
+const beforeInput = $('beforeInput');
+const afterInput = $('afterInput');
+const startBtn = $('startBtn');
+
+const fadeBtn = $('fadeBtn');
+const sliderBtn = $('sliderBtn');
+const fadeMode = $('fadeMode');
+const sliderMode = $('sliderMode');
+
+const fadeBeforeLayer = $('fadeBeforeLayer');
+const fadeAfterLayer = $('fadeAfterLayer');
+const fadeProgressBar = $('fadeProgressBar');
+const fadeProgressFill = $('fadeProgressFill');
+const fadeProgressThumb = $('fadeProgressThumb');
+const fadePlayBtn = $('fadePlayBtn');
+const playIcon = $('playIcon');
+const pauseIcon = $('pauseIcon');
+const beforeFadeLabel = $('beforeFadeLabel');
+const afterFadeLabel = $('afterFadeLabel');
+const showLabels = $('showLabels');
+
+const sliderCanvas = $('sliderCanvas');
+const sliderBeforeLayer = $('sliderBeforeLayer');
+const sliderAfterLayer = $('sliderAfterLayer');
+const sliderInnerAfter = $('sliderInnerAfter');
+const divider = $('divider');
+const showSliderLabels = $('showSliderLabels');
+
+const modeInfo = $('modeInfo');
+const dragHint = $('dragHint');
+const reuploadBtn = $('reuploadBtn');
+const recordBtn = $('recordBtn');
+const recordingOverlay = $('recordingOverlay');
+const stopRecordBtn = $('stopRecordBtn');
+const toast = $('toast');
+
+// ===== UTILITIES =====
+function showToast(msg, duration = 2500) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+function createMediaEl(src, type) {
+  if (type === 'video') {
+    const v = document.createElement('video');
+    v.src = src;
+    v.loop = true;
+    v.muted = true;
+    v.autoplay = true;
+    v.playsinline = true;
+    v.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+    return v;
+  } else {
+    const img = document.createElement('img');
+    img.src = src;
+    img.draggable = false;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;user-select:none;pointer-events:none;';
+    return img;
+  }
+}
+
+function getFileType(file) {
+  return file.type.startsWith('video/') ? 'video' : 'image';
+}
+
+// ===== UPLOAD HANDLING =====
+function handleFile(file, side) {
+  if (!file) return;
+  const type = getFileType(file);
+  const url = URL.createObjectURL(file);
+
+  if (side === 'before') {
+    state.beforeSrc = url;
+    state.beforeType = type;
+    // Show preview
+    beforePreview.innerHTML = '';
+    beforePreview.appendChild(createMediaEl(url, type));
+    beforePreview.style.display = 'block';
+  } else {
+    state.afterSrc = url;
+    state.afterType = type;
+    afterPreview.innerHTML = '';
+    afterPreview.appendChild(createMediaEl(url, type));
+    afterPreview.style.display = 'block';
+  }
+
+  if (state.beforeSrc && state.afterSrc) {
+    startBtn.disabled = false;
+  }
+}
+
+beforeInput.addEventListener('change', e => handleFile(e.target.files[0], 'before'));
+afterInput.addEventListener('change', e => handleFile(e.target.files[0], 'after'));
+
+// Drag and drop
+function setupDrop(zone, side) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file, side);
+  });
+}
+setupDrop($('beforeZone'), 'before');
+setupDrop($('afterZone'), 'after');
+
+// ===== START COMPARISON =====
+startBtn.addEventListener('click', () => {
+  uploadSection.classList.add('hidden');
+  compareSection.classList.remove('hidden');
+  initComparison();
+});
+
+function initComparison() {
+  // Set up fade mode layers
+  fadeBeforeLayer.innerHTML = '';
+  fadeAfterLayer.innerHTML = '';
+  fadeBeforeLayer.appendChild(createMediaEl(state.beforeSrc, state.beforeType));
+  fadeAfterLayer.appendChild(createMediaEl(state.afterSrc, state.afterType));
+
+  // Set up slider mode layers
+  sliderBeforeLayer.innerHTML = '';
+  sliderInnerAfter.innerHTML = '';
+  sliderBeforeLayer.appendChild(createMediaEl(state.beforeSrc, state.beforeType));
+  sliderInnerAfter.appendChild(createMediaEl(state.afterSrc, state.afterType));
+
+  setMode('fade');
+  updateFadeProgress(0);
+  updateSliderPos(0.5);
+}
+
+// ===== MODE SWITCHING =====
+function setMode(mode) {
+  state.mode = mode;
+  if (mode === 'fade') {
+    fadeMode.classList.remove('hidden');
+    sliderMode.classList.add('hidden');
+    fadeBtn.classList.add('active');
+    sliderBtn.classList.remove('active');
+    modeInfo.textContent = '渐变模式';
+    dragHint.textContent = '拖动进度条控制切换';
+  } else {
+    fadeMode.classList.add('hidden');
+    sliderMode.classList.remove('hidden');
+    fadeBtn.classList.remove('active');
+    sliderBtn.classList.add('active');
+    modeInfo.textContent = '分割线模式';
+    dragHint.textContent = '拖动分割线对比前后效果';
+  }
+}
+
+fadeBtn.addEventListener('click', () => { stopFade(); setMode('fade'); });
+sliderBtn.addEventListener('click', () => { stopFade(); setMode('slider'); });
+
+// ===== FADE MODE =====
+function updateFadeProgress(val) {
+  state.fadeProgress = Math.max(0, Math.min(1, val));
+  fadeAfterLayer.style.opacity = state.fadeProgress;
+  const pct = state.fadeProgress * 100;
+  fadeProgressFill.style.flexBasis = pct + '%';
+
+  // Update labels opacity
+  if (state.showLabels) {
+    beforeFadeLabel.style.opacity = 1 - state.fadeProgress * 0.8;
+    afterFadeLabel.style.opacity = state.fadeProgress;
+  }
+}
+
+// Progress bar drag
+let fadeBarDragging = false;
+fadeProgressBar.addEventListener('mousedown', e => {
+  fadeBarDragging = true;
+  scrubFade(e);
+  if (state.fadePlaying) stopFade();
+});
+document.addEventListener('mousemove', e => { if (fadeBarDragging) scrubFade(e); });
+document.addEventListener('mouseup', () => { fadeBarDragging = false; });
+
+// Touch
+fadeProgressBar.addEventListener('touchstart', e => {
+  fadeBarDragging = true;
+  scrubFade(e.touches[0]);
+  if (state.fadePlaying) stopFade();
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (fadeBarDragging) scrubFade(e.touches[0]);
+}, { passive: true });
+document.addEventListener('touchend', () => { fadeBarDragging = false; });
+
+function scrubFade(e) {
+  const rect = fadeProgressBar.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const ratio = Math.max(0, Math.min(1, x / rect.width));
+  updateFadeProgress(ratio);
+}
+
+// Auto play
+function startFade() {
+  state.fadePlaying = true;
+  playIcon.classList.add('hidden');
+  pauseIcon.classList.remove('hidden');
+  fadePlayBtn.classList.add('playing');
+
+  const speed = state.fadeSpeed;
+  let startVal = state.fadeProgress;
+  let targetVal = state.fadeDir > 0 ? 1 : 0;
+
+  function animate(ts) {
+    if (!state.fadePlaying) return;
+    if (!state.fadeStartTime) state.fadeStartTime = ts;
+    const elapsed = ts - state.fadeStartTime;
+    const dist = Math.abs(targetVal - startVal);
+    const duration = speed * dist;
+    let t = duration > 0 ? Math.min(elapsed / duration, 1) : 1;
+    // Ease in-out
+    t = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    const val = startVal + (targetVal - startVal) * t;
+    updateFadeProgress(val);
+
+    if (elapsed >= duration) {
+      // Flip direction
+      state.fadeDir *= -1;
+      startVal = val;
+      targetVal = state.fadeDir > 0 ? 1 : 0;
+      state.fadeStartTime = ts;
+    }
+    state.fadeRaf = requestAnimationFrame(animate);
+  }
+  state.fadeStartTime = null;
+  state.fadeRaf = requestAnimationFrame(animate);
+}
+
+function stopFade() {
+  state.fadePlaying = false;
+  if (state.fadeRaf) cancelAnimationFrame(state.fadeRaf);
+  state.fadeStartTime = null;
+  playIcon.classList.remove('hidden');
+  pauseIcon.classList.add('hidden');
+}
+
+fadePlayBtn.addEventListener('click', () => {
+  if (state.fadePlaying) stopFade();
+  else startFade();
+});
+
+// Speed control
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const speedVal = parseInt(this.dataset.speed);
+    if (!speedVal) return;
+    state.fadeSpeed = speedVal;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    if (state.fadePlaying) { stopFade(); startFade(); }
+  });
+});
+
+// Labels toggle
+showLabels.addEventListener('change', () => {
+  state.showLabels = showLabels.checked;
+  beforeFadeLabel.style.display = state.showLabels ? '' : 'none';
+  afterFadeLabel.style.display = state.showLabels ? '' : 'none';
+});
+
+// ===== SLIDER MODE =====
+function updateSliderPos(pos) {
+  state.sliderPos = Math.max(0.02, Math.min(0.98, pos));
+  const pct = state.sliderPos * 100;
+
+  if (state.sliderDir === 'horizontal') {
+    divider.style.left = pct + '%';
+    divider.style.top = '0';
+    divider.style.transform = 'translateX(-50%)';
+    divider.style.width = '';
+    divider.style.height = '100%';
+    sliderAfterLayer.style.clipPath = `inset(0 0 0 ${pct}%)`;
+  } else {
+    divider.style.top = pct + '%';
+    divider.style.left = '0';
+    divider.style.transform = 'translateY(-50%)';
+    divider.style.width = '100%';
+    divider.style.height = '';
+    sliderAfterLayer.style.clipPath = `inset(${pct}% 0 0 0)`;
+  }
+}
+
+function getSliderPos(e) {
+  const rect = sliderCanvas.getBoundingClientRect();
+  if (state.sliderDir === 'horizontal') {
+    return (e.clientX - rect.left) / rect.width;
+  } else {
+    return (e.clientY - rect.top) / rect.height;
+  }
+}
+
+sliderCanvas.addEventListener('mousedown', e => {
+  state.sliderDragging = true;
+  updateSliderPos(getSliderPos(e));
+});
+document.addEventListener('mousemove', e => {
+  if (state.sliderDragging) updateSliderPos(getSliderPos(e));
+});
+document.addEventListener('mouseup', () => { state.sliderDragging = false; });
+
+sliderCanvas.addEventListener('touchstart', e => {
+  state.sliderDragging = true;
+  updateSliderPos(getSliderPos(e.touches[0]));
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (state.sliderDragging) updateSliderPos(getSliderPos(e.touches[0]));
+}, { passive: true });
+document.addEventListener('touchend', () => { state.sliderDragging = false; });
+
+// Direction buttons
+$('horizontalBtn').addEventListener('click', function() {
+  state.sliderDir = 'horizontal';
+  $('horizontalBtn').classList.add('active');
+  $('verticalBtn').classList.remove('active');
+  divider.classList.remove('vertical');
+  sliderCanvas.classList.remove('vertical-mode');
+  sliderCanvas.style.cursor = 'ew-resize';
+  divider.style.width = '';
+  divider.style.height = '';
+  updateSliderPos(state.sliderPos);
+});
+$('verticalBtn').addEventListener('click', function() {
+  state.sliderDir = 'vertical';
+  $('verticalBtn').classList.add('active');
+  $('horizontalBtn').classList.remove('active');
+  divider.classList.add('vertical');
+  sliderCanvas.classList.add('vertical-mode');
+  sliderCanvas.style.cursor = 'ns-resize';
+  updateSliderPos(state.sliderPos);
+});
+
+// Slider labels toggle
+showSliderLabels.addEventListener('change', () => {
+  state.showSliderLabels = showSliderLabels.checked;
+  const labels = divider.querySelectorAll('.divider-label-before, .divider-label-after');
+  labels.forEach(l => l.style.display = state.showSliderLabels ? '' : 'none');
+});
+
+// Auto scan
+let sliderAutoActive = false;
+$('sliderAutoBtn').addEventListener('click', () => {
+  sliderAutoActive = !sliderAutoActive;
+  const btn = $('sliderAutoBtn');
+  if (sliderAutoActive) {
+    btn.style.background = 'linear-gradient(135deg, #7c3aed, #06b6d4)';
+    btn.style.boxShadow = '0 6px 25px rgba(168,85,247,0.5)';
+    runSliderAuto();
+  } else {
+    btn.style.background = '';
+    btn.style.boxShadow = '';
+    if (state.sliderAutoRaf) cancelAnimationFrame(state.sliderAutoRaf);
+  }
+});
+
+function runSliderAuto() {
+  if (!sliderAutoActive) return;
+  let last = null;
+  const speed = 0.00035; // pos units per ms
+
+  function animate(ts) {
+    if (!sliderAutoActive) return;
+    if (last !== null) {
+      const dt = ts - last;
+      let newPos = state.sliderPos + state.sliderAutoDir * speed * dt;
+      if (newPos >= 0.97) { newPos = 0.97; state.sliderAutoDir = -1; }
+      if (newPos <= 0.03) { newPos = 0.03; state.sliderAutoDir = 1; }
+      updateSliderPos(newPos);
+    }
+    last = ts;
+    state.sliderAutoRaf = requestAnimationFrame(animate);
+  }
+  state.sliderAutoRaf = requestAnimationFrame(animate);
+}
+
+// ===== REUPLOAD =====
+reuploadBtn.addEventListener('click', () => {
+  stopFade();
+  sliderAutoActive = false;
+  if (state.sliderAutoRaf) cancelAnimationFrame(state.sliderAutoRaf);
+
+  compareSection.classList.add('hidden');
+  uploadSection.classList.remove('hidden');
+
+  // Reset
+  state.beforeSrc = null;
+  state.afterSrc = null;
+  beforePreview.style.display = 'none';
+  afterPreview.style.display = 'none';
+  beforePreview.innerHTML = '';
+  afterPreview.innerHTML = '';
+  beforeInput.value = '';
+  afterInput.value = '';
+  startBtn.disabled = true;
+});
+
+// ===== RECORDING (Screen Capture API) =====
+recordBtn.addEventListener('click', async () => {
+  if (state.mediaRecorder && state.mediaRecorder.state === 'recording') return;
+
+  try {
+    // Try to record just the stage
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: 30, cursor: 'never' },
+      audio: false,
+    });
+
+    state.recordingChunks = [];
+    state.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+
+    state.mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) state.recordingChunks.push(e.data);
+    };
+
+    state.mediaRecorder.onstop = () => {
+      const blob = new Blob(state.recordingChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `before-after-${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+      recordingOverlay.classList.add('hidden');
+      recordBtn.classList.remove('recording');
+      showToast('🎬 视频已保存！');
+      stream.getTracks().forEach(t => t.stop());
+    };
+
+    stream.getVideoTracks()[0].onended = () => {
+      if (state.mediaRecorder.state === 'recording') state.mediaRecorder.stop();
+    };
+
+    state.mediaRecorder.start();
+    recordingOverlay.classList.remove('hidden');
+    recordBtn.classList.add('recording');
+    showToast('🔴 录制已开始，操作对比效果后停止即可保存', 4000);
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      showToast('⚠️ 无法启动录制，请使用系统录屏工具');
+    }
+  }
+});
+
+stopRecordBtn.addEventListener('click', () => {
+  if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+    state.mediaRecorder.stop();
+  }
+});
+
+// ===== WINDOW RESIZE =====
+window.addEventListener('resize', () => {
+  if (state.mode === 'slider') updateSliderPos(state.sliderPos);
+});
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', e => {
+  if (compareSection.classList.contains('hidden')) return;
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (state.mode === 'fade') {
+      if (state.fadePlaying) stopFade(); else startFade();
+    } else {
+      sliderAutoActive = !sliderAutoActive;
+      $('sliderAutoBtn').click();
+    }
+  }
+  if (e.code === 'KeyF') { fadeBtn.click(); }
+  if (e.code === 'KeyS') { sliderBtn.click(); }
+  if (e.code === 'ArrowLeft' && state.mode === 'fade') updateFadeProgress(state.fadeProgress - 0.05);
+  if (e.code === 'ArrowRight' && state.mode === 'fade') updateFadeProgress(state.fadeProgress + 0.05);
+  if (e.code === 'ArrowLeft' && state.mode === 'slider') updateSliderPos(state.sliderPos - 0.05);
+  if (e.code === 'ArrowRight' && state.mode === 'slider') updateSliderPos(state.sliderPos + 0.05);
+});
+
+// Show keyboard hint
+setTimeout(() => {
+  if (!compareSection.classList.contains('hidden')) return;
+  showToast('💡 上传前后图片，开始对比', 3000);
+}, 1000);
+
+
+// ===================================================
+// ===== EXPORT VIDEO (Canvas + MediaRecorder) =====
+// ===================================================
+
+const exportBtn       = $('exportBtn');
+const exportModalBg   = $('exportModalBg');
+const exportClose     = $('exportClose');
+const exportCancelBtn = $('exportCancelBtn');
+const exportStartBtn  = $('exportStartBtn');
+const exportProgressWrap  = $('exportProgressWrap');
+const exportProgressFill  = $('exportProgressFill');
+const exportProgressLabel = $('exportProgressLabel');
+const exportInfoText  = $('exportInfoText');
+
+let exportAborted = false;
+
+// Open / Close modal
+exportBtn.addEventListener('click', () => {
+  exportModalBg.classList.remove('hidden');
+  resetExportUI();
+  updateExportInfo();
+});
+exportClose.addEventListener('click', closeExportModal);
+exportCancelBtn.addEventListener('click', () => {
+  exportAborted = true;
+  closeExportModal();
+});
+exportModalBg.addEventListener('click', e => {
+  if (e.target === exportModalBg) closeExportModal();
+});
+
+function closeExportModal() {
+  exportAborted = true;
+  exportModalBg.classList.add('hidden');
+  resetExportUI();
+}
+
+function resetExportUI() {
+  exportProgressWrap.classList.add('hidden');
+  exportProgressFill.style.width = '0%';
+  exportProgressLabel.textContent = '正在渲染帧... 0%';
+  exportStartBtn.disabled = false;
+  exportStartBtn.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M9 2v9M5 8l4 4 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M2 13v1a2 2 0 002 2h10a2 2 0 002-2v-1" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    开始导出`;
+}
+
+// Update estimated file size info
+function updateExportInfo() {
+  const res = document.querySelector('input[name="expRes"]:checked')?.value || '1280x720';
+  const fps = parseInt(document.querySelector('input[name="expFps"]:checked')?.value || 30);
+  const dur = parseInt(document.querySelector('input[name="expDur"]:checked')?.value || 5);
+  const [w, h] = res.split('x').map(Number);
+
+  // Rough bitrate estimate
+  const pixels = w * h;
+  let bitsPerSec = pixels * fps * 0.07; // ~0.07 bits per pixel per frame
+  const sizeMB = (bitsPerSec * dur / 8 / 1024 / 1024).toFixed(0);
+  const label = res.includes('3840') ? '4K' : res.includes('2560') ? '2K' :
+                res.includes('1920') ? '1080p' : res.includes('1280') ? '720p' : '480p';
+
+  exportInfoText.textContent = `预计导出：${fps}fps · ${label} · ${dur}秒 · 约 ${sizeMB}MB`;
+}
+
+// Listen for setting changes
+document.querySelectorAll('input[name="expRes"], input[name="expFps"], input[name="expDur"]').forEach(el => {
+  el.addEventListener('change', updateExportInfo);
+});
+
+// ===== LOAD MEDIA FOR CANVAS =====
+function loadCanvasMedia(src, type) {
+  return new Promise((resolve, reject) => {
+    if (type === 'video') {
+      const v = document.createElement('video');
+      v.src = src;
+      v.muted = true;
+      v.loop = true;
+      v.crossOrigin = 'anonymous';
+      v.oncanplay = () => { v.play(); resolve(v); };
+      v.onerror = reject;
+      v.load();
+    } else {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    }
+  });
+}
+
+// ===== DRAW ONE FRAME TO CANVAS =====
+function drawExportFrame(ctx, beforeEl, afterEl, progress, mode, showLabels, w, h) {
+  ctx.clearRect(0, 0, w, h);
+
+  if (mode === 'fade') {
+    // Draw before (full)
+    ctx.globalAlpha = 1;
+    drawMedia(ctx, beforeEl, 0, 0, w, h);
+    // Draw after on top with opacity
+    ctx.globalAlpha = progress;
+    drawMedia(ctx, afterEl, 0, 0, w, h);
+    ctx.globalAlpha = 1;
+
+    if (showLabels) {
+      const beforeOpacity = 1 - progress * 0.8;
+      const afterOpacity = progress;
+      drawLabel(ctx, '原  片', 'left', beforeOpacity, w, h);
+      drawLabel(ctx, '精  修', 'right', afterOpacity, w, h);
+    }
+  } else {
+    // Slider mode: before on left, after on right
+    const splitX = Math.round(progress * w);
+
+    // Draw before (full, clipped left)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, splitX, h);
+    ctx.clip();
+    drawMedia(ctx, beforeEl, 0, 0, w, h);
+    ctx.restore();
+
+    // Draw after (full, clipped right)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(splitX, 0, w - splitX, h);
+    ctx.clip();
+    drawMedia(ctx, afterEl, 0, 0, w, h);
+    ctx.restore();
+
+    // Draw divider line
+    const grad = ctx.createLinearGradient(splitX, 0, splitX, h);
+    grad.addColorStop(0, 'transparent');
+    grad.addColorStop(0.2, '#a855f7');
+    grad.addColorStop(0.8, '#06b6d4');
+    grad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = Math.max(2, w / 640);
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(splitX, 0);
+    ctx.lineTo(splitX, h);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Draw handle circle
+    const cx = splitX, cy = h / 2;
+    const r = Math.max(18, w / 55);
+    const hGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+    hGrad.addColorStop(0, '#a855f7');
+    hGrad.addColorStop(1, '#06b6d4');
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = hGrad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = Math.max(1.5, w / 800);
+    ctx.stroke();
+
+    // Arrows inside handle
+    ctx.fillStyle = 'white';
+    ctx.font = `bold ${Math.round(r * 0.8)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⟺', cx, cy);
+
+    if (showLabels) {
+      drawLabel(ctx, '原  片', 'left', 1, w, h);
+      drawLabel(ctx, '精  修', 'right', 1, w, h);
+    }
+  }
+}
+
+function drawMedia(ctx, el, x, y, w, h) {
+  const srcW = el.videoWidth || el.naturalWidth;
+  const srcH = el.videoHeight || el.naturalHeight;
+  if (!srcW || !srcH) { ctx.drawImage(el, x, y, w, h); return; }
+
+  // Cover fit
+  const scale = Math.max(w / srcW, h / srcH);
+  const dw = srcW * scale, dh = srcH * scale;
+  const dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
+  ctx.drawImage(el, dx, dy, dw, dh);
+}
+
+function drawLabel(ctx, text, side, alpha, w, h) {
+  if (alpha <= 0.02) return;
+  const pad = Math.max(12, w / 100);
+  const fontSize = Math.max(13, w / 80);
+  ctx.font = `800 ${fontSize}px "Noto Sans SC", "PingFang SC", sans-serif`;
+  const tw = ctx.measureText(text).width;
+  const labelW = tw + pad * 2.5;
+  const labelH = fontSize * 2;
+  const lx = side === 'left' ? pad : w - pad - labelW;
+  const ly = pad;
+  const r = labelH / 2;
+
+  ctx.globalAlpha = alpha * 0.88;
+
+  // Background pill
+  ctx.fillStyle = side === 'left' ? 'rgba(168,85,247,0.35)' : 'rgba(6,182,212,0.35)';
+  ctx.beginPath();
+  ctx.roundRect(lx, ly, labelW, labelH, r);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = side === 'left' ? 'rgba(168,85,247,0.6)' : 'rgba(6,182,212,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Text
+  ctx.fillStyle = side === 'left' ? '#e9d5ff' : '#cffafe';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '4px';
+  ctx.fillText(text, lx + labelW / 2, ly + labelH / 2);
+  ctx.globalAlpha = 1;
+  ctx.letterSpacing = '0px';
+}
+
+// ===== MAIN EXPORT FUNCTION =====
+exportStartBtn.addEventListener('click', async () => {
+  const mode     = document.querySelector('input[name="expMode"]:checked')?.value || 'fade';
+  const res      = document.querySelector('input[name="expRes"]:checked')?.value  || '1280x720';
+  const fps      = parseInt(document.querySelector('input[name="expFps"]:checked')?.value  || 30);
+  const duration = parseInt(document.querySelector('input[name="expDur"]:checked')?.value || 5);
+  const showLabels = $('expShowLabels').checked;
+  const [w, h]   = res.split('x').map(Number);
+
+  exportAborted = false;
+  exportStartBtn.disabled = true;
+  exportStartBtn.innerHTML = `<span style="opacity:0.7">准备中...</span>`;
+  exportProgressWrap.classList.remove('hidden');
+
+  // Load media
+  let beforeEl, afterEl;
+  try {
+    exportProgressLabel.textContent = '正在加载素材...';
+    [beforeEl, afterEl] = await Promise.all([
+      loadCanvasMedia(state.beforeSrc, state.beforeType),
+      loadCanvasMedia(state.afterSrc, state.afterType),
+    ]);
+  } catch (err) {
+    showToast('⚠️ 素材加载失败，请重试');
+    resetExportUI();
+    return;
+  }
+
+  if (exportAborted) return;
+
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // Determine supported mime type
+  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ? 'video/webm;codecs=vp9'
+    : MediaRecorder.isTypeSupported('video/webm')
+    ? 'video/webm'
+    : 'video/webm';
+
+  // Bitrate
+  const pixels = w * h;
+  const bitsPerSec = Math.min(Math.round(pixels * fps * 0.07), 80_000_000);
+
+  const stream = canvas.captureStream(fps);
+  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: bitsPerSec });
+  const chunks = [];
+
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    const label = res.includes('3840') ? '4K' : res.includes('2560') ? '2K' :
+                  res.includes('1920') ? '1080p' : res.includes('1280') ? '720p' : '480p';
+    a.download = `对比视频_${label}_${fps}fps_${duration}s.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    exportProgressFill.style.width = '100%';
+    exportProgressLabel.textContent = '✅ 导出完成，已开始下载！';
+    exportStartBtn.disabled = false;
+    exportStartBtn.innerHTML = `✅ 导出完成`;
+    showToast(`🎬 视频已导出：${label} · ${fps}fps · ${duration}秒`);
+
+    setTimeout(() => {
+      if (!exportAborted) closeExportModal();
+    }, 2000);
+  };
+
+  recorder.start();
+
+  // Render frames
+  const totalFrames = duration * fps;
+  const frameDuration = 1000 / fps;
+
+  for (let frame = 0; frame <= totalFrames; frame++) {
+    if (exportAborted) { recorder.stop(); stream.getTracks().forEach(t => t.stop()); return; }
+
+    const t = frame / totalFrames; // 0 → 1
+    let progress;
+
+    if (mode === 'fade') {
+      // Ease in-out, go 0→1→0 (one full cycle)
+      const cycle = t * 2; // 0→2
+      if (cycle <= 1) {
+        progress = cycle < 0.5 ? 2 * cycle * cycle : -1 + (4 - 2 * cycle) * cycle;
+      } else {
+        const ct = cycle - 1;
+        progress = 1 - (ct < 0.5 ? 2 * ct * ct : -1 + (4 - 2 * ct) * ct);
+      }
+    } else {
+      // Slider: sweep 0→1→0
+      const cycle = t * 2;
+      if (cycle <= 1) {
+        progress = cycle < 0.5 ? 2 * cycle * cycle : -1 + (4 - 2 * cycle) * cycle;
+      } else {
+        const ct = cycle - 1;
+        progress = 1 - (ct < 0.5 ? 2 * ct * ct : -1 + (4 - 2 * ct) * ct);
+      }
+    }
+
+    drawExportFrame(ctx, beforeEl, afterEl, progress, mode, showLabels, w, h);
+
+    const pct = Math.round((frame / totalFrames) * 100);
+    exportProgressFill.style.width = pct + '%';
+    exportProgressLabel.textContent = `正在渲染... ${pct}% （第 ${frame}/${totalFrames} 帧）`;
+
+    // Wait for next frame slot
+    await new Promise(resolve => setTimeout(resolve, frameDuration));
+  }
+
+  recorder.stop();
+  stream.getTracks().forEach(t => t.stop());
+});
+
+</script>
+</body>
+</html>
