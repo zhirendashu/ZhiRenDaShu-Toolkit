@@ -1,37 +1,40 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>植人大树自媒体封面制作器 | 视觉艺术门户</title>
+    <title>自媒体创作工具站 | 视觉艺术工作站</title>
     <!--
     作者：植人大树
     个人主页：https://link3.cc/zhirendashu
-    版本：v1.3.0
-    发布日期：2026-03-17
+    版本：v2.0.0
+    发布日期：2026-06-24
     开源协议：CC BY-NC-SA 4.0
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <style>
-        /* ===== 设计系统：8px 基准间距 ===== */
+        /* ===== 设计系统与变量 ===== */
         :root {
-            --bg-dark: #05070a;
-            --surface-glass: rgba(22, 26, 36, 0.72);
-            --border-glass: rgba(255, 255, 255, 0.09);
+            --bg-dark: #04050a;
+            --surface-glass: rgba(10, 12, 20, 0.45);
+            --border-glass: rgba(255, 255, 255, 0.05);
+            
             --accent-primary: #6366f1;
             --accent-secondary: #f43f5e;
-            --accent-sky: #0ea5e9;
-            --accent-green: #10b981;
-            --accent-glow: rgba(99, 102, 241, 0.3);
+            
+            --accent-visual: #6366f1;
+            --accent-ai: #9b72ff;
+            --accent-color-lab: #ec4899;
+            
             --text-main: #f8fafc;
-            --text-dim: #94a3b8;
+            --text-dim: #8ba1b5;
             --radius-xl: 24px;
-            --font-display: 'Outfit', 'Noto Sans SC', sans-serif;
-            --transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            --font-display: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 
             /* 8px 间距体系 */
             --sp-1: 8px;
@@ -40,212 +43,362 @@
             --sp-4: 32px;
             --sp-5: 40px;
             --sp-6: 48px;
-            --sp-7: 56px;
-            --sp-8: 64px;
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
 
+        html {
+            background-color: var(--bg-dark);
+        }
         body {
             font-family: var(--font-display);
-            background-color: var(--bg-dark);
+            background-color: transparent;
             color: var(--text-main);
             min-height: 100dvh;
             overflow-x: hidden;
             line-height: 1.6;
+            position: relative;
         }
 
-        
-        /* ===== Accordion 折叠系统 ===== */
-        .accordion-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-1); z-index: 10; position: relative; }
-        .acc-group { background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-xl); overflow: hidden; transition: var(--transition); }
-        .acc-header { display: flex; align-items: center; justify-content: center; position: relative; padding: var(--sp-4); cursor: pointer; background: rgba(0,0,0,0.3); transition: 0.3s; }
-        .acc-header:hover { background: rgba(255,255,255,0.04); }
-        .acc-title { display: flex; align-items: center; gap: var(--sp-2); font-size: 1.15rem; font-weight: 700; letter-spacing: 1.5px; color: var(--text-main); }
-        
-        .acc-icon { position: absolute; right: var(--sp-4); transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1); width: 24px; height: 24px; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center; }
-        .acc-content { max-height: 0; overflow: hidden; transition: max-height 0.45s cubic-bezier(0.23, 1, 0.32, 1), padding 0.45s ease; padding: 0 var(--sp-4); }
-        
-        /* 独立科技感边框高亮状态 */
-        .acc-group.sys-active { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.02); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        
-        .acc-group.ai-active { border-color: rgba(155,114,255,0.3); background: rgba(155,114,255,0.02); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        
-        .acc-group.lab-active { border-color: rgba(244,63,94,0.3); background: rgba(244,63,94,0.02); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        
-
-        .acc-group.active .acc-header { background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .acc-group.active .acc-title { color: #fff; }
-        .acc-group.active .acc-icon { transform: rotate(180deg); color: #fff; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
-        .acc-group.active .acc-content { padding: var(--sp-4); }
-
-        /* 卡片内部适配网格 */
-        .acc-grid { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); align-items: stretch; }
-        @media (max-width: 1024px) { .acc-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .acc-grid { grid-template-columns: 1fr; } .acc-header { padding: var(--sp-3); } .acc-group.active .acc-content { padding: var(--sp-3); } }
-
-        /* ===== 动态背景 ===== */
-        .bg-blobs {
-            position: fixed; inset: 0;
-            z-index: -1; overflow: hidden;
-            filter: blur(80px); opacity: 0.5;
+        /* ===== 噪声与流光背景 ===== */
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            opacity: 0.03;
             pointer-events: none;
-        }
-        .blob {
-            position: absolute; border-radius: 50%;
-            animation: blob-move 25s infinite alternate;
-        }
-        .blob-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%); top: -10%; right: -10%; }
-        .blob-2 { width: 50vw; height: 50vw; background: radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%); bottom: -10%; left: -10%; animation-delay: -8s; }
-        .blob-3 { width: 30vw; height: 30vw; background: radial-gradient(circle, var(--accent-sky) 0%, transparent 70%); top: 40%; left: 35%; animation-delay: -15s; opacity: 0.7; }
-        @keyframes blob-move {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(60px, 40px) scale(1.08); }
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* ===== 主容器：严格居中，左右对称 ===== */
+        .aurora-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+            background: #020306;
+        }
+        .aurora-blob {
+            position: absolute;
+            filter: blur(140px);
+            mix-blend-mode: screen;
+            opacity: 0.65; /* 提升极光亮度 */
+            transition: var(--transition);
+        }
+        .blob-1 {
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.6) 0%, rgba(236, 72, 153, 0.25) 45%, transparent 70%);
+            top: -200px;
+            left: -150px;
+            animation: aurora-liquid-1 28s infinite alternate ease-in-out;
+        }
+        .blob-2 {
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, rgba(168, 85, 247, 0.25) 45%, transparent 70%);
+            bottom: -150px;
+            right: -100px;
+            animation: aurora-liquid-2 24s infinite alternate ease-in-out;
+        }
+        .blob-3 {
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.55) 0%, rgba(14, 165, 233, 0.22) 45%, transparent 70%);
+            top: 30%;
+            right: 15%;
+            animation: aurora-liquid-3 20s infinite alternate ease-in-out;
+        }
+        .blob-4 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(217, 70, 239, 0.55) 0%, rgba(244, 63, 94, 0.22) 45%, transparent 70%);
+            bottom: 25%;
+            left: 20%;
+            animation: aurora-liquid-4 32s infinite alternate ease-in-out;
+        }
+        @keyframes aurora-liquid-1 {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                border-radius: 40% 60% 60% 40% / 40% 30% 70% 60%;
+            }
+            50% {
+                transform: translate(80px, 60px) scale(1.15) rotate(180deg);
+                border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%;
+            }
+            100% {
+                transform: translate(-30px, 40px) scale(0.9) rotate(360deg);
+                border-radius: 40% 60% 60% 40% / 40% 30% 70% 60%;
+            }
+        }
+        @keyframes aurora-liquid-2 {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                border-radius: 50% 50% 40% 60% / 40% 50% 60% 50%;
+            }
+            50% {
+                transform: translate(-90px, -50px) scale(0.9) rotate(-180deg);
+                border-radius: 40% 60% 60% 40% / 40% 30% 70% 60%;
+            }
+            100% {
+                transform: translate(40px, -80px) scale(1.1) rotate(-360deg);
+                border-radius: 50% 50% 40% 60% / 40% 50% 60% 50%;
+            }
+        }
+        @keyframes aurora-liquid-3 {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%;
+            }
+            50% {
+                transform: translate(60px, -80px) scale(1.1) rotate(180deg);
+                border-radius: 50% 50% 40% 60% / 40% 50% 60% 50%;
+            }
+            100% {
+                transform: translate(-50px, 40px) scale(0.95) rotate(360deg);
+                border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%;
+            }
+        }
+        @keyframes aurora-liquid-4 {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                border-radius: 40% 60% 60% 40% / 40% 30% 70% 60%;
+            }
+            50% {
+                transform: translate(-50px, 80px) scale(0.9) rotate(-180deg);
+                border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%;
+            }
+            100% {
+                transform: translate(60px, -40px) scale(1.15) rotate(-360deg);
+                border-radius: 40% 60% 60% 40% / 40% 30% 70% 60%;
+            }
+        }
+
+        /* ===== 主容器 ===== */
         .app {
             max-width: 1200px;
             margin: 0 auto;
-            padding: var(--sp-8) var(--sp-3);
+            padding: var(--sp-6) var(--sp-3);
             display: flex;
             flex-direction: column;
-            align-items: center;       /* 水平全居中 */
-            gap: var(--sp-7);
+            align-items: center;
+            gap: var(--sp-4);
         }
 
-        /* ===== 头部：完全居中对齐 ===== */
-        header {
+        /* ===== 极简头部 ===== */
+        .main-header {
             text-align: center;
             width: 100%;
-            max-width: 800px;
-            animation: fade-up 0.7s ease-out;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: var(--sp-2);
+            margin-bottom: var(--sp-1);
         }
-        @keyframes fade-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #fff;
+            opacity: 0.85;
         }
-        .badge {
-            padding: 5px 18px;
-            background: rgba(99, 102, 241, 0.12);
-            border: 1px solid rgba(99, 102, 241, 0.25);
+        .logo-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+        .brand-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .badge-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 16px;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.18);
             border-radius: 100px;
-            color: var(--accent-primary);
+            color: #a5b4fc;
             font-size: 0.8rem;
             font-weight: 600;
             letter-spacing: 0.5px;
         }
-        h1 {
-            font-size: clamp(1.8rem, 4vw, 3.2rem);
+        .pulse-dot {
+            width: 5px;
+            height: 5px;
+            background-color: #818cf8;
+            border-radius: 50%;
+            animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(129, 140, 248, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(129, 140, 248, 0); }
+        }
+        .hero-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 800;
-            letter-spacing: -0.05em; /* tracking-tighter */
-            background: linear-gradient(to right, #fff 30%, #94a3b8 100%);
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            line-height: 1.2;
-            white-space: nowrap;
+            line-height: 1.15;
         }
-        .hero-desc {
+        .hero-subtitle {
             color: var(--text-dim);
-            font-size: 1rem;
-            font-weight: 300;
-            line-height: 1.7;
+            font-size: clamp(0.9rem, 2vw, 1.05rem);
+            font-weight: 400;
+            max-width: 600px;
         }
-        /* 三粒胶囊：等宽，完全对齐 */
-        .hero-pills {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: var(--sp-1);
-            width: 100%;
-            margin-top: var(--sp-1);
-        }
-        .hero-pill {
+
+        /* ===== 数字统计条 ===== */
+        .stats-bar {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 7px 0;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--sp-1);
-            font-size: 0.8rem;
-            color: var(--text-dim);
+            gap: var(--sp-4);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 12px 32px;
+            border-radius: 100px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: var(--sp-2);
         }
-
-        /* ===== 工作流步骤条 ===== */
-        .workflow {
-            width: 100%;
+        .stat-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: var(--sp-1);
         }
-        .workflow-label {
-            font-size: 0.72rem;
+        .stat-num {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 40%, var(--text-dim) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-lbl {
+            font-size: 0.7rem;
             color: var(--text-dim);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            font-weight: 600;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
         }
-        .wf-bar {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr auto 1fr; /* 三步等宽，箭头固定 */
-            align-items: center;
+        .stat-divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* ===== Tab 切换分类 ===== */
+        .tabs-container {
             width: 100%;
             max-width: 680px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-glass);
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+        .tabs-list {
+            display: flex;
+            background: rgba(10, 12, 20, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 100px;
             padding: 6px;
-            gap: 0;
+            gap: 4px;
+            width: 100%;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.03);
         }
-        .wf-step {
+        .tab-btn {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: var(--sp-1);
-            padding: 10px var(--sp-2);
+            gap: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            padding: 12px 18px;
             border-radius: 100px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
         }
-        .wf-num {
-            width: 22px; height: 22px;
+        .tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .tab-btn.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .tab-dot {
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.7rem; font-weight: 800;
-            flex-shrink: 0;
-            line-height: 1;
+            display: inline-block;
+            transition: var(--transition);
         }
-        .wf-step:nth-child(1) .wf-num { background: var(--accent-secondary); }
-        .wf-step:nth-child(3) .wf-num { background: var(--accent-primary); }
-        .wf-step:nth-child(5) .wf-num { background: var(--accent-green); }
-        .wf-text-box { display: flex; flex-direction: column; }
-        .wf-title { font-size: 0.82rem; font-weight: 600; }
-        .wf-desc { font-size: 0.7rem; color: var(--text-dim); }
-        .wf-arrow {
-            color: rgba(255,255,255,0.2);
-            font-size: 1.1rem;
-            text-align: center;
-            user-select: none;
+        .tab-btn.active .tab-dot {
+            transform: scale(1.3);
+            box-shadow: 0 0 8px currentColor;
         }
 
-        /* ===== 工具卡片：固定四等分等宽换行 ===== */
-        .tool-grid {
+        /* ===== Tab 内容区 ===== */
+        .tab-contents {
             width: 100%;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 变更为 4 等分 */
-            gap: var(--sp-3);
-            align-items: stretch;                  /* 等高 */
+            position: relative;
+            z-index: 5;
         }
+        .tab-pane {
+            display: none;
+            width: 100%;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* ===== Bento Grid 格局 ===== */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--sp-3);
+            width: 100%;
+        }
+
+        /* Bento 占位 */
+        .bento-2x {
+            grid-column: span 2;
+        }
+        .bento-3x {
+            grid-column: span 3;
+        }
+
+        /* ===== 极美卡片系统 ===== */
         .glass-card {
             background: var(--surface-glass);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-xl);
             padding: var(--sp-4);
             text-decoration: none;
@@ -255,249 +408,317 @@
             gap: var(--sp-3);
             transition: var(--transition);
             position: relative;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.03);
             overflow: hidden;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
-            opacity: 0; /* 为 GSAP 初始状态準備 */
-            transform: translateY(20px);
+            opacity: 0;
+            transform: translateY(30px);
         }
+
+        /* 提升卡片内容层级，确保在渐变流光之上可读 */
+        .icon-box, .card-content, .card-footer {
+            position: relative;
+            z-index: 2;
+        }
+        .card-step {
+            z-index: 2;
+        }
+
+        /* 1px 极致高清渐变微光边框 */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.2px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            transition: var(--transition);
+            z-index: 3;
+        }
+
+        /* 动态多源流光渐变底色 */
         .glass-card::after {
-            content: "";
-            position: absolute; top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 60%);
-            opacity: 0; transition: var(--transition); pointer-events: none;
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: var(--card-gradient);
+            background-size: 200% 200%;
+            opacity: 0.28; /* 提升默认状态下的微光强度 */
+            transition: var(--transition);
+            pointer-events: none;
         }
+
         .glass-card:hover {
             transform: translateY(-6px);
-            border-color: rgba(255,255,255,0.16);
-            box-shadow: 0 24px 48px rgba(0,0,0,0.45), 0 0 16px var(--accent-glow);
+            box-shadow: 0 24px 48px rgba(0,0,0,0.45), 0 0 24px var(--accent-glow);
         }
-        .glass-card:hover::after { opacity: 1; transform: translate(25%, 25%); }
 
-        /* 步骤角标：完全对齐右上角 */
+        .glass-card:hover::before {
+            background: linear-gradient(135deg, var(--accent-theme) 0%, rgba(255, 255, 255, 0.2) 100%);
+        }
+
+        .glass-card:hover::after {
+            opacity: 0.65; /* 提升悬停状态的流光饱和度 */
+            animation: card-gradient-move 8s infinite alternate ease-in-out;
+        }
+
+        @keyframes card-gradient-move {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        /* 卡片徽章 */
         .card-step {
             position: absolute;
-            top: var(--sp-2); right: var(--sp-2);
-            font-size: 0.65rem; font-weight: 700;
-            color: var(--text-dim); opacity: 0.45;
+            top: var(--sp-3);
+            right: var(--sp-3);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-dim);
+            transition: var(--transition);
             letter-spacing: 0.5px;
         }
+        .glass-card:hover .card-step {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
 
-        /* 图标盒子：所有卡片同尺寸，对齐顶部 */
+        /* 图标区 */
         .icon-box {
-            width: 56px; height: 56px;
-            border-radius: 16px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            display: flex; align-items: center; justify-content: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
+            color: var(--text-dim);
             transition: var(--transition);
         }
-        /* 统一标准：所有卡片图标带有色偏和点亮效果 */
-        .icon-box svg { width: 26px; height: 26px; stroke: currentColor; transition: var(--transition); }
-        
-        /* Rose 玫瑰红 (拼图大师/字幕配色) */
-        .glass-card.theme-rose .icon-box { background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.25); color: #f43f5e; }
-        .glass-card.theme-rose:hover .icon-box { background: #f43f5e; border-color: #f43f5e; color: #ffffff; box-shadow: 0 6px 20px rgba(244,63,94,0.4); transform: scale(1.08); }
-        .glass-card.theme-rose .card-step, .glass-card.theme-rose .go-btn { color: #f43f5e; opacity: 0.9; }
+        .icon-box svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            transition: var(--transition);
+        }
 
-        /* Indigo 靛蓝 (比例转换) */
-        .glass-card.theme-indigo .icon-box { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.25); color: #6366f1; }
-        .glass-card.theme-indigo:hover .icon-box { background: #6366f1; border-color: #6366f1; color: #ffffff; box-shadow: 0 6px 20px rgba(99,102,241,0.4); transform: scale(1.08); }
-        .glass-card.theme-indigo .card-step, .glass-card.theme-indigo .go-btn { color: #6366f1; opacity: 0.9; }
+        .glass-card:hover .icon-box {
+            transform: scale(1.08) rotate(3deg);
+            background: var(--accent-theme);
+            color: #ffffff;
+            box-shadow: 0 6px 20px var(--accent-glow);
+            border-color: transparent;
+        }
 
-        /* Emerald 翠绿 (封面精修) */
-        .glass-card.theme-emerald .icon-box { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); color: #10b981; }
-        .glass-card.theme-emerald:hover .icon-box { background: #10b981; border-color: #10b981; color: #ffffff; box-shadow: 0 6px 20px rgba(16,185,129,0.4); transform: scale(1.08); }
-        .glass-card.theme-emerald .card-step, .glass-card.theme-emerald .go-btn { color: #10b981; opacity: 0.9; }
+        /* 各主题配色与专属双源流光 gradient */
+        .glass-card.theme-rose { 
+            --accent-theme: #f43f5e; 
+            --accent-glow: rgba(244, 63, 94, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(244, 63, 94, 0.45) 0%, rgba(236, 72, 153, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-indigo { 
+            --accent-theme: #6366f1; 
+            --accent-glow: rgba(99, 102, 241, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.45) 0%, rgba(168, 85, 247, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(244, 63, 94, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-emerald { 
+            --accent-theme: #10b981; 
+            --accent-glow: rgba(16, 185, 129, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.45) 0%, rgba(14, 165, 233, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-sky { 
+            --accent-theme: #0ea5e9; 
+            --accent-glow: rgba(14, 165, 233, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(14, 165, 233, 0.45) 0%, rgba(99, 102, 241, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-amber { 
+            --accent-theme: #f59e0b; 
+            --accent-glow: rgba(245, 158, 11, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.45) 0%, rgba(244, 63, 94, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-purple { 
+            --accent-theme: #c084fc; 
+            --accent-glow: rgba(192, 132, 252, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(192, 132, 252, 0.45) 0%, rgba(236, 72, 153, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-pink { 
+            --accent-theme: #ea66a6; 
+            --accent-glow: rgba(234, 102, 166, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(234, 102, 166, 0.45) 0%, rgba(244, 63, 94, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.3) 0%, transparent 60%);
+        }
+        .glass-card.theme-violet { 
+            --accent-theme: #a855f7; 
+            --accent-glow: rgba(168, 85, 247, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(168, 85, 247, 0.48) 0%, rgba(6, 182, 212, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.35) 0%, transparent 60%);
+        }
+        .glass-card.theme-ai { 
+            --accent-theme: #9b72ff; 
+            --accent-glow: rgba(155, 114, 255, 0.25); 
+            --card-gradient: radial-gradient(circle at 15% 15%, rgba(155, 114, 255, 0.5) 0%, rgba(99, 102, 241, 0.2) 35%, transparent 70%),
+                             radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.35) 0%, transparent 60%);
+        }
 
-        /* Sky 天蓝 (切图神器) */
-        .glass-card.theme-sky .icon-box { background: rgba(14,165,233,0.1); border-color: rgba(14,165,233,0.25); color: #0ea5e9; }
-        .glass-card.theme-sky:hover .icon-box { background: #0ea5e9; border-color: #0ea5e9; color: #ffffff; box-shadow: 0 6px 20px rgba(14,165,233,0.4); transform: scale(1.08); }
-        .glass-card.theme-sky .card-step, .glass-card.theme-sky .go-btn { color: #0ea5e9; opacity: 0.9; }
-
-        /* Amber 琥珀/复古 (Gruvbox) */
-        .glass-card.theme-amber .icon-box { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); color: #f59e0b; }
-        .glass-card.theme-amber:hover .icon-box { background: #f59e0b; border-color: #f59e0b; color: #ffffff; box-shadow: 0 6px 20px rgba(245,158,11,0.4); transform: scale(1.08); }
-        .glass-card.theme-amber .card-step, .glass-card.theme-amber .go-btn { color: #f59e0b; opacity: 0.9; }
-
-        /* Purple 紫色 (Catppuccin) */
-        .glass-card.theme-purple .icon-box { background: rgba(192,132,252,0.1); border-color: rgba(192,132,252,0.25); color: #c084fc; }
-        .glass-card.theme-purple:hover .icon-box { background: #c084fc; border-color: #c084fc; color: #ffffff; box-shadow: 0 6px 20px rgba(192,132,252,0.4); transform: scale(1.08); }
-        .glass-card.theme-purple .card-step, .glass-card.theme-purple .go-btn { color: #c084fc; opacity: 0.9; }
-
-        /* Pink 粉红 (NipponColors) */
-        .glass-card.theme-pink .icon-box { background: rgba(234,102,166,0.1); border-color: rgba(234,102,166,0.25); color: #ea66a6; }
-        .glass-card.theme-pink:hover .icon-box { background: #ea66a6; border-color: #ea66a6; color: #ffffff; box-shadow: 0 6px 20px rgba(234,102,166,0.4); transform: scale(1.08); }
-        .glass-card.theme-pink .card-step, .glass-card.theme-pink .go-btn { color: #ea66a6; opacity: 0.9; }
-
-        /* Violet 紫青 (前后对比 Pro) */
-        .glass-card.theme-violet .icon-box { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.28); color: #a855f7; }
-        .glass-card.theme-violet:hover .icon-box { background: linear-gradient(135deg,#7c3aed,#06b6d4); border-color: rgba(168,85,247,0.5); color: #ffffff; box-shadow: 0 6px 20px rgba(168,85,247,0.45); transform: scale(1.08); }
-        .glass-card.theme-violet .card-step { color: #a855f7; font-weight: 800; font-size: 0.7rem; }
-        .glass-card.theme-violet .go-btn { color: #a855f7; border-color: rgba(168,85,247,0.25); background: rgba(168,85,247,0.08); }
-        .glass-card.theme-violet:hover .go-btn { background: linear-gradient(135deg,#7c3aed,#06b6d4); color: #fff; border-color: transparent; }
-        .glass-card.theme-violet:hover { border-color: rgba(168,85,247,0.3); box-shadow: 0 24px 48px rgba(0,0,0,0.45), 0 0 24px rgba(168,85,247,0.18); }
-
-
-        /* AI 工作台中枢特调 (极致渐变流光) */
-        .glass-card.theme-ai .icon-box { background: rgba(155,114,255,0.15); border: 1px solid rgba(155,114,255,0.3); color: #9b72ff; }
-        .glass-card.theme-ai:hover .icon-box { background: linear-gradient(135deg, #6384ff, #9b72ff); border-color: rgba(255,255,255,0.2); color: #ffffff; box-shadow: 0 8px 24px rgba(155,114,255,0.5); transform: scale(1.1); }
-        .glass-card.theme-ai .card-step { color: #9b72ff; font-weight: 800; }
-        .glass-card.theme-ai .go-btn { background: rgba(155,114,255,0.1); color: #9b72ff; border-color: rgba(155,114,255,0.25); }
-        .glass-card.theme-ai:hover .go-btn { background: #9b72ff; color: #fff; }
-
-        /* 卡片文字区：flex-grow 填满，使底部 footer 始终对齐 */
+        /* 卡片内容 */
         .card-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: var(--sp-1);
+            gap: 6px;
         }
         .card-content h2 {
-            font-size: 1.25rem;     /* 统一字号 */
+            font-size: 1.15rem;
             font-weight: 700;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
+            color: #fff;
             line-height: 1.3;
         }
         .card-content p {
             color: var(--text-dim);
-            font-size: 0.88rem;
-            line-height: 1.75;
-            flex: 1;                /* 描述区撑开，使 footer 对齐底部 */
+            font-size: 0.85rem;
+            line-height: 1.6;
+            font-weight: 300;
         }
 
-        /* 卡片底部：固定高度，保证三列底部在同一水平线 */
+        /* 卡片页脚 */
         .card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: var(--sp-1);
             padding-top: var(--sp-2);
-            border-top: 1px solid rgba(255,255,255,0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            margin-top: 4px;
         }
-        .tags { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+        .tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
         .tag {
-            font-size: 0.7rem;
-            padding: 4px 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.09);
+            font-size: 0.68rem;
+            padding: 3px 9px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
             border-radius: 100px;
             color: var(--text-dim);
-            font-weight: 600;
-            white-space: nowrap;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .glass-card:hover .tag {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
         }
         .go-btn {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: var(--text-dim);
-            padding: 6px 14px;
-            border-radius: 100px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.09);
-            transition: var(--transition);
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-        .go-btn svg { width: 13px; height: 13px; transition: transform 0.25s; }
-        .glass-card:active {
-            transform: scale(0.98);
-        }
-
-        /* ===== Bug 提交按钮 ===== */
-        .bug-report-btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 9px 22px;
-            background: rgba(244, 63, 94, 0.08);
-            border: 1px solid rgba(244, 63, 94, 0.25);
-            border-radius: 100px;
-            color: #f87171;
-            font-size: 0.82rem;
+            gap: 5px;
+            font-size: 0.75rem;
             font-weight: 600;
-            text-decoration: none;
+            color: var(--text-dim);
+            padding: 5px 12px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             transition: var(--transition);
-            margin-top: var(--sp-1);
-            cursor: pointer;
+            white-space: nowrap;
         }
-        .bug-report-btn:hover {
-            background: rgba(244, 63, 94, 0.18);
-            border-color: rgba(244, 63, 94, 0.5);
-            color: #fca5a5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(244, 63, 94, 0.2);
+        .glass-card:hover .go-btn {
+            background: var(--accent-theme);
+            border-color: transparent;
+            color: #ffffff;
+            box-shadow: 0 4px 12px var(--accent-glow);
         }
-        .bug-report-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .go-btn svg {
+            width: 11px;
+            height: 11px;
+            stroke: currentColor;
+            transition: transform 0.25s ease;
+        }
+        .glass-card:hover .go-btn svg {
+            transform: translateX(3px);
+        }
 
         /* ===== 打赏创作者卡片 ===== */
         .donate-section {
             width: 100%;
-            margin-top: var(--sp-2);
+            margin-top: var(--sp-3);
         }
         .donate-card {
             position: relative;
             overflow: hidden;
             border-radius: var(--radius-xl);
-            border: 1px solid rgba(251, 191, 36, 0.25);
+            border: 1px solid rgba(251, 191, 36, 0.15);
             background: linear-gradient(135deg,
-                rgba(251, 191, 36, 0.06) 0%,
-                rgba(245, 158, 11, 0.04) 40%,
-                rgba(16, 185, 129, 0.04) 100%);
-            padding: var(--sp-5) var(--sp-6);
+                rgba(251, 191, 36, 0.04) 0%,
+                rgba(245, 158, 11, 0.02) 40%,
+                rgba(16, 185, 129, 0.02) 100%);
+            padding: var(--sp-4) var(--sp-5);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: var(--sp-4);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(251,191,36,0.1);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.25), inset 0 1px 0 rgba(251,191,36,0.06);
             transition: var(--transition);
         }
-        .donate-card::before {
-            content: "";
-            position: absolute;
-            top: -60%; right: -20%;
-            width: 60%; height: 200%;
-            background: radial-gradient(ellipse, rgba(251,191,36,0.12) 0%, transparent 70%);
-            pointer-events: none;
-        }
         .donate-card:hover {
-            border-color: rgba(251, 191, 36, 0.4);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 24px rgba(251,191,36,0.12);
+            border-color: rgba(251, 191, 36, 0.3);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.35), 0 0 20px rgba(251,191,36,0.08);
             transform: translateY(-2px);
         }
         .donate-left {
             display: flex;
             align-items: center;
-            gap: var(--sp-4);
+            gap: var(--sp-3);
             flex: 1;
         }
         .donate-icon-wrap {
-            width: 72px;
-            height: 72px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.1));
-            border: 1px solid rgba(251,191,36,0.3);
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.08));
+            border: 1px solid rgba(251,191,36,0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 2rem;
+            font-size: 1.6rem;
             transition: var(--transition);
         }
         .donate-card:hover .donate-icon-wrap {
-            background: linear-gradient(135deg, rgba(251,191,36,0.35), rgba(245,158,11,0.2));
             transform: scale(1.08) rotate(-3deg);
-            box-shadow: 0 8px 24px rgba(251,191,36,0.3);
+            box-shadow: 0 6px 16px rgba(251,191,36,0.2);
         }
-        .donate-text { display: flex; flex-direction: column; gap: 6px; }
+        .donate-text { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px; 
+        }
         .donate-title {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--text-main);
-            letter-spacing: -0.3px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
         }
         .donate-title span {
             background: linear-gradient(90deg, #fbbf24, #f59e0b, #10b981);
@@ -507,555 +728,688 @@
         }
         .donate-desc {
             color: var(--text-dim);
-            font-size: 0.88rem;
-            line-height: 1.6;
+            font-size: 0.85rem;
+            font-weight: 300;
         }
         .donate-tags {
             display: flex;
-            gap: var(--sp-1);
+            gap: 6px;
             flex-wrap: wrap;
             margin-top: 4px;
         }
         .donate-tag {
-            font-size: 0.72rem;
-            padding: 3px 10px;
-            background: rgba(251,191,36,0.1);
-            border: 1px solid rgba(251,191,36,0.2);
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            background: rgba(251,191,36,0.08);
+            border: 1px solid rgba(251,191,36,0.15);
             border-radius: 100px;
             color: #fbbf24;
-            font-weight: 600;
-        }
-        .donate-tag.tok {
-            background: rgba(16,185,129,0.1);
-            border-color: rgba(16,185,129,0.2);
-            color: #10b981;
+            font-weight: 500;
         }
         .donate-btn {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 14px 28px;
+            padding: 12px 24px;
             background: linear-gradient(135deg, #f59e0b, #d97706);
             border: none;
             border-radius: 100px;
-            color: #1a1a1a;
-            font-size: 0.92rem;
-            font-weight: 800;
+            color: #0c0d12;
+            font-size: 0.85rem;
+            font-weight: 700;
             text-decoration: none;
             cursor: pointer;
             transition: var(--transition);
             white-space: nowrap;
             flex-shrink: 0;
-            box-shadow: 0 4px 16px rgba(245,158,11,0.4);
+            box-shadow: 0 4px 16px rgba(245,158,11,0.3);
             letter-spacing: 0.3px;
         }
         .donate-btn:hover {
             background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            transform: scale(1.04);
-            box-shadow: 0 8px 24px rgba(245,158,11,0.5);
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(245,158,11,0.4);
         }
-        .donate-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-        @media (max-width: 768px) {
-            .donate-card { flex-direction: column; padding: var(--sp-4); text-align: center; }
-            .donate-left { flex-direction: column; align-items: center; text-align: center; }
-            .donate-btn { width: 100%; justify-content: center; }
-            .donate-tags { justify-content: center; }
+        .donate-btn svg { 
+            width: 14px; 
+            height: 14px; 
+            stroke: currentColor;
+            fill: currentColor;
+            flex-shrink: 0; 
         }
 
-        /* ===== 页脚：完全居中，行间距对齐 ===== */
+        /* ===== 页脚 ===== */
         footer {
             width: 100%;
-            padding: var(--sp-6) 0 var(--sp-4);
+            padding: var(--sp-5) 0 var(--sp-3);
             text-align: center;
             border-top: 1px solid var(--border-glass);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: var(--sp-2);
+            gap: 12px;
+            margin-top: var(--sp-3);
         }
-        .footer-logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -1px; }
-        .footer-links { display: flex; gap: var(--sp-4); }
+        .footer-brand { 
+            font-weight: 800; 
+            font-size: 1.1rem; 
+            letter-spacing: -0.5px;
+            font-family: 'Space Grotesk', sans-serif;
+            color: #fff;
+            opacity: 0.9;
+        }
+        .footer-links { 
+            display: flex; 
+            gap: 16px; 
+            align-items: center;
+        }
         .footer-links a {
             color: var(--text-dim);
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.82rem;
+            font-weight: 400;
             transition: color 0.2s;
         }
-        .footer-links a:hover { color: var(--accent-primary); }
-        .copyright { font-size: 0.78rem; color: #475569; }
+        .footer-links a:hover { 
+            color: var(--accent-primary); 
+        }
+        .footer-dot {
+            color: rgba(255,255,255,0.15);
+            font-size: 0.7rem;
+            user-select: none;
+        }
 
-        /* ===== 响应式：小屏适配 ===== */
+        .copyright { 
+            font-size: 0.72rem; 
+            color: #475569; 
+        }
+
+        /* ===== 响应式适配 ===== */
         @media (max-width: 1024px) {
-            /* 平板：工具卡片根1列，色彩卡片根2列 */
-            .tool-grid { grid-template-columns: repeat(2, 1fr); }
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .bento-2x, .bento-3x {
+                grid-column: span 2;
+            }
+            .app {
+                padding: var(--sp-4) var(--sp-3);
+            }
         }
+
+        @media (max-width: 768px) {
+            .donate-card { 
+                flex-direction: column; 
+                padding: var(--sp-4); 
+                text-align: center; 
+            }
+            .donate-left { 
+                flex-direction: column; 
+                align-items: center; 
+                text-align: center; 
+            }
+            .donate-btn { 
+                width: 100%; 
+                justify-content: center; 
+            }
+            .donate-tags { 
+                justify-content: center; 
+            }
+        }
+
         @media (max-width: 640px) {
-            /* 手机：全部单列 */
-            .tool-grid { grid-template-columns: 1fr; }
-            .wf-bar { max-width: 100%; border-radius: 16px; grid-template-columns: 1fr; padding: var(--sp-1); }
-            .wf-arrow { transform: rotate(90deg); padding: 4px 0; }
-            .wf-step { justify-content: flex-start; padding: 12px var(--sp-2); }
-            .hero-pills { grid-template-columns: 1fr; }
-            .app { padding: var(--sp-5) var(--sp-2); gap: var(--sp-5); }
-            .glass-card { padding: var(--sp-3); }
-            h1 { font-size: clamp(1.4rem, 5vw, 2.2rem); white-space: normal; }
-            .card-footer { flex-wrap: wrap; gap: var(--sp-1); }
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+            .bento-2x, .bento-3x {
+                grid-column: span 1;
+            }
+            .tabs-list {
+                flex-direction: column;
+                border-radius: var(--radius-xl);
+                padding: 8px;
+            }
+            .tab-btn {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+            .stats-bar {
+                padding: 10px 20px;
+                gap: 12px;
+                width: 100%;
+            }
+            .stat-num {
+                font-size: 1.15rem;
+            }
+            .stat-lbl {
+                font-size: 0.65rem;
+            }
         }
-        /* GSAP 未加载时的保陽显示：如果 js 不执行，卡片直接可见 */
+
+        /* 安全保底显示：如果 GSAP 没加载 */
         @media (prefers-reduced-motion: reduce) {
-            .glass-card { opacity: 1 !important; transform: none !important; }
+            .glass-card { 
+                opacity: 1 !important; 
+                transform: none !important; 
+            }
         }
     </style>
 </head>
 <body>
-    <div class="bg-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
+    <!-- 噪声纹理和流体背景 -->
+    <div class="noise-overlay"></div>
+    <div class="aurora-bg">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2"></div>
+        <div class="aurora-blob blob-3"></div>
+        <div class="aurora-blob blob-4"></div>
     </div>
 
     <div class="app">
 
-        <!-- 头部 -->
-        <header id="hero-header">
-            <div class="badge">自媒体创作工具集</div>
-            <h1>植人大树自媒体制作器</h1>
-            <p class="hero-desc">为内容创作者设计的专业封面工作平台，三步完成从拼图到精修的全流程。</p>
-            <div class="hero-pills">
-                <div class="hero-pill">无需设计基础</div>
-                <div class="hero-pill">三步完成封面</div>
-                <div class="hero-pill">高清本地导出</div>
+        <!-- 极简头部 -->
+        <header class="main-header" id="hero-header">
+            <div class="logo-area">
+                <span class="logo-dot"></span>
+                <span>植人大树. 工作室</span>
             </div>
-            <a href="https://link3.cc/zhirendashu" target="_blank" class="bug-report-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                🐛 发现 Bug？点此反馈给作者
-            </a>
+            <div class="brand-hero">
+                <div class="badge-container">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-text">15 个专业工具已就绪</span>
+                </div>
+                <h1 class="hero-title">让每一张封面都成为艺术</h1>
+                <p class="hero-subtitle">专为小红书、抖音与朋友圈定制的拼图、套壳、CCD滤镜与排版工作站</p>
+            </div>
         </header>
 
-        <!-- 工作流步骤条 -->
-        <div class="workflow">
-            <div class="workflow-label">推荐工作流</div>
-            <div class="wf-bar">
-                <div class="wf-step">
-                    <div class="wf-num">1</div>
-                    <div class="wf-text-box">
-                        <div class="wf-title">拼图排版</div>
-                        <div class="wf-desc">多图合并成一张</div>
-                    </div>
-                </div>
-                <div class="wf-arrow">›</div>
-                <div class="wf-step">
-                    <div class="wf-num">2</div>
-                    <div class="wf-text-box">
-                        <div class="wf-title">比例转换</div>
-                        <div class="wf-desc">适配各平台尺寸</div>
-                    </div>
-                </div>
-                <div class="wf-arrow">›</div>
-                <div class="wf-step">
-                    <div class="wf-num">3</div>
-                    <div class="wf-text-box">
-                        <div class="wf-title">精修加字</div>
-                        <div class="wf-desc">文字贴图最终润色</div>
-                    </div>
-                </div>
+        <!-- Tab 切换菜单 -->
+        <div class="tabs-container">
+            <div class="tabs-list">
+                <button class="tab-btn active" data-tab="visual">
+                    <span class="tab-dot" style="background-color: var(--accent-visual); color: var(--accent-visual);"></span>
+                    视觉与排版套件
+                </button>
+                <button class="tab-btn" data-tab="ai">
+                    <span class="tab-dot" style="background-color: var(--accent-ai); color: var(--accent-ai);"></span>
+                    AI 工作站
+                </button>
+                <button class="tab-btn" data-tab="color">
+                    <span class="tab-dot" style="background-color: var(--accent-color-lab); color: var(--accent-color-lab);"></span>
+                    色彩实验室
+                </button>
             </div>
         </div>
 
-        <!-- 三工具卡片：严格三等分 -->
-        
-        <div class="accordion-container">
+        <!-- Tab 内容区 -->
+        <div class="tab-contents">
             
-            <!-- 视觉图文处理主干舱 -->
-            <div class="acc-group active sys-active" id="grp-sys">
-                <div class="acc-header" onclick="toggleAcc('grp-sys', 'sys-active')">
-                    <div class="acc-title">原生视觉与排版套件</div>
-                    <div class="acc-icon"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
-                </div>
-                <div class="acc-content">
-                    <div class="acc-grid">
-                        <a href="./小红书拼图工具.html" class="glass-card theme-rose">
-                <span class="card-step">STEP 01</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="14" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>小红书拼图大师</h2>
-                    <p>将多张照片智能合并为一张。宫格、长卷、相框、斜切四种排版，支持拖拽任意调整画面构图。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">智能拼图</span>
-                        <span class="tag">小红书风</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./封面比例转换工具.html" class="glass-card theme-indigo">
-                <span class="card-step">STEP 02</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 11V4h7M20 13v7h-7M4 17l6-6M14 10l6-6"/>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>封面比例转换工具</h2>
-                    <p>一键适配各平台尺寸。16:9 / 3:4 自由转换，模糊填充不留黑边，内置专业水印叠加体系。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">比例转换</span>
-                        <span class="tag">水印保护</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./封面精修大师.html" class="glass-card theme-emerald">
-                <span class="card-step">STEP 03</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>封面精修大师</h2>
-                    <p>最后的点睛之笔。自由添加文字和贴图，默认透明背景，按需叠加色块引导语排版。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">文字排版</span>
-                        <span class="tag">艺术贴图</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./图片切分神器.html" class="glass-card theme-sky">
-                <span class="card-step">NEW</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>图片切图神器</h2>
-                    <p>高效的单图切割工具。支持九宫格信息流排版及罕见的斜切提取透明导出。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">切九宫格</span>
-                        <span class="tag">斜切透明片</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./前后对比展示工具.html" class="glass-card theme-sky">
-                <span class="card-step">经典</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="12" y1="3" x2="12" y2="21"></line>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>前后对比展示</h2>
-                    <p>五种经典切割模式：左右竖切、上下横切、斜角对角、百叶窗、渐变混合。支持图片与视频对比，4K 精度导出。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">5种切割</span>
-                        <span class="tag">4K导出</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./前后对比展示工具Pro.html" class="glass-card theme-violet">
-                <span class="card-step">PRO ✨</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>前后对比 Pro</h2>
-                    <p>渐变淡入淡出 · 分割线扫描两大核心模式，时髦中文「原片 / 精修」标签，支持直接导出 480p～4K 视频一键下载。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">导出视频</span>
-                        <span class="tag">原片精修</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./截图套壳美化大师.html" class="glass-card theme-sky">
-                <span class="card-step">HOT🔥</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                        <line x1="8" y1="21" x2="16" y2="21"></line>
-                        <line x1="12" y1="17" x2="12" y2="21"></line>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>截图套壳美化大师</h2>
-                    <p>一键将普通截图美化成高级质感卡片。9 款大师渐变背景、macOS 窗口套壳、阴影发光全精控，纯离线高清导出。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">背景渐变</span>
-                        <span class="tag">套壳美化</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./时髦加湿器.html" class="glass-card theme-amber">
-                <span class="card-step">HOT🔥</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>时髦加湿器</h2>
-                    <p>无边际的阵列生成引擎。全自定透明矢量 SVG 与内置原生图形混编阵列排版，自由抽丝抽离极简视效。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">阵列生成</span>
-                        <span class="tag">矢量混排</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                    </div>
+            <!-- Tab 1: 视觉与排版套件 (8个) -->
+            <div class="tab-pane active" id="tab-visual">
+                <div class="bento-grid">
+                    
+                    <!-- 1. 小红书拼图大师 (Featured: span 2) -->
+                    <a href="./小红书拼图工具.html" class="glass-card theme-rose bento-2x">
+                        <span class="card-step">01</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>小红书拼图大师</h2>
+                            <p>多张照片智能快速合并。内置宫格、长卷、相框与斜切排版，支持拖拽自由调整构图与比例。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">智能拼图</span>
+                                <span class="tag">自由构图</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 2. 封面比例转换 -->
+                    <a href="./封面比例转换工具.html" class="glass-card theme-indigo">
+                        <span class="card-step">02</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 11V4h7M20 13v7h-7M4 17l6-6M14 10l6-6"/>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>封面比例转换</h2>
+                            <p>一键转换 16:9 / 3:4 等常用尺寸，模糊填充防出界，内置全套透明水印叠加保护。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">智能填充</span>
+                                <span class="tag">防盗水印</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 3. 封面精修大师 -->
+                    <a href="./封面精修大师.html" class="glass-card theme-emerald">
+                        <span class="card-step">03</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>封面精修大师</h2>
+                            <p>最后的细节加分利器。自由添加个性文字、发光贴图与大字报排版，让封面更具眼球吸引力。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">艺术大字</span>
+                                <span class="tag">引导色块</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 4. 图片切图神器 (Featured: span 2) -->
+                    <a href="./图片切分神器.html" class="glass-card theme-sky bento-2x">
+                        <span class="card-step">NEW</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="3" y1="15" x2="21" y2="15"></line>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <line x1="15" y1="3" x2="15" y2="21"></line>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>图片切分神器</h2>
+                            <p>极简的网格切分工具。支持朋友圈/小红书九宫格排版，以及独特高效的斜切与透明PNG切割模式。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">九宫格切分</span>
+                                <span class="tag">斜切透明片</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 5. 前后对比展示 -->
+                    <a href="./前后对比展示工具.html" class="glass-card theme-sky">
+                        <span class="card-step">经典</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="12" y1="3" x2="12" y2="21"></line>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>前后对比展示</h2>
+                            <p>直观呈现修图对比效果。支持左右竖切、上下横切、斜切、百叶窗与渐变等5种对比视角模式。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">物理对比</span>
+                                <span class="tag">视频支持</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 6. 前后对比 Pro -->
+                    <a href="./前后对比展示工具Pro.html" class="glass-card theme-violet">
+                        <span class="card-step">PRO ✨</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>前后对比 Pro</h2>
+                            <p>高级对比生成器。提供渐变淡入淡出、动态线扫，支持添加中文文字角标，并可直接导出4K视频。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">4K视频导出</span>
+                                <span class="tag">动态线扫</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 7. 截图套壳美化 -->
+                    <a href="./截图套壳美化大师.html" class="glass-card theme-sky">
+                        <span class="card-step">HOT 🔥</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>截图套壳美化</h2>
+                            <p>普通截图一键包装为高质感图卡。内置多款MacOS套壳、流光渐变背景与全套阴影发光精控。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">套壳美化</span>
+                                <span class="tag">流光渐变</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 8. 时髦加湿器 (Full width: span 3) -->
+                    <a href="./时髦加湿器.html" class="glass-card theme-amber bento-3x">
+                        <span class="card-step">HOT 🔥</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>时髦加湿器</h2>
+                            <p>无边际阵列生成引擎。全自定透明矢量 SVG 与内置原生图形混编阵列排版，自由调节缩放与间隔，可轻松生成时髦大厂前沿背景与微光海报纹理。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">网格阵列</span>
+                                <span class="tag">SVG混编</span>
+                                <span class="tag">壁纸纹理</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
                 </div>
             </div>
 
-            <!-- AI 核心智脑中枢 -->
-            <div class="acc-group active ai-active" id="grp-ai">
-                <div class="acc-header" onclick="toggleAcc('grp-ai', 'ai-active')">
-                    <div class="acc-title">AI 物理工作站矩阵</div>
-                    <div class="acc-icon"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
-                </div>
-                <div class="acc-content">
-                    <div class="acc-grid">
-                        <a href="./AI摄影创作工作台.html" class="glass-card theme-ai">
-                <span class="card-step">🚀 AI CORE</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>AI 摄影创作中枢</h2>
-                    <p>直连全球各大模型或自定义中转。内置千万粉丝级爆款文案、拍摄脚本撰写及小红书热门提取器。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">AI 智脑</span>
-                        <span class="tag">全案策划</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                        <a href="./Gemini水印修复.html" class="glass-card theme-ai">
-                <span class="card-step">STEP 04</span>
-                <div class="icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 18h8M12 22l4-4-4-4M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>AI 全能水印修复</h2>
-                    <p>专业级无损还原。采用反向混合算法物理级清除 Gemini 等平台水印，100% 找回被遮挡的画面细节。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">无损修复</span>
-                        <span class="tag">离线脱密</span>
-                    </div>
-                    <div class="go-btn">
-                        进入
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
-                    </div>
+            <!-- Tab 2: AI 工作站 (2个) -->
+            <div class="tab-pane" id="tab-ai">
+                <div class="bento-grid">
+                    
+                    <!-- 9. AI摄影创作中枢 (Featured: span 2) -->
+                    <a href="./AI摄影创作工作台.html" class="glass-card theme-ai bento-2x">
+                        <span class="card-step">🚀 AI CORE</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>AI 摄影创作中枢</h2>
+                            <p>直连全球顶尖大模型，内置爆款自媒体文案、口播脚本撰写、小红书热门文案提取与摄影词快速生成模型，全案一键即刻生成。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">API 直连</span>
+                                <span class="tag">爆款文案</span>
+                                <span class="tag">脚本策划</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 10. Gemini水印修复 -->
+                    <a href="./Gemini水印修复.html" class="glass-card theme-ai">
+                        <span class="card-step">修复</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 18h8M12 22l4-4-4-4M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>Gemini 水印修复</h2>
+                            <p>反向混合还原算法。可无损擦除 Gemini 等平台生成的半透明角标与图片水印，完美补全遮挡像素细节。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">智能脱密</span>
+                                <span class="tag">细节还原</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
                 </div>
             </div>
 
-            <!-- 美学色彩分离调取实验室 -->
-            <div class="acc-group" id="grp-lab">
-                <div class="acc-header" onclick="toggleAcc('grp-lab', 'lab-active')">
-                    <div class="acc-title">专业美学色彩色盘实验室</div>
-                    <div class="acc-icon"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
-                </div>
-                <div class="acc-content">
-                    <div class="acc-grid">
-                        <a href="./顶级字幕配色直提库.html" class="glass-card theme-rose">
-                <span class="card-step">HOT🔥</span>
-                <div class="icon-box">
-                    <!-- 文字Icon -->
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>影视字幕绝佳搭子</h2>
-                    <p>专治剪影等软件字幕变瘦发糊痛点！基于彻底的外扩张渲染引擎，字芯与边框完美解耦。直击各种质感双色提取。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">高级字幕</span>
-                        <span class="tag">双色解耦</span>
-                    </div>
-                    <div class="go-btn">直提 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
-                </div>
-            </a>
-                        <a href="./Gruvbox复古胶片色库.html" class="glass-card theme-amber">
-                <div class="icon-box">
-                    <!-- 胶片/相机Icon -->
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <ellipse cx="12" cy="12" rx="10" ry="10"></ellipse><line x1="14.3" y1="16" x2="21" y2="16"></line><line x1="14.3" y1="8" x2="21" y2="8"></line><line x1="3" y1="12" x2="9.7" y2="12"></line><line x1="12" y1="2" x2="12" y2="8.7"></line>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>Gruvbox 胶片暗房</h2>
-                    <p>极客圈统治级流派。抛弃廉价的绝对黑白，全部采用老相纸浸泡过的温暖大地色。再现上世纪好莱坞经典底色厚重感。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">相纸冲洗</span>
-                        <span class="tag">黄铜大地</span>
-                    </div>
-                    <div class="go-btn">直提 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
-                </div>
-            </a>
-                        <a href="./Catppuccin色彩工作室.html" class="glass-card theme-purple">
-                <div class="icon-box">
-                    <!-- 咖啡/调色板图标 -->
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>Catppuccin 冰粉静室</h2>
-                    <p>极度柔和护眼的冷峻粉彩风。自带星冰乐、玛奇朵等冷调滤镜矩阵推算，一键生成当流的自媒体微光清冷情绪排版。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">清冷氛围</span>
-                        <span class="tag">低反差</span>
-                    </div>
-                    <div class="go-btn">直提 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
-                </div>
-            </a>
-                        <a href="./NipponColors东方传统色库.html" class="glass-card theme-pink">
-                <span class="card-step">NEW ✨</span>
-                <div class="icon-box">
-                    <!-- 扇子/古典图标 -->
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22v-7"></path><path d="M12 15a7 7 0 0 0 7-7 7 7 0 0 0-14 0 7 7 0 0 0 7 7z"></path>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h2>Nippon 东方雅韵</h2>
-                    <p>致敬 nipponcolors 网站。收录 28 款最具东方美学意境的传统色谱。国风海报、诗词散文及古典排版的顶级唯美点缀。</p>
-                </div>
-                <div class="card-footer">
-                    <div class="tags">
-                        <span class="tag">古典意境</span>
-                        <span class="tag">东方色谱</span>
-                    </div>
-                    <div class="go-btn">直提 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
-                </div>
-            </a>
-                    </div>
+            <!-- Tab 3: 色彩实验室 (5个) -->
+            <div class="tab-pane" id="tab-color">
+                <div class="bento-grid">
+                    
+                    <!-- 11. 数码胶片 CCD 模拟器 (Featured: span 2) -->
+                    <a href="./数码胶片CCD模拟器.html" class="glass-card theme-amber bento-2x">
+                        <span class="card-step">NEW ✨</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>数码胶片 CCD 模拟器</h2>
+                            <p>完美模拟千禧年代老数码相机的复古氛围感。提供多款经典 CCD机型预设，内置胶片颗粒、色差偏色、复古暗角与高光溢出模拟器。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">CCD 滤镜</span>
+                                <span class="tag">颗粒暗角</span>
+                                <span class="tag">复古机型</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 12. 顶级字幕配色库 -->
+                    <a href="./顶级字幕配色直提库.html" class="glass-card theme-rose">
+                        <span class="card-step">HOT 🔥</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                                <line x1="9" y1="20" x2="15" y2="20"></line>
+                                <line x1="12" y1="4" x2="12" y2="20"></line>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>顶级字幕配色库</h2>
+                            <p>杜绝剪映等字幕的边缘模糊发虚。字芯与边框完全解耦，支持超细外扩张边线，支持双色快捷直提复制。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">高级字幕</span>
+                                <span class="tag">解耦边线</span>
+                            </div>
+                            <div class="go-btn">
+                                直提
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 13. Gruvbox 胶片暗房 -->
+                    <a href="./Gruvbox复古胶片色库.html" class="glass-card theme-amber">
+                        <span class="card-step">经典</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <ellipse cx="12" cy="12" rx="10" ry="10"></ellipse>
+                                <line x1="14.3" y1="16" x2="21" y2="16"></line>
+                                <line x1="14.3" y1="8" x2="21" y2="8"></line>
+                                <line x1="3" y1="12" x2="9.7" y2="12"></line>
+                                <line x1="12" y1="2" x2="12" y2="8.7"></line>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>Gruvbox 胶片暗房</h2>
+                            <p>极客圈统治级配色流派。摒弃死板的高对比黑白，采用浸透暖意的大地与黄铜色，再现厚重胶片质感。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">大地暖色</span>
+                                <span class="tag">复古胶片</span>
+                            </div>
+                            <div class="go-btn">
+                                直提
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 14. Catppuccin 冰粉静室 -->
+                    <a href="./Catppuccin色彩工作室.html" class="glass-card theme-purple">
+                        <span class="card-step">柔和</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                                <line x1="6" y1="1" x2="6" y2="4"></line>
+                                <line x1="10" y1="1" x2="10" y2="4"></line>
+                                <line x1="14" y1="1" x2="14" y2="4"></line>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>Catppuccin 色彩工作室</h2>
+                            <p>柔和护眼的冷感粉彩风格。带有拿铁、玛奇朵等冷暖调性滤镜参数推算，专治自媒体微光与清冷感排版。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">冷感粉彩</span>
+                                <span class="tag">微光情绪</span>
+                            </div>
+                            <div class="go-btn">
+                                直提
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 15. Nippon 东方雅韵 -->
+                    <a href="./NipponColors东方传统色库.html" class="glass-card theme-pink">
+                        <span class="card-step">NEW ✨</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22v-7"></path>
+                                <path d="M12 15a7 7 0 0 0 7-7 7 7 0 0 0-14 0 7 7 0 0 0 7 7z"></path>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>Nippon 东方雅韵</h2>
+                            <p>收录最具东方古典意境与历史韵味的传统色谱。适合国风海报、古典画卷及自媒体古风插画的点睛配搭。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">东方古典</span>
+                                <span class="tag">传统色盘</span>
+                            </div>
+                            <div class="go-btn">
+                                直提
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
                 </div>
             </div>
 
         </div>
 
-        <!-- 打赏创作者 -->
+        <!-- 打赏与支持 -->
         <div class="donate-section">
             <div class="donate-card">
                 <div class="donate-left">
                     <div class="donate-icon-wrap">☕</div>
                     <div class="donate-text">
                         <div class="donate-title">喜欢这套工具？<span>请作者喝杯咖啡</span> ☕</div>
-                        <div class="donate-desc">所有工具完全免费、纯离线、无广告。若觉得好用，一杯咖啡的支持就是最大的鼓励！<br>也可以去 TikTok/抖音 刷刷视频，帮作者<strong style="color:#10b981"> 赚一些 TOK 钱</strong> 🎉</div>
+                        <div class="donate-desc">所有工具完全免费、纯离线运行、无任何跟踪广告。一杯咖啡的支持是让作者持续打磨更新的最大动力！</div>
                         <div class="donate-tags">
                             <span class="donate-tag">☕ 买杯咖啡</span>
-                            <span class="donate-tag tok">💰 赚TOK钱</span>
                             <span class="donate-tag">🆓 永久免费</span>
-                            <span class="donate-tag">🔒 完全离线</span>
+                            <span class="donate-tag">🔒 纯离线安全</span>
                         </div>
                     </div>
                 </div>
@@ -1063,85 +1417,133 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
-                    去作者主页支持一下
+                    支持创作者
                 </a>
             </div>
         </div>
 
         <!-- 页脚 -->
         <footer>
-            <div class="footer-logo">植人大树.</div>
+            <div class="footer-brand">植人大树. 工作室</div>
             <div class="footer-links">
                 <a href="https://link3.cc/zhirendashu" target="_blank">作者主页</a>
+                <span class="footer-dot">•</span>
                 <a href="https://link3.cc/zhirendashu" target="_blank">哔哩哔哩</a>
+                <span class="footer-dot">•</span>
                 <a href="https://link3.cc/zhirendashu" target="_blank">小红书</a>
+                <span class="footer-dot">•</span>
+                <a href="https://link3.cc/zhirendashu" target="_blank">反馈与建议</a>
             </div>
             <p class="copyright">© 2026 植人大树 · CC BY-NC-SA 4.0</p>
-            <script>
-                const __AUTH_SIGNATURE = "179689535&0814";
-                
-                // GSAP 入场动画，带安全保陽：如果 GSAP 未加载则直接显示所有内容
-                function showAllFallback() {
-                    document.querySelectorAll('.glass-card').forEach(el => {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    });
-                    document.querySelectorAll('#hero-header > *').forEach(el => {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    });
-                }
-
-                
-                function toggleAcc(id, activeClass) {
-                    const group = document.getElementById(id);
-                    const content = group.querySelector('.acc-content');
-                    if(group.classList.contains('active')) {
-                        content.style.maxHeight = '0px';
-                        group.classList.remove('active');
-                        group.classList.remove(activeClass);
-                    } else {
-                        group.classList.add('active');
-                        group.classList.add(activeClass);
-                        content.style.maxHeight = content.scrollHeight + 'px';
-                    }
-                }
-
-                // 初始赋予所有已打开的 Accordion 计算高度
-                setTimeout(() => {
-                    document.querySelectorAll('.acc-group.active .acc-content').forEach(el => {
-                        el.style.maxHeight = el.scrollHeight + 'px';
-                    });
-                }, 100);
-
-                window.addEventListener('DOMContentLoaded', () => {
-                    // 若 GSAP 未加载（移动端网绍差、CDN 超时），直接显示
-                    if (typeof gsap === 'undefined') { showAllFallback(); return; }
-
-                    try {
-                        const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-                        tl.from("#hero-header > *", {
-                            y: 30, opacity: 0, duration: 1, stagger: 0.1
-                        })
-                        .to(".glass-card", {
-                            y: 0, opacity: 1, duration: 0.8, stagger: 0.05
-                        }, "-=0.6");
-                    } catch(e) {
-                        // 动画异常就展开 fallback
-                        showAllFallback();
-                    }
-
-                    // 保陽计时器：1.5s 后如果卡片还是不可见，强制显示
-                    setTimeout(() => {
-                        const firstCard = document.querySelector('.glass-card');
-                        if (firstCard && parseFloat(getComputedStyle(firstCard).opacity) < 0.5) {
-                            showAllFallback();
-                        }
-                    }, 1500);
-                });
-            </script>
         </footer>
 
     </div>
+
+    <!-- JS 逻辑 -->
+    <script>
+        const __AUTH_SIGNATURE = "179689535&0814";
+
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        // 安全保底：直接展开并显示当前 Tab
+        function showAllFallback() {
+            const activePane = document.querySelector('.tab-pane.active');
+            if (activePane) {
+                activePane.querySelectorAll('.glass-card').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                });
+            }
+        }
+
+        // Tab 切换函数
+        function switchTab(tabId) {
+            const activePane = document.getElementById(`tab-${tabId}`);
+            if (!activePane) return;
+
+            const currentPane = document.querySelector('.tab-pane.active');
+            if (currentPane === activePane) return;
+
+            // 切换按钮高亮
+            tabButtons.forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            if (typeof gsap !== 'undefined') {
+                const currentCards = currentPane ? currentPane.querySelectorAll('.glass-card') : [];
+                
+                // 当前卡片淡出
+                gsap.to(currentCards, {
+                    y: 15,
+                    opacity: 0,
+                    duration: 0.2,
+                    stagger: 0.015,
+                    onComplete: () => {
+                        // 隐藏之前的 pane，显示新 pane
+                        tabPanes.forEach(pane => pane.classList.remove('active'));
+                        activePane.classList.add('active');
+                        
+                        // 新卡片渐入
+                        const newCards = activePane.querySelectorAll('.glass-card');
+                        gsap.killTweensOf(newCards);
+                        gsap.fromTo(newCards, 
+                            { y: 25, opacity: 0 },
+                            { y: 0, opacity: 1, duration: 0.45, stagger: 0.03, ease: "power2.out" }
+                        );
+                    }
+                });
+            } else {
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                activePane.classList.add('active');
+                showAllFallback();
+            }
+        }
+
+        // 绑定事件
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+
+        // 初始 GSAP 动画
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof gsap === 'undefined') {
+                showAllFallback();
+                return;
+            }
+
+            try {
+                const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+                
+                tl.from(".logo-area", { y: -15, opacity: 0, duration: 0.6 })
+                  .from(".brand-hero > *", { y: 20, opacity: 0, duration: 0.7, stagger: 0.08 }, "-=0.25")
+                  .from(".tabs-container", { y: 15, opacity: 0, duration: 0.5 }, "-=0.3")
+                  .fromTo("#tab-visual .glass-card", 
+                      { y: 25, opacity: 0 },
+                      { y: 0, opacity: 1, duration: 0.6, stagger: 0.04 },
+                      "-=0.2"
+                  )
+                  .from(".donate-section", { y: 15, opacity: 0, duration: 0.5 }, "-=0.3")
+                  .from("footer", { opacity: 0, duration: 0.5 }, "-=0.2");
+            } catch(e) {
+                showAllFallback();
+            }
+
+            // 保底定时器：1.5s 后如果卡片未渲染成功，强制展示
+            setTimeout(() => {
+                const firstCard = document.querySelector('.glass-card');
+                if (firstCard && parseFloat(getComputedStyle(firstCard).opacity) < 0.5) {
+                    showAllFallback();
+                }
+            }, 1500);
+        });
+    </script>
 </body>
 </html>

@@ -223,7 +223,72 @@
           order: 1;
         }
       }
-    </style>
+    
+
+
+
+/* ==================== Unified Canvas & Workspace Design System ==================== */
+/* 1. Workspace Backdrop: Slate navy (#080a0f) + Center Radial Glow + Inner Shadow */
+.preview-area, #main-preview-box, .canvas-container-wrap, .preview-pane, .canvas-area, #compare-container {
+    background-color: #080a0f !important;
+    background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 2. Artboard / Canvas Card: Elegant 24px Drop Shadow + Subtle 1px White Border */
+#main-canvas, #canvas, .canvas-box, .canvas-container, #ratio-frame, #canvas-container, #display-canvas, .stage {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 3. Transparent Checkerboard Pattern (Only inside the artboards of tools that support transparency) */
+#main-canvas, .canvas-box, #ratio-frame, #canvas-container {
+    background-image: repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0% 25%, transparent 0% 50%) !important;
+    background-size: 20px 20px !important;
+    background-color: #11131a !important;
+}
+
+/* 4. Unified Drag-and-Drop Zones: Dotted Indigo Border + Translucent Indigo Background + Micro Glow on Hover */
+#inner-drop-zone, #drop-zone, #upload-zone, .upload-zone {
+    border: 2px dashed rgba(99, 102, 241, 0.28) !important;
+    background: rgba(99, 102, 241, 0.03) !important;
+    transition: all 0.3s ease !important;
+}
+#inner-drop-zone:hover, #inner-drop-zone.dragover,
+#drop-zone:hover, #drop-zone.dragover,
+#upload-zone:hover, #upload-zone.drag-over,
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* 视觉套件专属高亮对齐 */
+:root {
+    --accent: #6366f1 !important;
+    --accent-primary: #6366f1 !important;
+}
+.badge-pill, .header-badge {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    color: #a5b4fc !important;
+}
+input[type="range"] {
+    accent-color: #6366f1 !important;
+}
+.btn-primary, #export-btn {
+    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4) !important;
+    color: #fff !important;
+}
+.btn-primary:hover, #export-btn:hover {
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.6) !important;
+    color: #fff !important;
+}
+select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+</style>
   </head>
   <body>
     <!-- 动态背景光斑 -->
@@ -242,8 +307,13 @@
         </a>
         <h1 class="logo">封面精修大师</h1>
       </div>
-      <div style="display: flex; gap: 12px;">
+      <div style="display: flex; gap: 12px; align-items: center;">
         <button class="btn btn-ghost" id="import-btn">导入背景</button>
+        <select id="export-multiplier" style="width: 85px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; padding: 6px; font-size: 0.8rem; height: 36px; outline: none; cursor: pointer;">
+          <option value="1">1x 导出</option>
+          <option value="2" selected>2x 高清</option>
+          <option value="3">3x 超清</option>
+        </select>
         <button class="btn btn-primary" id="export-btn" style="background: linear-gradient(135deg, #ff2442, #ff7e5f);">保存封面</button>
       </div>
     </header>
@@ -276,6 +346,16 @@
         <!-- 背景管理 -->
         <div class="panel-section active" id="section-image">
            <div class="section-title">画幅与背景</div>
+           <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+              <button class="btn btn-ghost" id="undo-btn" disabled style="flex: 1; padding: 6px; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                 撤销 (Ctrl+Z)
+              </button>
+              <button class="btn btn-ghost" id="redo-btn" disabled style="flex: 1; padding: 6px; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                 重做 (Ctrl+Y)
+              </button>
+           </div>
            <div class="prop-row">
              <label>画布比例</label>
              <select id="canvas-ratio">
@@ -301,6 +381,24 @@
              <label>模糊 (背景虚化)</label>
              <input type="range" id="filter-blur" min="0" max="2" step="0.05" value="0">
            </div>
+           <div class="prop-row">
+             <label>背景缩放</label>
+             <input type="range" id="bg-scale" min="0.1" max="4" step="0.01" value="1">
+           </div>
+           <div style="display: flex; gap: 8px;">
+             <div style="flex: 1;">
+               <label style="font-size:0.75rem;">背景水平偏移</label>
+               <input type="range" id="bg-offset-x" min="-1000" max="1000" value="0">
+             </div>
+             <div style="flex: 1;">
+               <label style="font-size:0.75rem;">背景垂直偏移</label>
+               <input type="range" id="bg-offset-y" min="-1000" max="1000" value="0">
+             </div>
+           </div>
+           <div class="prop-row">
+             <label>电影暗角 (黑边氛围)</label>
+             <input type="range" id="bg-vignette" min="0" max="100" value="0">
+           </div>
            <button class="btn btn-ghost" id="clear-canvas" style="margin-top: 8px;">清空全部元素</button>
         </div>
 
@@ -308,10 +406,17 @@
         <div class="panel-section" id="section-text">
            <div class="section-title">添加文字</div>
            <button class="btn btn-primary" id="add-text-btn">+ 插入文本框</button>
+           <button class="btn btn-ghost" id="upload-font-btn" style="margin-top: 8px; font-size: 0.8rem; border: 1px dashed var(--border);">📂 上传自定义字体 (.ttf/.otf/.woff)</button>
+           <input type="file" id="font-file-input" style="display: none;" accept=".ttf,.otf,.woff,.woff2">
            <div class="prop-row" id="text-props" style="display: none; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 8px;">
              
              <!-- 新增大师预设色盘 -->
-             <label style="color: var(--accent);">👑 专享灵感色盘 (一键渲染)</label>
+             <label style="color: var(--accent); display: flex; justify-content: space-between; align-items: center;">
+                <span>👑 专享灵感色盘 (一键渲染)</span>
+                <button id="random-color-btn" style="background: var(--border); border: none; color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; cursor: pointer;">🎲 随机配色</button>
+              </label>
+              <label style="color: var(--accent); margin-top: 4px; display: none;" id="adaptive-palette-label">🎯 画面色彩灵感 (自适应)</label>
+              <div class="color-palette-grid" id="adaptive-palette-grid" style="margin-bottom: 8px; display: none;"></div>
              <div class="color-palette-grid">
                <!-- 个人主视觉 IP 色 -->
                <button class="palette-btn" data-fill="#FFFFFF" data-stroke="#2c50ab" data-width="8" style="background:#2c50ab; color:#FFFFFF;" title="经典航海白">航海白</button>
@@ -345,7 +450,10 @@
              </div>
              
              <label>字体颜色</label>
-             <input type="color" id="text-color" value="#ffffff">
+             <div style="display: flex; gap: 8px; align-items: center;">
+               <input type="color" id="text-color" value="#ffffff" style="flex: 1; height: 36px; padding: 2px;">
+               <button class="btn btn-ghost" id="eyedropper-btn" style="padding: 0 12px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;" title="画面颜色提取吸管">🎨 吸色</button>
+             </div>
              <div style="display: flex; gap: 8px;">
                <div style="flex: 1;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -370,6 +478,26 @@
                  <input type="number" id="text-font-size" value="40" style="width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px;">
                </div>
              </div>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <div style="flex: 1;">
+                  <label style="font-size:0.72rem;">字间距 (字距)</label>
+                  <input type="range" id="text-char-spacing" min="-100" max="600" value="0">
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size:0.72rem;">行间距 (行高)</label>
+                  <input type="range" id="text-line-height" min="0.5" max="2.5" step="0.05" value="1.16">
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <div style="flex: 1;">
+                  <label style="font-size:0.72rem;">倾斜 (斜切)</label>
+                  <input type="range" id="text-skew-x" min="-60" max="60" value="0">
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size:0.72rem;">旋转角度</label>
+                  <input type="range" id="text-angle" min="-180" max="180" value="0">
+                </div>
+              </div>
              <div style="display: flex; gap: 8px;">
                 <button class="btn btn-ghost" id="text-bold-btn" style="flex:1; padding: 6px;">B</button>
                 <button class="btn btn-ghost" id="text-italic-btn" style="flex:1; padding: 6px;">I</button>
@@ -378,8 +506,39 @@
              <input type="range" id="text-stroke-width" min="0" max="10" value="0">
              <label>描边颜色</label>
              <input type="color" id="text-stroke-color" value="#000000">
+             <label style="color: var(--accent); margin-top: 8px; display: flex; align-items: center; gap: 4px;">✨ 文字投影 (阴影)</label>
+             <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
+               <div style="display: flex; gap: 8px; align-items: center;">
+                 <label style="width: 60px; font-size: 0.72rem; margin-bottom: 0;">投影颜色</label>
+                 <input type="color" id="text-shadow-color" value="#000000" style="width: 24px; height: 18px; padding: 0; border: none; background: transparent;">
+                 <label style="width: 40px; font-size: 0.72rem; margin-bottom: 0; text-align: right;">不透明</label>
+                 <input type="range" id="text-shadow-opacity" min="0" max="100" value="50" style="flex: 1;">
+               </div>
+               <div style="display: flex; gap: 8px; align-items: center;">
+                 <label style="width: 60px; font-size: 0.72rem; margin-bottom: 0;">投影羽化</label>
+                 <input type="range" id="text-shadow-blur" min="0" max="40" value="0" style="flex: 1;">
+               </div>
+               <div style="display: flex; gap: 8px; align-items: center;">
+                 <label style="width: 60px; font-size: 0.72rem; margin-bottom: 0;">投影角度</label>
+                 <input type="range" id="text-shadow-angle" min="0" max="360" value="135" style="flex: 1;">
+               </div>
+               <div style="display: flex; gap: 8px; align-items: center;">
+                 <label style="width: 60px; font-size: 0.72rem; margin-bottom: 0;">投影距离</label>
+                 <input type="range" id="text-shadow-distance" min="0" max="50" value="0" style="flex: 1;">
+               </div>
+             </div>
              <label style="display:flex;justify-content:space-between;align-items:center;">背景填充 <button id="text-bg-clear" style="background:var(--border);border:none;color:var(--sub);font-size:0.65rem;padding:2px 8px;border-radius:4px;cursor:pointer;">✕ 无背景</button></label>
              <input type="color" id="text-bg-color" value="#ff2442">
+             <div style="display: flex; gap: 8px; margin-top: 8px;">
+               <div style="flex: 1;">
+                 <label style="font-size:0.72rem;">背景边距</label>
+                 <input type="range" id="text-bg-padding" min="0" max="40" value="6">
+               </div>
+               <div style="flex: 1;">
+                 <label style="font-size:0.72rem;">背景圆角</label>
+                 <input type="range" id="text-bg-radius" min="0" max="30" value="0">
+               </div>
+             </div>
              <button class="btn btn-ghost" id="delete-element" style="color: #ff4d4f; margin-top: 8px;">删除选中</button>
 
            </div>
@@ -417,7 +576,8 @@
                </label>
                <input type="text" id="rmbg-api-key" placeholder="输入免费 API Key" style="width: 100%; background: var(--border); border: none; color: white; padding: 10px; border-radius: 8px; font-size: 0.8rem;">
             </div>
-            <button class="btn btn-primary" id="ai-rmbg-btn" style="background: linear-gradient(135deg, #a855f7, #6366f1); margin-top: 8px;">一键抠图并添加为主体</button>
+            <button class="btn btn-primary" id="ai-rmbg-btn" style="background: linear-gradient(135deg, #a855f7, #6366f1); margin-top: 8px; width: 100%;">一键抠图并添加为主体</button>
+            <button class="btn btn-ghost" id="ai-depth-btn" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #c4b5fd; margin-top: 8px; font-weight: bold; width: 100%;" title="将背景人物抠图复制并在最上层覆盖，文字可穿梭其后">👑 一键生成景深穿透层</button>
             <input type="file" id="ai-rmbg-file" style="display:none;" accept="image/*,.svg">
             <p style="font-size: 0.75rem; color: var(--sub); line-height: 1.6;">上传任意包含人物或商品的照片，AI 将抹除背景，并作为透明元素直接添加到当前封面上。支持无限期缩放排版。</p>
         </div>
@@ -446,14 +606,39 @@
         <div class="panel-section" id="global-element-props" style="display: none; margin-top: auto; border-top: 1px solid var(--border); padding-top: 16px;">
             <div class="section-title" style="color: var(--accent);">高级设置</div>
             
-            <div style="display: flex; gap: 4px; border: 1px solid rgba(255,255,255,0.05); padding: 4px; border-radius: 8px;">
-               <button class="btn btn-ghost" title="左对齐" id="align-left" style="padding: 4px 6px; flex: 1; font-size: 0.8rem;">⇤</button>
-               <button class="btn btn-ghost" title="水平居中" id="align-center-x" style="padding: 4px 6px; flex: 1; font-size: 0.8rem;">⬌</button>
-               <button class="btn btn-ghost" title="右对齐" id="align-right" style="padding: 4px 6px; flex: 1; font-size: 0.8rem;">⇥</button>
-               <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 2px;"></div>
-               <button class="btn btn-ghost" title="顶对齐" id="align-top" style="padding: 4px 6px; flex: 1; font-size: 0.8rem;">⇡</button>
-               <button class="btn btn-ghost" title="垂直居中" id="align-center-y" style="padding: 4px 6px; flex: 1; font-size: 0.8rem;">⬍</button>
-               <button class="btn btn-ghost" title="底对齐" id="align-bottom" style="padding: 4px 6px; flex: 1; font-size: 0.8rem;">⇣</button>
+            <div style="display: flex; gap: 12px; align-items: center; border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.01);">
+                <!-- 3x3 九宫格磁吸对齐面板 -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 62px; height: 62px; padding: 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; flex-shrink: 0; align-items: center; justify-items: center;">
+                    <button class="grid-9-dot" id="align-tl" title="左上对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-tc" title="上中对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-tr" title="右上对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-ml" title="左中对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-mc" title="居中对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-mr" title="右中对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-bl" title="左下对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-bc" title="下中对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                    <button class="grid-9-dot" id="align-br" title="右下对齐" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: rgba(255,255,255,0.22); cursor: pointer; transition: 0.2s; outline: none;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='rgba(255,255,255,0.22)'"></button>
+                </div>
+                <!-- 右侧常规对齐按钮 -->
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; gap: 4px;">
+                       <button class="btn btn-ghost" title="左对齐" id="align-left" style="padding: 3px; flex: 1; font-size: 0.72rem; display: flex; align-items: center; justify-content: center;">左</button>
+                       <button class="btn btn-ghost" title="水平居中" id="align-center-x" style="padding: 3px; flex: 1; font-size: 0.72rem; display: flex; align-items: center; justify-content: center;">中</button>
+                       <button class="btn btn-ghost" title="右对齐" id="align-right" style="padding: 3px; flex: 1; font-size: 0.72rem; display: flex; align-items: center; justify-content: center;">右</button>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                       <button class="btn btn-ghost" title="顶对齐" id="align-top" style="padding: 3px; flex: 1; font-size: 0.72rem; display: flex; align-items: center; justify-content: center;">顶</button>
+                       <button class="btn btn-ghost" title="垂直居中" id="align-center-y" style="padding: 3px; flex: 1; font-size: 0.72rem; display: flex; align-items: center; justify-content: center;">中</button>
+                       <button class="btn btn-ghost" title="底对齐" id="align-bottom" style="padding: 3px; flex: 1; font-size: 0.72rem; display: flex; align-items: center; justify-content: center;">底</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 4px; border: 1px solid rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; margin-top: 6px;">
+               <button class="btn btn-ghost" title="置于顶层" id="layer-to-front" style="padding: 4px 6px; flex: 1; font-size: 0.75rem;">置顶 ⤊</button>
+               <button class="btn btn-ghost" title="上移一层" id="layer-forward" style="padding: 4px 6px; flex: 1; font-size: 0.75rem;">上移 ⇡</button>
+               <button class="btn btn-ghost" title="下移一层" id="layer-backward" style="padding: 4px 6px; flex: 1; font-size: 0.75rem;">下移 ⇣</button>
+               <button class="btn btn-ghost" title="置于底层" id="layer-to-back" style="padding: 4px 6px; flex: 1; font-size: 0.75rem;">置底 ⤋</button>
             </div>
 
             <label style="margin-top:4px; display:flex; align-items:center; gap:6px; cursor: pointer; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px;">
@@ -493,7 +678,13 @@
       </div>
 
       <div class="canvas-container-wrap">
-        <div class="canvas-box">
+        <div id="inner-drop-zone" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; cursor: pointer; width: 440px; height: 280px; max-width: 88vw; border-radius: 24px; z-index: 5;">
+            <div class="dz-icon" style="font-size: 2.8rem; line-height: 1;">📷</div>
+            <div class="dz-title" style="font-size: 1.05rem; font-weight: 700; color: #fff;">拖入图片 或 点此上传</div>
+            <div class="dz-sub" style="font-size: .84rem; color: var(--sub);">导入图像作为精修画布背景</div>
+            <div class="dz-chip" style="font-size: .72rem; color: #94a3b8; padding: 5px 14px; border-radius: 100px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.03); margin-top: 4px;">PNG · JPG · WebP</div>
+        </div>
+        <div class="canvas-box" style="display: none;">
           <canvas id="c"></canvas>
         </div>
       </div>
@@ -548,6 +739,102 @@
         preserveObjectStacking: true
       });
 
+      // === Undo / Redo 历史记录管理 ===
+      let undoStack = [];
+      let redoStack = [];
+      let isStateSavingLocked = false;
+
+      function saveCanvasState() {
+        if (isStateSavingLocked) return;
+        
+        const json = canvas.toJSON();
+        // 记录画布的尺寸和比例参数，确保撤销时能同步还原画布规格
+        json._customBoxRatio = document.getElementById('canvas-ratio').value;
+        json._customWidth = canvas.width;
+        json._customHeight = canvas.height;
+        
+        const jsonStr = JSON.stringify(json);
+        
+        // 过滤重复保存的完全相同的状态
+        if (undoStack.length > 0 && undoStack[undoStack.length - 1] === jsonStr) {
+          return;
+        }
+        
+        undoStack.push(jsonStr);
+        if (undoStack.length > 30) {
+          undoStack.shift(); // 限制历史记录上限为 30 步
+        }
+        
+        redoStack = []; // 每次新动作清空重做队列
+        updateHistoryUI();
+      }
+
+      function updateHistoryUI() {
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        if (undoBtn) undoBtn.disabled = undoStack.length <= 1;
+        if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+      }
+
+      function loadState(stateStr) {
+        isStateSavingLocked = true;
+        const data = JSON.parse(stateStr);
+        
+        // 还原画幅比例与尺寸
+        if (data._customBoxRatio) {
+          document.getElementById('canvas-ratio').value = data._customBoxRatio;
+        }
+        if (data._customWidth && data._customHeight) {
+          canvas.setDimensions({ width: data._customWidth, height: data._customHeight });
+        }
+        
+        canvas.loadFromJSON(data, () => {
+          canvas.renderAll();
+          isStateSavingLocked = false;
+          updateHistoryUI();
+        });
+      }
+
+      function undo() {
+        if (undoStack.length <= 1) return;
+        const currentState = undoStack.pop();
+        redoStack.push(currentState);
+        const previousState = undoStack[undoStack.length - 1];
+        loadState(previousState);
+      }
+
+      function redo() {
+        if (redoStack.length === 0) return;
+        const nextState = redoStack.pop();
+        undoStack.push(nextState);
+        loadState(nextState);
+      }
+
+      // 绑定历史监听事件
+      canvas.on('object:added', () => saveCanvasState());
+      canvas.on('object:removed', () => saveCanvasState());
+      canvas.on('object:modified', () => saveCanvasState());
+      
+      // 绑定按钮点击
+      document.getElementById('undo-btn').onclick = (e) => { e.stopPropagation(); undo(); };
+      document.getElementById('redo-btn').onclick = (e) => { e.stopPropagation(); redo(); };
+
+      // 绑定快捷键 Ctrl+Z, Ctrl+Y
+      window.addEventListener('keydown', (e) => {
+        const targetTag = e.target.tagName.toLowerCase();
+        if (targetTag === 'input' || targetTag === 'textarea' || targetTag === 'select') return;
+        
+        if (e.ctrlKey) {
+          if (e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            undo();
+          } else if (e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            redo();
+          }
+        }
+      });
+
       // 调整画布尺寸
       function resizeCanvas(ratio) {
         const wrap = document.querySelector('.canvas-container-wrap');
@@ -581,6 +868,12 @@
 
       // === 核心逻辑：导入图片 ===
       function setBackgroundImage(url) {
+        // 隐藏上传占位符并显示画布
+        const dropZone = document.getElementById('inner-drop-zone');
+        const canvasBox = document.querySelector('.canvas-box');
+        if (dropZone) dropZone.style.display = 'none';
+        if (canvasBox) canvasBox.style.display = 'block';
+
         fabric.Image.fromURL(url, (img) => {
           const ratio = img.width / img.height;
           // 根据图片建议比例
@@ -595,12 +888,57 @@
             originX: 'left',
             originY: 'top'
           });
-          canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+          // 记录背景图底基缩放和位移，以便相对偏移
+          img._baseScaleX = img.scaleX;
+          img._baseScaleY = img.scaleY;
+          img._baseLeft = 0;
+          img._baseTop = 0;
+          
+          // 重置侧边栏滑动条
+          document.getElementById('bg-scale').value = 1;
+          document.getElementById('bg-offset-x').value = 0;
+          document.getElementById('bg-offset-y').value = 0;
+          document.getElementById('bg-vignette').value = 0;
+          if (vignetteRect) {
+            canvas.remove(vignetteRect);
+            vignetteRect = null;
+          }
+          if (window._depthLayerObj) {
+            canvas.remove(window._depthLayerObj);
+            window._depthLayerObj = null;
+          }
+          
+          canvas.setBackgroundImage(img, () => {
+            canvas.renderAll();
+            saveCanvasState();
+          });
         });
       }
 
-      document.getElementById('import-btn').addEventListener('click', () => document.getElementById('file-input').click());
-      document.getElementById('file-input').addEventListener('change', (e) => {
+      // === 拖拽与点击上传事件 ===
+      const dropZone = document.getElementById('inner-drop-zone');
+      const fileInput = document.getElementById('file-input');
+
+      if (dropZone) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        window.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('dragover');
+        });
+        window.addEventListener('dragleave', (e) => {
+          dropZone.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+          const file = e.dataTransfer.files[0];
+          if (file) setBackgroundImage(URL.createObjectURL(file));
+        });
+      }
+
+      document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) setBackgroundImage(URL.createObjectURL(file));
       });
@@ -616,6 +954,8 @@
         const data = await BridgeDB.load();
         if (data && data.length > 0) {
           setBackgroundImage(URL.createObjectURL(data[0].blob));
+        } else {
+          saveCanvasState();
         }
       });
 
@@ -672,6 +1012,38 @@
            document.getElementById('text-stroke-width').value = obj.strokeWidth || 0;
            document.getElementById('text-stroke-color').value = typeof obj.stroke === 'string' ? obj.stroke : '#000000';
            if (obj.backgroundColor) document.getElementById('text-bg-color').value = obj.backgroundColor;
+            
+            // 同步字距、行高、斜切、角度以及阴影属性
+            document.getElementById('text-char-spacing').value = obj.charSpacing || 0;
+            document.getElementById('text-line-height').value = obj.lineHeight || 1.16;
+            document.getElementById('text-skew-x').value = obj.skewX || 0;
+            document.getElementById('text-angle').value = obj.angle || 0;
+            
+            if (obj.shadow) {
+              const shadowColor = obj.shadow.color || '#000000';
+              document.getElementById('text-shadow-color').value = shadowColor.startsWith('rgba') ? rgbaToHex(shadowColor) : shadowColor;
+              document.getElementById('text-shadow-opacity').value = shadowColor.startsWith('rgba') ? Math.round(parseFloat(shadowColor.split(',').pop()) * 100) : 100;
+              document.getElementById('text-shadow-blur').value = obj.shadow.blur || 0;
+              
+              const ox = obj.shadow.offsetX || 0;
+              const oy = obj.shadow.offsetY || 0;
+              const dist = Math.sqrt(ox*ox + oy*oy);
+              let angle = Math.round(Math.atan2(oy, ox) * 180 / Math.PI);
+              if (angle < 0) angle += 360;
+              
+              document.getElementById('text-shadow-angle').value = angle;
+              document.getElementById('text-shadow-distance').value = Math.round(dist);
+            } else {
+              document.getElementById('text-shadow-color').value = '#000000';
+              document.getElementById('text-shadow-opacity').value = 50;
+              document.getElementById('text-shadow-blur').value = 0;
+              document.getElementById('text-shadow-angle').value = 135;
+              document.getElementById('text-shadow-distance').value = 0;
+            }
+            
+            // 同步背景边距与圆角
+            document.getElementById('text-bg-padding').value = obj._bgPadding !== undefined ? obj._bgPadding : 6;
+            document.getElementById('text-bg-radius').value = obj._bgRadius !== undefined ? obj._bgRadius : 0;
            
            const boldBtn = document.getElementById('text-bold-btn');
            const italicBtn = document.getElementById('text-italic-btn');
@@ -687,21 +1059,31 @@
         const obj = canvas.getActiveObject();
         if (obj) { obj.set('fill', e.target.value); canvas.renderAll(); }
       };
+      document.getElementById('text-color').onchange = () => {
+        saveCanvasState();
+      };
       document.getElementById('text-font-family').onchange = (e) => {
         const obj = canvas.getActiveObject();
         if (obj) { 
           obj.set('fontFamily', e.target.value); 
           document.getElementById('custom-font-name').value = e.target.value;
           canvas.renderAll(); 
+          saveCanvasState();
         }
       };
       document.getElementById('custom-font-name').oninput = (e) => {
         const obj = canvas.getActiveObject();
         if (obj) { obj.set('fontFamily', e.target.value); canvas.renderAll(); }
       };
+      document.getElementById('custom-font-name').onchange = () => {
+        saveCanvasState();
+      };
       document.getElementById('text-font-size').oninput = (e) => {
         const obj = canvas.getActiveObject();
         if (obj) { obj.set('fontSize', parseInt(e.target.value)); canvas.renderAll(); }
+      };
+      document.getElementById('text-font-size').onchange = () => {
+        saveCanvasState();
       };
       document.getElementById('text-bold-btn').onclick = () => {
         const obj = canvas.getActiveObject();
@@ -710,6 +1092,7 @@
           obj.set('fontWeight', isBold ? 'normal' : 'bold');
           document.getElementById('text-bold-btn').style.background = !isBold ? 'var(--accent)' : 'var(--border)';
           canvas.renderAll();
+          saveCanvasState();
         }
       };
       document.getElementById('text-italic-btn').onclick = () => {
@@ -719,29 +1102,117 @@
           obj.set('fontStyle', isItalic ? 'normal' : 'italic');
           document.getElementById('text-italic-btn').style.background = !isItalic ? 'var(--accent)' : 'var(--border)';
           canvas.renderAll();
+          saveCanvasState();
         }
       };
       document.getElementById('text-stroke-width').oninput = (e) => {
         const obj = canvas.getActiveObject();
         if (obj) { obj.set('strokeWidth', parseInt(e.target.value)); canvas.renderAll(); }
       };
+      document.getElementById('text-stroke-width').onchange = () => {
+        saveCanvasState();
+      };
       document.getElementById('text-stroke-color').oninput = (e) => {
         const obj = canvas.getActiveObject();
         if (obj) { obj.set('stroke', e.target.value); canvas.renderAll(); }
+      };
+      document.getElementById('text-stroke-color').onchange = () => {
+        saveCanvasState();
       };
       document.getElementById('text-bg-color').oninput = (e) => {
         const obj = canvas.getActiveObject();
         if (obj) { obj.set('backgroundColor', e.target.value); canvas.renderAll(); }
       };
+      document.getElementById('text-bg-color').onchange = () => {
+        saveCanvasState();
+      };
       // 「无背景」按钮 —— 一键清除填充色
       document.getElementById('text-bg-clear').onclick = () => {
         const obj = canvas.getActiveObject();
-        if (obj) { obj.set('backgroundColor', ''); canvas.renderAll(); }
+        if (obj) { obj.set('backgroundColor', ''); canvas.renderAll(); saveCanvasState(); }
       };
       document.getElementById('delete-element').onclick = () => {
-        const obj = canvas.getActiveObject();
-        if (obj) { canvas.remove(obj); canvas.discardActiveObject(); canvas.renderAll(); }
+         const obj = canvas.getActiveObject();
+         if (obj) { canvas.remove(obj); canvas.discardActiveObject(); canvas.renderAll(); }
       };
+
+      // === 对齐操作绑定 ===
+      const alignUpdate = (action) => {
+          const obj = canvas.getActiveObject();
+          if (!obj) return;
+          const bound = obj.getBoundingRect();
+          const W = canvas.width;
+          const H = canvas.height;
+
+          switch(action) {
+              // 传统对齐
+              case 'cx': obj.centerH(); break;
+              case 'cy': obj.centerV(); break;
+              case 'left': obj.set('left', obj.left - bound.left); break;
+              case 'right': obj.set('left', obj.left + (W - (bound.left + bound.width))); break;
+              case 'top': obj.set('top', obj.top - bound.top); break;
+              case 'bottom': obj.set('top', obj.top + (H - (bound.top + bound.height))); break;
+              
+              // 九宫格对齐定位
+              case 'tl': // 左上
+                  obj.set('left', obj.left - bound.left);
+                  obj.set('top', obj.top - bound.top);
+                  break;
+              case 'tc': // 上中
+                  obj.set('left', obj.left + (W / 2 - (bound.left + bound.width / 2)));
+                  obj.set('top', obj.top - bound.top);
+                  break;
+              case 'tr': // 右上
+                  obj.set('left', obj.left + (W - (bound.left + bound.width)));
+                  obj.set('top', obj.top - bound.top);
+                  break;
+              case 'ml': // 左中
+                  obj.set('left', obj.left - bound.left);
+                  obj.set('top', obj.top + (H / 2 - (bound.top + bound.height / 2)));
+                  break;
+              case 'mc': // 居中
+                  obj.set('left', obj.left + (W / 2 - (bound.left + bound.width / 2)));
+                  obj.set('top', obj.top + (H / 2 - (bound.top + bound.height / 2)));
+                  break;
+              case 'mr': // 右中
+                  obj.set('left', obj.left + (W - (bound.left + bound.width)));
+                  obj.set('top', obj.top + (H / 2 - (bound.top + bound.height / 2)));
+                  break;
+              case 'bl': // 左下
+                  obj.set('left', obj.left - bound.left);
+                  obj.set('top', obj.top + (H - (bound.top + bound.height)));
+                  break;
+              case 'bc': // 下中
+                  obj.set('left', obj.left + (W / 2 - (bound.left + bound.width / 2)));
+                  obj.set('top', obj.top + (H - (bound.top + bound.height)));
+                  break;
+              case 'br': // 右下
+                  obj.set('left', obj.left + (W - (bound.left + bound.width)));
+                  obj.set('top', obj.top + (H - (bound.top + bound.height)));
+                  break;
+          }
+          obj.setCoords(); 
+          canvas.renderAll();
+          saveCanvasState();
+      };
+      
+      document.getElementById('align-center-x').onclick = () => alignUpdate('cx');
+      document.getElementById('align-center-y').onclick = () => alignUpdate('cy');
+      document.getElementById('align-left').onclick = () => alignUpdate('left');
+      document.getElementById('align-right').onclick = () => alignUpdate('right');
+      document.getElementById('align-top').onclick = () => alignUpdate('top');
+      document.getElementById('align-bottom').onclick = () => alignUpdate('bottom');
+
+      // 九宫格事件绑定
+      document.getElementById('align-tl').onclick = () => alignUpdate('tl');
+      document.getElementById('align-tc').onclick = () => alignUpdate('tc');
+      document.getElementById('align-tr').onclick = () => alignUpdate('tr');
+      document.getElementById('align-ml').onclick = () => alignUpdate('ml');
+      document.getElementById('align-mc').onclick = () => alignUpdate('mc');
+      document.getElementById('align-mr').onclick = () => alignUpdate('mr');
+      document.getElementById('align-bl').onclick = () => alignUpdate('bl');
+      document.getElementById('align-bc').onclick = () => alignUpdate('bc');
+      document.getElementById('align-br').onclick = () => alignUpdate('br');
 
       // ================= 全局属性控制选项绑定 =================
       document.getElementById('unlock-ratio-cb').onchange = (e) => {
@@ -753,6 +1224,7 @@
                 mt: unlocked, mb: unlocked, ml: unlocked, mr: unlocked
              });
              canvas.renderAll();
+             saveCanvasState();
          }
       };
 
@@ -790,30 +1262,6 @@
          const obj = canvas.getActiveObject();
          if (obj) { canvas.remove(obj); canvas.discardActiveObject(); canvas.renderAll(); }
       };
-
-      // === 对齐操作绑定 ===
-      const alignUpdate = (action) => {
-          const obj = canvas.getActiveObject();
-          if (!obj) return;
-          const bound = obj.getBoundingRect();
-          switch(action) {
-              case 'cx': obj.centerH(); break;
-              case 'cy': obj.centerV(); break;
-              case 'left': obj.set('left', obj.left - bound.left); break;
-              case 'right': obj.set('left', obj.left + (canvas.width - (bound.left + bound.width))); break;
-              case 'top': obj.set('top', obj.top - bound.top); break;
-              case 'bottom': obj.set('top', obj.top + (canvas.height - (bound.top + bound.height))); break;
-          }
-          obj.setCoords(); 
-          canvas.renderAll();
-      };
-      
-      document.getElementById('align-center-x').onclick = () => alignUpdate('cx');
-      document.getElementById('align-center-y').onclick = () => alignUpdate('cy');
-      document.getElementById('align-left').onclick = () => alignUpdate('left');
-      document.getElementById('align-right').onclick = () => alignUpdate('right');
-      document.getElementById('align-top').onclick = () => alignUpdate('top');
-      document.getElementById('align-bottom').onclick = () => alignUpdate('bottom');
 
       // === 图片实体描边合成器 ===
       function generateImageOutlineBase64(mainImg, outlineWidth, outlineDistance, outlineColorStr, patternFile) {
@@ -891,6 +1339,7 @@
               obj.setElement(origImg);
               obj.set({ width: origImg.width, height: origImg.height });
               canvas.renderAll();
+              saveCanvasState();
               return;
           }
 
@@ -905,6 +1354,7 @@
               obj.set({ width: img.width, height: img.height });
               canvas.renderAll();
               toast.style.display = 'none';
+              saveCanvasState();
           });
       }
       
@@ -1124,6 +1574,11 @@
                
                // 加载 JSON（保留选定元素和排列）
                canvas.loadFromJSON(data, () => {
+                   // 显示画布并隐藏上传占位符
+                   const dropZone = document.getElementById('inner-drop-zone');
+                   const canvasBox = document.querySelector('.canvas-box');
+                   if (dropZone) dropZone.style.display = 'none';
+                   if (canvasBox) canvasBox.style.display = 'block';
                    // 恢复原有的背景
                    if (oldBg) canvas.setBackgroundImage(oldBg, canvas.renderAll.bind(canvas));
                    canvas.renderAll();
@@ -1187,17 +1642,626 @@
       });
 
       // === 画布比例 ===
-      document.getElementById('canvas-ratio').onchange = (e) => resizeCanvas(parseFloat(e.target.value));
+      document.getElementById('canvas-ratio').onchange = (e) => {
+        resizeCanvas(parseFloat(e.target.value));
+        saveCanvasState();
+      };
 
       // === 导出 ===
       document.getElementById('export-btn').onclick = () => {
-        const dataURL = canvas.toDataURL({ format: 'png', quality: 1, multiplier: 2 });
+        const mult = parseFloat(document.getElementById('export-multiplier').value) || 2;
+        const dataURL = canvas.toDataURL({ format: 'png', quality: 1, multiplier: mult });
         saveAs(dataURL, `植人大树封面精修_${Date.now()}.png`);
       };
 
       document.getElementById('clear-canvas').onclick = () => {
         if (confirm('确定清空所有文字和贴图吗？')) { canvas.getObjects().forEach(obj => { if(obj !== canvas.backgroundImage) canvas.remove(obj); }); canvas.renderAll(); }
       };
+
+      // ==================== Premium Design Features Injection ====================
+      
+      // 重写 fabric.Text 背景绘制，支持圆角与内边距
+      fabric.Text.prototype._renderBackground = function(ctx) {
+        if (!this.backgroundColor) return;
+        ctx.fillStyle = this.backgroundColor;
+        
+        const pad = this._bgPadding !== undefined ? this._bgPadding : 6;
+        const rx = this._bgRadius !== undefined ? this._bgRadius : 0;
+        const ry = this._bgRadius !== undefined ? this._bgRadius : 0;
+        
+        const w = this.width + pad * 2;
+        const h = this.height + pad * 2;
+        const x = -this.width / 2 - pad;
+        const y = -this.height / 2 - pad;
+        
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(x, y, w, h, rx);
+        } else {
+            ctx.moveTo(x + rx, y);
+            ctx.lineTo(x + w - rx, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + ry);
+            ctx.lineTo(x + w, y + h - ry);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - rx, y + h);
+            ctx.lineTo(x + rx, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - ry);
+            ctx.lineTo(x, y + ry);
+            ctx.quadraticCurveTo(x, y, x + rx, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+      };
+      
+      // 颜色辅助转换：rgba 转 hex, hex 转 rgba
+      function rgbaToHex(rgba) {
+        const parts = rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+        if (!parts) return '#000000';
+        const r = parseInt(parts[1]).toString(16).padStart(2, '0');
+        const g = parseInt(parts[2]).toString(16).padStart(2, '0');
+        const b = parseInt(parts[3]).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
+      }
+      function hexToRgba(hex, alpha) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})` : `rgba(0,0,0,${alpha})`;
+      }
+
+      // 1. 自定义字体本地上传
+      const uploadFontBtn = document.getElementById('upload-font-btn');
+      const fontFileInput = document.getElementById('font-file-input');
+      if (uploadFontBtn && fontFileInput) {
+        uploadFontBtn.onclick = () => fontFileInput.click();
+        fontFileInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async (f) => {
+            try {
+              const fontName = 'UserFont_' + Date.now();
+              const fontFace = new FontFace(fontName, f.target.result);
+              await fontFace.load();
+              document.fonts.add(fontFace);
+              
+              const fontSelect = document.getElementById('text-font-family');
+              const option = document.createElement('option');
+              option.value = fontName;
+              option.textContent = `上传: ${file.name.split('.')[0]}`;
+              fontSelect.insertBefore(option, fontSelect.firstChild);
+              fontSelect.value = fontName;
+              
+              const activeObj = canvas.getActiveObject();
+              if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+                activeObj.set('fontFamily', fontName);
+                canvas.renderAll();
+                saveCanvasState();
+              }
+              showToast('字体导入并应用成功！', 'success');
+            } catch(err) {
+              alert('字体文件加载失败，请确认为 TTF/OTF 格式！');
+            }
+          };
+          reader.readAsArrayBuffer(file);
+          e.target.value = '';
+        };
+      }
+
+      // 2. Eyedropper 画面吸色 API
+      const eyedropperBtn = document.getElementById('eyedropper-btn');
+      if (eyedropperBtn) {
+        if (!window.EyeDropper) {
+          eyedropperBtn.style.display = 'none';
+        } else {
+          eyedropperBtn.onclick = async () => {
+            const activeObj = canvas.getActiveObject();
+            if (!activeObj) {
+              alert('请先选中一段你想改色的文字！');
+              return;
+            }
+            try {
+              const eyeDropper = new EyeDropper();
+              const result = await eyeDropper.open();
+              activeObj.set('fill', result.sRGBHex);
+              document.getElementById('text-color').value = result.sRGBHex;
+              canvas.renderAll();
+              saveCanvasState();
+              showToast('吸取颜色成功！', 'success');
+            } catch(e) {}
+          };
+        }
+      }
+
+      // 3. 字距、行高、斜切、旋转 滑动条绑定
+      document.getElementById('text-char-spacing').oninput = (e) => {
+        const obj = canvas.getActiveObject();
+        if (obj) { obj.set('charSpacing', parseInt(e.target.value)); canvas.renderAll(); }
+      };
+      document.getElementById('text-char-spacing').onchange = () => saveCanvasState();
+
+      document.getElementById('text-line-height').oninput = (e) => {
+        const obj = canvas.getActiveObject();
+        if (obj) { obj.set('lineHeight', parseFloat(e.target.value)); canvas.renderAll(); }
+      };
+      document.getElementById('text-line-height').onchange = () => saveCanvasState();
+
+      document.getElementById('text-skew-x').oninput = (e) => {
+        const obj = canvas.getActiveObject();
+        if (obj) { obj.set('skewX', parseInt(e.target.value)); canvas.renderAll(); }
+      };
+      document.getElementById('text-skew-x').onchange = () => saveCanvasState();
+
+      document.getElementById('text-angle').oninput = (e) => {
+        const obj = canvas.getActiveObject();
+        if (obj) { obj.set('angle', parseInt(e.target.value)); canvas.renderAll(); }
+      };
+      document.getElementById('text-angle').onchange = () => saveCanvasState();
+
+      // 双击重设文本格式滑块默认值
+      ['text-char-spacing', 'text-line-height', 'text-skew-x', 'text-angle'].forEach(id => {
+        const slider = document.getElementById(id);
+        slider.addEventListener('dblclick', () => {
+          let def = 0;
+          if (id === 'text-line-height') def = 1.16;
+          slider.value = def;
+          const obj = canvas.getActiveObject();
+          if (obj) {
+            const key = id === 'text-char-spacing' ? 'charSpacing' : (id === 'text-line-height' ? 'lineHeight' : (id === 'text-skew-x' ? 'skewX' : 'angle'));
+            obj.set(key, def);
+            canvas.renderAll();
+            saveCanvasState();
+          }
+        });
+      });
+
+      // 4. 文字阴影高级控制 (基于角度与距离)
+      function applyTextShadow() {
+        const obj = canvas.getActiveObject();
+        if (obj && (obj.type === 'i-text' || obj.type === 'text')) {
+          const color = document.getElementById('text-shadow-color').value;
+          const opacity = parseInt(document.getElementById('text-shadow-opacity').value) / 100;
+          const blur = parseInt(document.getElementById('text-shadow-blur').value);
+          const angle = parseInt(document.getElementById('text-shadow-angle').value);
+          const distance = parseInt(document.getElementById('text-shadow-distance').value);
+          
+          if (blur === 0 && distance === 0) {
+            obj.set('shadow', null);
+          } else {
+            const rad = angle * Math.PI / 180;
+            const offsetX = distance * Math.cos(rad);
+            const offsetY = distance * Math.sin(rad);
+            obj.set('shadow', new fabric.Shadow({
+              color: hexToRgba(color, opacity),
+              blur: blur,
+              offsetX: Math.round(offsetX),
+              offsetY: Math.round(offsetY)
+            }));
+          }
+          canvas.renderAll();
+        }
+      }
+
+      ['text-shadow-color', 'text-shadow-opacity', 'text-shadow-blur', 'text-shadow-angle', 'text-shadow-distance'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.oninput = applyTextShadow;
+          el.onchange = () => saveCanvasState();
+        }
+      });
+
+      // 5. 背景图片位移与缩放调节
+      function applyBgTransforms() {
+        const bg = canvas.backgroundImage;
+        if (!bg) return;
+        
+        if (!bg._baseScaleX) {
+          bg._baseScaleX = bg.scaleX;
+          bg._baseScaleY = bg.scaleY;
+          bg._baseLeft = bg.left || 0;
+          bg._baseTop = bg.top || 0;
+        }
+
+        const scaleMultiplier = parseFloat(document.getElementById('bg-scale').value);
+        const offsetX = parseInt(document.getElementById('bg-offset-x').value);
+        const offsetY = parseInt(document.getElementById('bg-offset-y').value);
+
+        bg.set({
+          scaleX: bg._baseScaleX * scaleMultiplier,
+          scaleY: bg._baseScaleY * scaleMultiplier,
+          left: bg._baseLeft + offsetX,
+          top: bg._baseTop + offsetY
+        });
+
+        // 景深剪裁贴合图层与其同步
+        if (window._depthLayerObj) {
+          window._depthLayerObj.set({
+            scaleX: bg.scaleX,
+            scaleY: bg.scaleY,
+            left: bg.left,
+            top: bg.top
+          });
+        }
+
+        canvas.renderAll();
+      }
+
+      ['bg-scale', 'bg-offset-x', 'bg-offset-y'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.oninput = applyBgTransforms;
+          el.onchange = () => saveCanvasState();
+        }
+      });
+
+      // 双击背景滑块恢复默认
+      ['bg-scale', 'bg-offset-x', 'bg-offset-y'].forEach(id => {
+        const slider = document.getElementById(id);
+        slider.addEventListener('dblclick', () => {
+          slider.value = id === 'bg-scale' ? 1 : 0;
+          applyBgTransforms();
+          saveCanvasState();
+        });
+      });
+
+      // 6. 电影级暗角 Vignette 蒙版系统
+      let vignetteRect = null;
+      function updateVignette() {
+        const opacity = parseInt(document.getElementById('bg-vignette').value) / 100;
+        const wasLocked = isStateSavingLocked;
+        isStateSavingLocked = true;
+        
+        if (vignetteRect) {
+          canvas.remove(vignetteRect);
+          vignetteRect = null;
+        }
+        
+        if (opacity > 0) {
+          const W = canvas.width;
+          const H = canvas.height;
+          vignetteRect = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: W,
+            height: H,
+            selectable: false,
+            evented: false,
+            fill: new fabric.Gradient({
+              type: 'radial',
+              coords: {
+                x1: W / 2,
+                y1: H / 2,
+                x2: W / 2,
+                y2: H / 2,
+                r1: 0,
+                r2: Math.max(W, H) / 1.3
+              },
+              colorStops: [
+                { offset: 0, color: 'rgba(0,0,0,0)' },
+                { offset: 0.6, color: `rgba(0,0,0,${opacity * 0.45})` },
+                { offset: 1, color: `rgba(0,0,0,${opacity})` }
+              ]
+            })
+          });
+          canvas.add(vignetteRect);
+          bringVignetteToCorrectLayer();
+        }
+        
+        canvas.renderAll();
+        isStateSavingLocked = wasLocked;
+      }
+
+      function bringVignetteToCorrectLayer() {
+        if (vignetteRect) {
+          vignetteRect.bringToFront();
+        }
+        if (window._depthLayerObj) {
+          window._depthLayerObj.bringToFront();
+        }
+        // 画布开窗蒙版永远放在最上层
+        const maskObj = canvas.getObjects().find(o => o.fillRule === 'evenodd');
+        if (maskObj) {
+          maskObj.bringToFront();
+        }
+      }
+
+      // 添加对象时确保层级排序正确
+      canvas.on('object:added', () => {
+        bringVignetteToCorrectLayer();
+      });
+
+      document.getElementById('bg-vignette').oninput = updateVignette;
+      document.getElementById('bg-vignette').onchange = () => saveCanvasState();
+
+      // 7. AI 景深主体提取 (Depth Effect)
+      document.getElementById('ai-depth-btn').onclick = async () => {
+        const bg = canvas.backgroundImage;
+        if (!bg) {
+          alert('请先导入背景图片！');
+          return;
+        }
+        const apiKey = document.getElementById('rmbg-api-key').value.trim();
+        if (!apiKey) {
+          alert('请先在 AI 抠图 面板中配置 remove.bg 的 API Key！');
+          return;
+        }
+
+        const toast = document.getElementById('loading-toast');
+        toast.innerText = 'AI 景深主体计算中 (约5~10秒)，请稍候...';
+        toast.style.display = 'block';
+
+        try {
+          const imgEl = bg.getElement();
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = imgEl.naturalWidth || imgEl.width;
+          tempCanvas.height = imgEl.naturalHeight || imgEl.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCtx.drawImage(imgEl, 0, 0);
+          
+          const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+          
+          const formData = new FormData();
+          formData.append('size', 'auto');
+          formData.append('image_file', blob);
+
+          const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+            method: 'POST',
+            headers: { 'X-Api-Key': apiKey },
+            body: formData
+          });
+
+          if (!res.ok) {
+            let errorMsg = `抠图失败 (HTTP ${res.status})`;
+            try {
+              const errorData = await res.json();
+              if (errorData.errors && errorData.errors.length > 0) {
+                errorMsg += `\n原因：${errorData.errors[0].title}`;
+              }
+            } catch(e) {}
+            throw new Error(errorMsg);
+          }
+
+          const cutoutBlob = await res.blob();
+          const url = URL.createObjectURL(cutoutBlob);
+
+          fabric.Image.fromURL(url, (imgObj) => {
+            const wasLocked = isStateSavingLocked;
+            isStateSavingLocked = true;
+
+            if (window._depthLayerObj) {
+              canvas.remove(window._depthLayerObj);
+            }
+
+            imgObj.set({
+              left: bg.left,
+              top: bg.top,
+              scaleX: bg.scaleX,
+              scaleY: bg.scaleY,
+              angle: bg.angle,
+              flipX: bg.flipX,
+              flipY: bg.flipY,
+              selectable: false,
+              evented: false,
+              originX: bg.originX,
+              originY: bg.originY
+            });
+
+            window._depthLayerObj = imgObj;
+            canvas.add(imgObj);
+            
+            bringVignetteToCorrectLayer();
+            canvas.renderAll();
+            
+            isStateSavingLocked = wasLocked;
+            saveCanvasState();
+            
+            toast.style.display = 'none';
+            showToast('👑 景深穿透层已生成！添加文本并移动层级到人后，即可完美穿插。', 'success');
+          });
+
+        } catch(err) {
+          alert(err.message);
+          toast.style.display = 'none';
+        }
+      };
+
+      // 8. 元素图层层级移动控制
+      document.getElementById('layer-to-front').onclick = () => {
+        const obj = canvas.getActiveObject();
+        if (obj) {
+          obj.bringToFront();
+          bringVignetteToCorrectLayer();
+          canvas.renderAll();
+          saveCanvasState();
+        }
+      };
+      document.getElementById('layer-forward').onclick = () => {
+        const obj = canvas.getActiveObject();
+        if (obj) {
+          obj.bringForward();
+          bringVignetteToCorrectLayer();
+          canvas.renderAll();
+          saveCanvasState();
+        }
+      };
+      document.getElementById('layer-backward').onclick = () => {
+        const obj = canvas.getActiveObject();
+        if (obj) {
+          const idx = canvas.getObjects().indexOf(obj);
+          if (idx > (canvas.backgroundImage ? 1 : 0)) {
+            obj.sendBackwards();
+            bringVignetteToCorrectLayer();
+            canvas.renderAll();
+            saveCanvasState();
+          }
+        }
+      };
+      document.getElementById('layer-to-back').onclick = () => {
+        const obj = canvas.getActiveObject();
+        if (obj) {
+          obj.sendToBack();
+          if (canvas.backgroundImage) {
+            canvas.backgroundImage.sendToBack();
+          }
+          bringVignetteToCorrectLayer();
+          canvas.renderAll();
+          saveCanvasState();
+        }
+      };
+
+      // 4.5. 文字背景内边距与圆角控制
+      document.getElementById('text-bg-padding').oninput = (e) => {
+        const obj = canvas.getActiveObject();
+        if (obj && (obj.type === 'i-text' || obj.type === 'text')) {
+          obj.set('_bgPadding', parseInt(e.target.value));
+          canvas.renderAll();
+        }
+      };
+      document.getElementById('text-bg-padding').onchange = () => saveCanvasState();
+
+      document.getElementById('text-bg-radius').oninput = (e) => {
+        const obj = canvas.getActiveObject();
+        if (obj && (obj.type === 'i-text' || obj.type === 'text')) {
+          obj.set('_bgRadius', parseInt(e.target.value));
+          canvas.renderAll();
+        }
+      };
+      document.getElementById('text-bg-radius').onchange = () => saveCanvasState();
+
+      // 双击滑块重置背景参数
+      ['text-bg-padding', 'text-bg-radius', 'text-shadow-angle', 'text-shadow-distance'].forEach(id => {
+        const slider = document.getElementById(id);
+        if (slider) {
+          slider.addEventListener('dblclick', () => {
+            let def = 0;
+            if (id === 'text-bg-padding') def = 6;
+            if (id === 'text-shadow-angle') def = 135;
+            slider.value = def;
+            
+            const obj = canvas.getActiveObject();
+            if (obj) {
+              if (id === 'text-bg-padding') obj.set('_bgPadding', def);
+              if (id === 'text-bg-radius') obj.set('_bgRadius', def);
+              if (id.startsWith('text-shadow')) applyTextShadow();
+              canvas.renderAll();
+              saveCanvasState();
+            }
+          });
+        }
+      });
+
+      // 4.6. 背景图片色彩自适应提取推荐算法
+      function extractColorsFromBackground() {
+        const bg = canvas.backgroundImage;
+        const grid = document.getElementById('adaptive-palette-grid');
+        const label = document.getElementById('adaptive-palette-label');
+        if (!bg || !grid) {
+          if (grid) grid.style.display = 'none';
+          if (label) label.style.display = 'none';
+          return;
+        }
+        
+        try {
+          const imgEl = bg.getElement();
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = 10;
+          tempCanvas.height = 10;
+          const ctx = tempCanvas.getContext('2d');
+          ctx.drawImage(imgEl, 0, 0, 10, 10);
+          const pixels = ctx.getImageData(0, 0, 10, 10).data;
+          
+          const colorCounts = {};
+          for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i];
+            const g = pixels[i+1];
+            const b = pixels[i+2];
+            const rRound = Math.round(r / 16) * 16;
+            const gRound = Math.round(g / 16) * 16;
+            const bRound = Math.round(b / 16) * 16;
+            const hex = '#' + [rRound, gRound, bRound].map(x => Math.min(255, Math.max(0, x)).toString(16).padStart(2,'0')).join('');
+            colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+          }
+          
+          const sorted = Object.keys(colorCounts).sort((a,b) => colorCounts[b] - colorCounts[a]);
+          const recommended = [];
+          
+          sorted.slice(0, 5).forEach(hex => {
+            recommended.push(hex);
+            const r = parseInt(hex.slice(1,3), 16);
+            const g = parseInt(hex.slice(3,5), 16);
+            const b = parseInt(hex.slice(5,7), 16);
+            const bright = (r*299 + g*587 + b*114)/1000;
+            recommended.push(bright > 128 ? '#11131a' : '#ffffff');
+          });
+          
+          const uniqueRec = Array.from(new Set(recommended)).slice(0, 10);
+          
+          grid.innerHTML = uniqueRec.map(hex => {
+            const r = parseInt(hex.slice(1,3), 16);
+            const g = parseInt(hex.slice(3,5), 16);
+            const b = parseInt(hex.slice(5,7), 16);
+            const bright = (r*299 + g*587 + b*114)/1000;
+            const textCol = bright > 128 ? '#000000' : '#ffffff';
+            return `<button class="palette-btn" data-fill="${hex}" data-stroke="${bright > 128 ? '#000000' : '#ffffff'}" data-width="2" style="background:${hex}; color:${textCol}; font-size:0.6rem; padding: 4px 0;" title="${hex}">推荐</button>`;
+          }).join('');
+          
+          grid.querySelectorAll('.palette-btn').forEach(btn => {
+            btn.onclick = () => {
+              const activeObj = canvas.getActiveObject();
+              if (activeObj && activeObj.type === 'i-text') {
+                activeObj.set({ fill: btn.dataset.fill });
+                document.getElementById('text-color').value = btn.dataset.fill;
+                canvas.renderAll();
+                saveCanvasState();
+              }
+            };
+          });
+          
+          grid.style.display = 'grid';
+          if (label) label.style.display = 'block';
+        } catch(e) {
+          console.warn("Failed to extract colors:", e);
+          grid.style.display = 'none';
+          if (label) label.style.display = 'none';
+        }
+      }
+
+      // 4.7. 随机配色灵感发生器
+      document.getElementById('random-color-btn').onclick = (e) => {
+        e.preventDefault();
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && activeObj.type === 'i-text') {
+          const getRandomHex = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(2, '0');
+          const fill = getRandomHex();
+          const stroke = getRandomHex();
+          const strokeWidth = Math.floor(Math.random() * 6);
+          
+          activeObj.set({ fill, stroke, strokeWidth, paintFirst: 'stroke' });
+          
+          document.getElementById('text-color').value = fill;
+          document.getElementById('text-stroke-color').value = stroke;
+          document.getElementById('text-stroke-width').value = strokeWidth;
+          
+          canvas.renderAll();
+          saveCanvasState();
+          showToast('🎲 随机配色已生成！', 'success');
+        } else {
+          alert('💡 请先选中一段你想配色的文字！');
+        }
+      };
+
+      // 监听背景图载入，触发色彩分析
+      canvas.on('after:render', () => {
+         // 首次渲染且有背景图时触发一次自适应取色，增加防抖
+         if (canvas.backgroundImage && !canvas.backgroundImage._colorsExtracted) {
+             canvas.backgroundImage._colorsExtracted = true;
+             setTimeout(extractColorsFromBackground, 500);
+         }
+      });
+
+      // DOM 加载完成时自动运行一次
+      window.addEventListener('DOMContentLoaded', () => {
+         setTimeout(extractColorsFromBackground, 1000);
+      });
+
+      // ==================== Premium Features End ====================
 
       // === 系统字体扫描功能 ===
       const loadFontsBtn = document.getElementById('load-system-fonts');
@@ -1480,7 +2544,7 @@
 window.showToast = function(msg, type="info") {
     const toast = document.getElementById("modern-toast");
     const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
-    toast.innerHTML = ${icon} <span style="margin-left:4px;"></span>;
+    toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
     toast.classList.add("show");
     if(window._toastTimer) clearTimeout(window._toastTimer);
     window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
@@ -1504,7 +2568,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 </script>
-<!-- 注入结束 -->
 <!-- 极客画框蒙版系统注入 -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -1512,10 +2575,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolbar = document.querySelector('.toolbar');
     if(toolbar && !document.querySelector('[data-target="section-mask"]')) {
         toolbar.insertAdjacentHTML('beforeend', 
-          <div class="tool-btn" data-target="section-mask" id="btn-mask">
+          `<div class="tool-btn" data-target="section-mask" id="btn-mask">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path><path d="M8 3v18"></path><path d="M16 3v18"></path><path d="M3 8h18"></path><path d="M3 16h18"></path></svg>
             <span style="color:var(--accent); font-weight: bold; margin-top:2px;">高级开窗</span>
-          </div>
+          </div>`
         );
     }
 
@@ -1523,7 +2586,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const sidePanel = document.querySelector('.side-panel');
     if(sidePanel && !document.getElementById('section-mask')) {
         sidePanel.insertAdjacentHTML('beforeend', 
-          <div class="panel-section" id="section-mask">
+          `<div class="panel-section" id="section-mask">
               <div class="section-title">IG 镂空画报蒙版</div>
               <div style="font-size: 0.75rem; color: var(--sub); line-height: 1.6; margin-bottom: 8px;">
                  ✨ 这是类似 WalkColor 等最前沿的设计，为海报盖上一层带镂空的物理画框蒙版，营造绝佳的时髦空间感！
@@ -1558,11 +2621,11 @@ document.addEventListener("DOMContentLoaded", () => {
                  <label>悬浮内阴影 (提升真实感)</label>
                  <input type="range" id="mask-shadow-blur" min="0" max="100" value="40">
               </div>
-          </div>
+          </div>`
         );
     }
 
-    // 绑定事件到新按钮 (如果原生 JS 是用 querySelectorAll('.tool-btn')，新加的没绑定到)
+    // 绑定事件到新按钮
     const newBtn = document.getElementById('btn-mask');
     if (newBtn) {
         newBtn.addEventListener('click', () => {
@@ -1579,16 +2642,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function hexToRgba(hex, a) {
         let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? gba(, , , ) : gba(255,255,255,);
+        return result ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${a})` : `rgba(255,255,255,${a})`;
     }
 
     function renderMask() {
+        const wasLocked = isStateSavingLocked;
+        isStateSavingLocked = true;
+        
         if (currentMaskObj) {
             canvas.remove(currentMaskObj);
             currentMaskObj = null;
         }
         if (activeMaskType === 'none' || !canvas) {
             if(canvas) canvas.renderAll();
+            isStateSavingLocked = wasLocked;
             return;
         }
 
@@ -1602,30 +2669,39 @@ document.addEventListener("DOMContentLoaded", () => {
         if (activeMaskType === 'polaroid') {
             const pd = M * (0.05 + baseThickness * 0.5);
             const bpd = M * (0.15 + baseThickness);
-            pathStr = M 0,0 H  V  H 0 Z M , V  H  V  Z;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M dots`;
+            pathStr = `M 0,0 H dots`; // Clean path assignment
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${pd},${pd} H ${W - pd} V dots`;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${pd},${pd} H ${W - pd} V ${H - bpd} H ${pd} Z`;
         } else if (activeMaskType === 'square') {
             const pd = M * (0.05 + baseThickness);
-            pathStr = M 0,0 H  V  H 0 Z M , V  H  V  Z;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${pd},${pd} H ${W - pd} V ${H - pd} H ${pd} Z`;
         } else if (activeMaskType === 'arch') {
             const pd = M * (0.02 + baseThickness);
             const aw = W - pd * 2;
             const ar = aw / 2;
-            pathStr = M 0,0 H  V  H 0 Z M , V  A , 0 0,1 , V  Z;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${pd},${H - pd} V ${pd + ar} A ${ar},dots`;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${pd},${H - pd} V ${pd + ar} A ${ar},${ar} 0 0,1 ${W - pd},${pd + ar} V ${H - pd} Z`;
         } else if (activeMaskType === 'circle') {
             const cx = W/2, cy = H/2;
             const r = M * (0.45 - baseThickness);
-            pathStr = M 0,0 H  V  H 0 Z M , a , 0 1,0 ,0 a , 0 1,0 -,0;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${cx - r},${cy} a ${r},${r} 0 1,0 ${r*2},0 a ${r},${r} 0 1,0 -${r*2},0`;
         } else if (activeMaskType === 'heart') {
-            const cx = W/2, cy = H/2 + M*0.05;
-            const s = M * (0.022 - baseThickness * 0.01);
-            pathStr = M 0,0 H  V  H 0 Z M , C , , , A , 0 0,1 , A , 0 0,1 , C , , , Z;
+            const cx = W/2, cy = H/2 - (M * 0.1);
+            const r = M * 0.3 - (baseThickness * M * 0.2);
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${cx},${cy + r} C ${cx - r},${cy} ${cx - r},${cy - r} ${cx},${cy - r} C dots`;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${cx},dots`;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${cx},${cy + r} C ${cx - r},${cy} ${cx - r},${cy - r} ${cx},${cy - r} C ${cx + r},${cy - r} ${cx + r},${cy} ${cx},${cy + r} Z`;
         } else if (activeMaskType === 'ticket') {
             const pd = M * 0.05;
             const d = 30 + baseThickness * 100;
-            pathStr = M 0,0 H  V  H 0 Z M , H  V  A , 0 0,0 , V  H  V  A , 0 0,0 , Z;
+            pathStr = `M 0,0 H ${W} V ${H} H 0 Z M ${pd},${pd} H ${W - pd} V ${H - pd} H ${pd} Z`;
         }
 
-        if(!pathStr) return;
+        if(!pathStr) {
+            isStateSavingLocked = wasLocked;
+            return;
+        }
 
         const hex = document.getElementById('mask-color-picker').value;
         const opacity = parseInt(document.getElementById('mask-opacity').value) / 100;
@@ -1647,24 +2723,23 @@ document.addEventListener("DOMContentLoaded", () => {
             left: 0,
             top: 0,
             shadow: shadow,
-            objectCaching: false // 避免某些高清模糊渲染错误
+            objectCaching: false
         });
         
         canvas.add(currentMaskObj);
         
-        // 确保它永远在最上面
         const sendToFront = () => {
             if(currentMaskObj) currentMaskObj.bringToFront();
         };
         sendToFront();
         
-        // 事件绑定，确保所有元素的添加或移动都不会覆盖边框
         canvas.off('object:added', sendToFront);
         canvas.on('object:added', sendToFront);
         canvas.off('object:modified', sendToFront);
         canvas.on('object:modified', sendToFront);
         
         canvas.renderAll();
+        isStateSavingLocked = wasLocked;
     }
 
     document.querySelectorAll('.mask-ctrl-btn').forEach(btn => {
@@ -1680,6 +2755,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             activeMaskType = type;
             renderMask();
+            saveCanvasState();
         });
     });
 
@@ -1687,10 +2763,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => renderMask());
+            el.addEventListener('change', () => saveCanvasState());
         }
     });
     
-    // 当画布比例切换被触发时，重新生成蒙版
     const ratioSelector = document.getElementById('canvas-ratio');
     if(ratioSelector) {
         ratioSelector.addEventListener('change', () => {

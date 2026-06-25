@@ -841,5 +841,126 @@
       }
     }
   </script>
+<!-- ZhiRenDaShu Unified Premium UX Enhancement -->
+<style>
+#modern-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(22, 26, 36, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 100000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#modern-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+</style>
+<div id="modern-toast"></div>
+<script>
+(function() {
+    // 1. Alert Override with Modern Toast
+    window.showToast = function(msg, type="info") {
+        const toast = document.getElementById("modern-toast");
+        if (!toast) return;
+        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
+        toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
+        toast.classList.add("show");
+        if(window._toastTimer) clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    };
+    window.alert = function(msg) {
+        window.showToast(msg, 'error');
+    };
+
+    // 2. Double-Click Range Reset
+    function initRangeResets() {
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            if (slider._hasDblclickReset) return;
+            slider._hasDblclickReset = true;
+            const defVal = slider.getAttribute('value') || slider.value || '0';
+            slider.addEventListener('dblclick', () => {
+                slider.value = defVal;
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                slider.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    }
+
+    // 3. Eyedropper API integration for color inputs
+    function initEyedropper() {
+        if (!window.EyeDropper) return;
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            if (colorInput.dataset.hasEyedropper) return;
+            colorInput.dataset.hasEyedropper = "true";
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '🎨';
+            btn.title = '屏幕吸色';
+            btn.style.marginLeft = '6px';
+            btn.style.padding = '4px 6px';
+            btn.style.background = 'rgba(255,255,255,0.06)';
+            btn.style.border = '1px solid rgba(255,255,255,0.1)';
+            btn.style.borderRadius = '6px';
+            btn.style.color = '#fff';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '0.75rem';
+            btn.style.display = 'inline-flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.height = '28px';
+            btn.style.transition = '0.2s';
+            btn.style.verticalAlign = 'middle';
+            
+            btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.12)';
+            btn.onmouseout = () => btn.style.background = 'rgba(255,255,255,0.06)';
+            
+            if (colorInput.nextSibling) {
+                colorInput.parentNode.insertBefore(btn, colorInput.nextSibling);
+            } else {
+                colorInput.parentNode.appendChild(btn);
+            }
+            
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                try {
+                    const dropper = new EyeDropper();
+                    const result = await dropper.open();
+                    colorInput.value = result.sRGBHex;
+                    colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    colorInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch(err) {}
+            };
+        });
+    }
+
+    // Initialize all components
+    function initAll() {
+        initRangeResets();
+        initEyedropper();
+    }
+    
+    document.addEventListener("DOMContentLoaded", initAll);
+    if (document.readyState === "interactive" || document.readyState === "complete") {
+        initAll();
+    }
+})();
+</script>
+<!-- Unified Premium UX End -->
 </body>
 </html>

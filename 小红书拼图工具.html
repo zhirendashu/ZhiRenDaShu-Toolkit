@@ -98,27 +98,33 @@
         /* 左侧预览区 */
         .preview-area {
             flex: 1;
-            background: repeating-conic-gradient(rgba(255,255,255,.028) 0% 25%, transparent 0% 50%) 0 0/28px 28px;
+            background-color: #080a0f !important;
+            background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
             border-radius: var(--radius);
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: inset 0 20px 140px rgba(0,0,0,0.7);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
         }
-        .preview-area.drag-active { background: rgba(99, 102, 241, 0.05); }
+        .preview-area.drag-active { background: rgba(99, 102, 241, 0.08) !important; }
 
         #inner-drop-zone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             gap: 14px; cursor: pointer;
             width: 440px; height: 280px; max-width: 88vw;
-            border-radius: 24px; border: 2px dashed rgba(99, 102, 241, .35);
-            background: rgba(99, 102, 241, .04); transition: 0.3s;
+            border-radius: 24px; border: 2px dashed rgba(99, 102, 241, .28) !important;
+            background: rgba(99, 102, 241, .03) !important; transition: 0.3s;
             z-index: 5;
             /* 未载入图片时可交互，载入后由JS设为pointer-events:none */
         }
-        .preview-area:hover #inner-drop-zone { border-color: var(--accent-primary); background: rgba(99, 102, 241, .1); }
+        #inner-drop-zone:hover, #inner-drop-zone.dragover {
+            border-color: #6366f1 !important;
+            background: rgba(99, 102, 241, 0.08) !important;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) !important;
+        }
+        .preview-area:hover #inner-drop-zone { border-color: var(--accent-primary); background: rgba(99, 102, 241, .08); }
         .dz-icon { font-size: 2.8rem; line-height: 1; }
         .dz-title { font-size: 1.05rem; font-weight: 700; color: #fff; }
         .dz-sub { font-size: .84rem; color: var(--text-dim); }
@@ -131,7 +137,10 @@
         canvas {
             max-width: 90%;
             max-height: 90%;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+            
+            background-size: 20px 20px !important;
+            background-color: #11131a !important;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
             transition: transform 0.1s;
         }
 
@@ -339,7 +348,72 @@
                 overflow-y: visible;
             }
         }
-    </style>
+    
+
+
+
+/* ==================== Unified Canvas & Workspace Design System ==================== */
+/* 1. Workspace Backdrop: Slate navy (#080a0f) + Center Radial Glow + Inner Shadow */
+.preview-area, #main-preview-box, .canvas-container-wrap, .preview-pane, .canvas-area, #compare-container {
+    background-color: #080a0f !important;
+    background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 2. Artboard / Canvas Card: Elegant 24px Drop Shadow + Subtle 1px White Border */
+#main-canvas, #canvas, .canvas-box, .canvas-container, #ratio-frame, #canvas-container, #display-canvas, .stage {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 3. Transparent Checkerboard Pattern (Only inside the artboards of tools that support transparency) */
+#main-canvas, .canvas-box, #ratio-frame, #canvas-container {
+    background-image: repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0% 25%, transparent 0% 50%) !important;
+    background-size: 20px 20px !important;
+    background-color: #11131a !important;
+}
+
+/* 4. Unified Drag-and-Drop Zones: Dotted Indigo Border + Translucent Indigo Background + Micro Glow on Hover */
+#inner-drop-zone, #drop-zone, #upload-zone, .upload-zone {
+    border: 2px dashed rgba(99, 102, 241, 0.28) !important;
+    background: rgba(99, 102, 241, 0.03) !important;
+    transition: all 0.3s ease !important;
+}
+#inner-drop-zone:hover, #inner-drop-zone.dragover,
+#drop-zone:hover, #drop-zone.dragover,
+#upload-zone:hover, #upload-zone.drag-over,
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* 视觉套件专属高亮对齐 */
+:root {
+    --accent: #6366f1 !important;
+    --accent-primary: #6366f1 !important;
+}
+.badge-pill, .header-badge {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    color: #a5b4fc !important;
+}
+input[type="range"] {
+    accent-color: #6366f1 !important;
+}
+.btn-primary, #export-btn {
+    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4) !important;
+    color: #fff !important;
+}
+.btn-primary:hover, #export-btn:hover {
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.6) !important;
+    color: #fff !important;
+}
+select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+</style>
 </head>
 <body>
     <!-- 动态背景光斑 -->
@@ -400,6 +474,57 @@
 
             <div class="panel-card" id="settings-panel">
                 <!-- 动态注入设置项 -->
+            </div>
+
+            <div class="panel-card" id="border-panel">
+                <div class="panel-title">复古相框 (BEAMS 风格)</div>
+                <div class="control-row">
+                    <span>预设风格</span>
+                    <select id="param-border-preset" style="width: 50%; font-size: 0.8rem;">
+                        <option value="none" selected>无相框 (默认)</option>
+                        <option value="beams">🍊 经典 BEAMS 橙色双线</option>
+                        <option value="retro-black">🖤 昭和复古黑色双线</option>
+                        <option value="vintage-gold">🏆 复古白金/红金双线</option>
+                        <option value="minimal-bold">🔳 极简主义单粗线框</option>
+                        <option value="marrs-teal">💚 运动活力青碧双线</option>
+                        <option value="custom">🎨 自定义调整</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <span>相框样式</span>
+                    <select id="param-border-style" style="width: 50%; font-size: 0.8rem;">
+                        <option value="none" selected>无相框</option>
+                        <option value="single">单层粗边</option>
+                        <option value="double">复古双线 (推荐)</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <span>线框颜色</span>
+                    <input type="color" id="param-border-color" value="#ff5a1f" style="width: 50%; height: 28px; padding: 0; cursor: pointer; border: 1px solid var(--border-glass); background: transparent;">
+                </div>
+                <div class="control-row">
+                    <span>外框厚度 (Outer)</span>
+                    <input type="range" id="param-border-outer" min="4" max="150" value="28" style="width: 50%;">
+                </div>
+                <div class="control-row" id="row-border-gap">
+                    <span>双线间距 (Gap)</span>
+                    <input type="range" id="param-border-gap" min="2" max="100" value="16" style="width: 50%;">
+                </div>
+                <div class="control-row" id="row-border-inner">
+                    <span>内线粗细 (Inner)</span>
+                    <input type="range" id="param-border-inner" min="1" max="30" value="3" style="width: 50%;">
+                </div>
+                <div class="control-row" id="row-border-overlay">
+                    <span>内线叠在图上</span>
+                    <select id="param-border-overlay" style="width: 50%; font-size: 0.8rem;">
+                        <option value="false" selected>常规 (白底缩小)</option>
+                        <option value="true">置于图上 (不缩小)</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <span>线框圆角 (Radius)</span>
+                    <input type="range" id="param-border-radius" min="0" max="200" value="32" style="width: 50%;">
+                </div>
             </div>
 
             <div class="panel-card">
@@ -625,6 +750,82 @@
             }
         }
         initSettings();
+
+        const BORDER_PRESETS = {
+            none: { style: 'none', color: '#ff5a1f', outer: 28, gap: 16, inner: 3, radius: 32, overlay: 'false' },
+            beams: { style: 'double', color: '#ff5a1f', outer: 28, gap: 16, inner: 3, radius: 32, overlay: 'false' },
+            'retro-black': { style: 'double', color: '#111111', outer: 24, gap: 14, inner: 3, radius: 24, overlay: 'false' },
+            'vintage-gold': { style: 'double', color: '#d4af37', outer: 20, gap: 12, inner: 2, radius: 20, overlay: 'false' },
+            'minimal-bold': { style: 'single', color: '#000000', outer: 16, gap: 12, inner: 2, radius: 16, overlay: 'false' },
+            'marrs-teal': { style: 'double', color: '#008080', outer: 26, gap: 15, inner: 3, radius: 28, overlay: 'false' }
+        };
+
+        function updateBorderUI() {
+            const styleEl = document.getElementById("param-border-style");
+            if (!styleEl) return;
+            const style = styleEl.value;
+            const rowGap = document.getElementById("row-border-gap");
+            const rowInner = document.getElementById("row-border-inner");
+            const rowOverlay = document.getElementById("row-border-overlay");
+            if (style === 'double') {
+                if (rowGap) rowGap.style.display = 'flex';
+                if (rowInner) rowInner.style.display = 'flex';
+                if (rowOverlay) rowOverlay.style.display = 'flex';
+            } else if (style === 'single') {
+                if (rowGap) rowGap.style.display = 'none';
+                if (rowInner) rowInner.style.display = 'none';
+                if (rowOverlay) rowOverlay.style.display = 'flex';
+            } else {
+                if (rowGap) rowGap.style.display = 'none';
+                if (rowInner) rowInner.style.display = 'none';
+                if (rowOverlay) rowOverlay.style.display = 'none';
+            }
+        }
+
+        // 绑定复古边框事件
+        document.querySelectorAll('#border-panel input, #border-panel select').forEach(inp => {
+            inp.addEventListener('input', triggerRender);
+            if(inp.tagName.toLowerCase() === 'select') {
+                inp.addEventListener('change', () => {
+                    updateBorderUI();
+                    triggerRender();
+                });
+            }
+        });
+
+        // 预设选择变化逻辑
+        const presetSelect = document.getElementById("param-border-preset");
+        if(presetSelect) {
+            presetSelect.addEventListener("change", (e) => {
+                const val = e.target.value;
+                if (val === 'custom') return;
+                const p = BORDER_PRESETS[val];
+                if (p) {
+                    document.getElementById("param-border-style").value = p.style;
+                    document.getElementById("param-border-color").value = p.color;
+                    document.getElementById("param-border-outer").value = p.outer;
+                    document.getElementById("param-border-gap").value = p.gap;
+                    document.getElementById("param-border-inner").value = p.inner;
+                    document.getElementById("param-border-radius").value = p.radius;
+                    const overlayEl = document.getElementById("param-border-overlay");
+                    if (overlayEl) overlayEl.value = p.overlay || 'false';
+                    updateBorderUI();
+                    triggerRender();
+                }
+            });
+        }
+
+        // 手动调整滑块时，将预设自动切换回“自定义”
+        document.querySelectorAll('#border-panel input, #border-panel select:not(#param-border-preset)').forEach(inp => {
+            inp.addEventListener('input', () => {
+                if(presetSelect) presetSelect.value = 'custom';
+            });
+            inp.addEventListener('change', () => {
+                if(presetSelect) presetSelect.value = 'custom';
+            });
+        });
+
+        updateBorderUI();
 
         // 质量切换
         document.querySelectorAll('#quality-group .style-btn').forEach(btn => {
@@ -998,24 +1199,83 @@
             }
         }
 
+        function drawRetroBorder(ctx, W, H, style, color, outerW, gapW, innerW, radius) {
+            if (!style || style === 'none') return;
+            
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            
+            if (style === 'single' || style === 'double') {
+                const halfOuter = outerW / 2;
+                ctx.lineWidth = outerW;
+                ctx.beginPath();
+                if (typeof ctx.roundRect === 'function') {
+                    ctx.roundRect(halfOuter, halfOuter, W - outerW, H - outerW, radius);
+                } else {
+                    ctx.rect(halfOuter, halfOuter, W - outerW, H - outerW);
+                }
+                ctx.stroke();
+            }
+            
+            if (style === 'double') {
+                const offset = outerW + gapW + innerW / 2;
+                const innerRadius = Math.max(0, radius - outerW - gapW);
+                ctx.lineWidth = innerW;
+                ctx.beginPath();
+                if (typeof ctx.roundRect === 'function') {
+                    ctx.roundRect(offset, offset, W - offset * 2, H - offset * 2, innerRadius);
+                } else {
+                    ctx.rect(offset, offset, W - offset * 2, H - offset * 2);
+                }
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+
         function render() {
             if(!sourceImages.length) return;
             hitboxes = [];
             splitLines = [];
             const W = getOutConfig().w;
             
-            // 获取下拉框选择的比例，如果没有(比如长卷模式)则默认 3:4 (0.75)
             const ratioSelect = document.getElementById("param-ratio");
             const ratio = ratioSelect ? parseFloat(ratioSelect.value) : 0.75;
             let H = W / ratio;
+
+            // 获取复古边框设置
+            const borderStyle = document.getElementById("param-border-style") ? document.getElementById("param-border-style").value : 'none';
+            const borderColor = document.getElementById("param-border-color") ? document.getElementById("param-border-color").value : '#ff5a1f';
+            const outerW = document.getElementById("param-border-outer") ? parseInt(document.getElementById("param-border-outer").value) : 28;
+            const gapW = document.getElementById("param-border-gap") ? parseInt(document.getElementById("param-border-gap").value) : 16;
+            const innerW = document.getElementById("param-border-inner") ? parseInt(document.getElementById("param-border-inner").value) : 3;
+            const borderRadiusVal = document.getElementById("param-border-radius") ? parseInt(document.getElementById("param-border-radius").value) : 32;
+
+            // 计算包含边框后的有效内边距
+            const padEl = document.getElementById("param-pad");
+            const pad = padEl ? parseInt(padEl.value) : 0;
+            const borderOverlaySelect = document.getElementById("param-border-overlay");
+            const borderOverlay = borderOverlaySelect ? (borderOverlaySelect.value === 'true') : false;
+            let effPad = pad;
+            if (borderStyle !== 'none') {
+                if (borderOverlay) {
+                    effPad = Math.max(pad, outerW);
+                } else {
+                    if (borderStyle === 'single') {
+                        effPad = Math.max(pad, outerW + 10);
+                    } else if (borderStyle === 'double') {
+                        effPad = Math.max(pad, outerW + gapW + innerW + 15);
+                    }
+                }
+            }
 
             // 创建离屏 Canvas
             const off = document.createElement("canvas");
             const ocx = off.getContext("2d");
 
             if(currentMode === "grid") {
-                const padEl = document.getElementById("param-pad");
-                const pad = padEl ? parseInt(padEl.value) : 0;
                 const gap = parseInt(document.getElementById("param-gap").value);
                 const bgEl = document.getElementById("param-bg");
                 const bg = bgEl ? bgEl.value : "#ffffff";
@@ -1024,53 +1284,51 @@
                 
                 const len = sourceImages.length;
                 if (len === 1) {
-                    drawCover(ocx, sourceImages[0], pad, pad, W - pad*2, H - pad*2);
+                    drawCover(ocx, sourceImages[0], effPad, effPad, W - effPad*2, H - effPad*2);
                 } else if (len === 2) {
-                    const innerH = H - pad*2;
-                    const cw = W - pad*2;
+                    const innerH = H - effPad*2;
+                    const cw = W - effPad*2;
                     const row1_H = (innerH - gap) * splitRatios.grid2;
                     const row2_H = (innerH - gap) - row1_H;
-                    drawCover(ocx, sourceImages[0], pad, pad, cw, row1_H);
-                    drawCover(ocx, sourceImages[1], pad, pad + row1_H + gap, cw, row2_H);
-                    splitLines.push({ type: 'h', key: 'grid2', y: pad + row1_H + gap/2, x1: pad, x2: pad+cw });
+                    drawCover(ocx, sourceImages[0], effPad, effPad, cw, row1_H);
+                    drawCover(ocx, sourceImages[1], effPad, effPad + row1_H + gap, cw, row2_H);
+                    splitLines.push({ type: 'h', key: 'grid2', y: effPad + row1_H + gap/2, x1: effPad, x2: effPad+cw });
                 } else if (len === 3) {
-                    const cw = W - pad*2;
-                    const innerH = H - pad*2;
+                    const cw = W - effPad*2;
+                    const innerH = H - effPad*2;
                     const row1_H = (innerH - gap) * splitRatios.grid3_y;
                     const row2_H = (innerH - gap) - row1_H;
                     const col1_W = (cw - gap) * splitRatios.grid3_x;
                     const col2_W = (cw - gap) - col1_W;
-                    drawCover(ocx, sourceImages[0], pad, pad, cw, row1_H);
-                    drawCover(ocx, sourceImages[1], pad, pad + row1_H + gap, col1_W, row2_H);
-                    drawCover(ocx, sourceImages[2], pad + col1_W + gap, pad + row1_H + gap, col2_W, row2_H);
-                    splitLines.push({ type: 'h', key: 'grid3_y', y: pad + row1_H + gap/2, x1: pad, x2: pad+cw });
-                    splitLines.push({ type: 'v', key: 'grid3_x', x: pad + col1_W + gap/2, y1: pad + row1_H + gap, y2: pad+innerH });
+                    drawCover(ocx, sourceImages[0], effPad, effPad, cw, row1_H);
+                    drawCover(ocx, sourceImages[1], effPad, effPad + row1_H + gap, col1_W, row2_H);
+                    drawCover(ocx, sourceImages[2], effPad + col1_W + gap, effPad + row1_H + gap, col2_W, row2_H);
+                    splitLines.push({ type: 'h', key: 'grid3_y', y: effPad + row1_H + gap/2, x1: effPad, x2: effPad+cw });
+                    splitLines.push({ type: 'v', key: 'grid3_x', x: effPad + col1_W + gap/2, y1: effPad + row1_H + gap, y2: effPad+innerH });
                 } else {
                     let cols = 2, rows = 2;
                     if(len<=4) { cols=2; rows=2; }
                     else if(len<=6) { cols=3; rows=2; }
                     else { cols=3; rows=3; }
                     
-                    const cellW = (W - gap*(cols-1) - pad*2) / cols;
-                    const cellH = (H - gap*(rows-1) - pad*2) / rows;
+                    const cellW = (W - gap*(cols-1) - effPad*2) / cols;
+                    const cellH = (H - gap*(rows-1) - effPad*2) / rows;
 
                     sourceImages.forEach((item, i) => {
                         if(i >= cols*rows) return;
                         const c = i % cols;
                         const r = Math.floor(i / cols);
-                        drawCover(ocx, item, pad + c*(cellW+gap), pad + r*(cellH+gap), cellW, cellH);
+                        drawCover(ocx, item, effPad + c*(cellW+gap), effPad + r*(cellH+gap), cellW, cellH);
                     });
                 }
 
             } else if(currentMode === "long") {
-                const padEl = document.getElementById("param-pad");
-                const pad = padEl ? parseInt(padEl.value) : 0;
                 const gap = parseInt(document.getElementById("param-gap").value);
                 const bgEl = document.getElementById("param-bg");
                 const bg = bgEl ? bgEl.value : "#ffffff";
-                const innerW = W - pad*2;
+                const innerW = W - effPad*2;
                 
-                let totalH = pad * 2;
+                let totalH = effPad * 2;
                 sourceImages.forEach(item => {
                     const img = item.bgRemovedImg || item.img;
                     totalH += innerW / (img.width / img.height);
@@ -1080,11 +1338,11 @@
                 off.width = W; off.height = Math.round(totalH);
                 fillBackgroundFn(ocx, off.width, off.height, bg);
                 
-                let cy = pad;
+                let cy = effPad;
                 sourceImages.forEach(item => {
                     const img = item.bgRemovedImg || item.img;
                     const ch = innerW / (img.width / img.height);
-                    drawCover(ocx, item, pad, cy, innerW, ch);
+                    drawCover(ocx, item, effPad, cy, innerW, ch);
                     cy += ch + gap;
                 });
 
@@ -1097,16 +1355,15 @@
                 off.width = W; off.height = H;
                 fillBackgroundFn(ocx, W, H, bg);
                 
-                const pad = W * 0.12;
                 const fSpace = H * 0.15;
-                const cw = W - pad*2;
-                const ch = H - pad - fSpace;
+                const cw = W - effPad*2;
+                const ch = H - effPad - fSpace;
                 
                 const gap = 30;
                 const sh = (ch - gap*(sourceImages.length-1)) / sourceImages.length;
-                let cy = pad;
+                let cy = effPad;
                 sourceImages.forEach(item => {
-                    drawCover(ocx, item, pad, cy, cw, sh);
+                    drawCover(ocx, item, effPad, cy, cw, sh);
                     cy += sh + gap;
                 });
 
@@ -1126,38 +1383,66 @@
                 fillBackgroundFn(ocx, W, H, bg);
                 
                 const len = sourceImages.length;
+                const innerW = W - effPad*2;
+                const innerH = H - effPad*2;
                 if(len===1 || len>3) {
-                    drawCover(ocx, sourceImages[0], 0,0,W,H);
+                    drawCover(ocx, sourceImages[0], effPad, effPad, innerW, innerH);
                 } else {
-                    const dx = H * Math.tan(angle);
+                    const dx = innerH * Math.tan(angle);
                     if(len===2) {
-                        const splitY = H * splitRatios.skew2;
-                        ocx.save(); ocx.beginPath(); ocx.moveTo(0,0); ocx.lineTo(W,0); ocx.lineTo(W, splitY+dx); ocx.lineTo(0, splitY-dx); ocx.clip();
-                        drawCover(ocx, sourceImages[0], 0, 0, W, splitY + dx); ocx.restore();
+                        const splitY = innerH * splitRatios.skew2;
+                        ocx.save(); ocx.beginPath(); 
+                        ocx.moveTo(effPad, effPad); 
+                        ocx.lineTo(W - effPad, effPad); 
+                        ocx.lineTo(W - effPad, effPad + splitY + dx); 
+                        ocx.lineTo(effPad, effPad + splitY - dx); 
+                        ocx.clip();
+                        drawCover(ocx, sourceImages[0], effPad, effPad, innerW, splitY + dx); ocx.restore();
                         
-                        ocx.save(); ocx.beginPath(); ocx.moveTo(0, splitY-dx); ocx.lineTo(W, splitY+dx); ocx.lineTo(W, H); ocx.lineTo(0, H); ocx.clip();
-                        drawCover(ocx, sourceImages[1], 0, splitY - dx, W, H - (splitY - dx)); ocx.restore();
+                        ocx.save(); ocx.beginPath(); 
+                        ocx.moveTo(effPad, effPad + splitY - dx); 
+                        ocx.lineTo(W - effPad, effPad + splitY + dx); 
+                        ocx.lineTo(W - effPad, H - effPad); 
+                        ocx.lineTo(effPad, H - effPad); 
+                        ocx.clip();
+                        drawCover(ocx, sourceImages[1], effPad, effPad + splitY - dx, innerW, innerH - (splitY - dx)); ocx.restore();
                         
-                        ocx.lineWidth = 14; ocx.strokeStyle="#fff";
-                        ocx.beginPath(); ocx.moveTo(0, splitY-dx); ocx.lineTo(W, splitY+dx); ocx.stroke();
-                        splitLines.push({ type: 'skew', key: 'skew2', yCenter: splitY, dx: dx, x1: 0, x2: W });
+                        ocx.lineWidth = 14; ocx.strokeStyle=bg;
+                        ocx.beginPath(); ocx.moveTo(effPad, effPad + splitY - dx); ocx.lineTo(W - effPad, effPad + splitY + dx); ocx.stroke();
+                        splitLines.push({ type: 'skew', key: 'skew2', yCenter: effPad + splitY, dx: dx, x1: effPad, x2: W - effPad });
                     } else if(len===3) {
-                        const splitY1 = H * splitRatios.skew3_1;
-                        const splitY2 = H * splitRatios.skew3_2;
-                        ocx.save(); ocx.beginPath(); ocx.moveTo(0,0); ocx.lineTo(W,0); ocx.lineTo(W, splitY1+dx); ocx.lineTo(0, splitY1-dx); ocx.clip();
-                        drawCover(ocx, sourceImages[0], 0, 0, W, splitY1 + dx); ocx.restore();
+                        const splitY1 = innerH * splitRatios.skew3_1;
+                        const splitY2 = innerH * splitRatios.skew3_2;
                         
-                        ocx.save(); ocx.beginPath(); ocx.moveTo(0, splitY1-dx); ocx.lineTo(W, splitY1+dx); ocx.lineTo(W, splitY2+dx); ocx.lineTo(0, splitY2-dx); ocx.clip();
-                        drawCover(ocx, sourceImages[1], 0, splitY1 - dx, W, (splitY2+dx) - (splitY1-dx)); ocx.restore();
+                        ocx.save(); ocx.beginPath(); 
+                        ocx.moveTo(effPad, effPad); 
+                        ocx.lineTo(W - effPad, effPad); 
+                        ocx.lineTo(W - effPad, effPad + splitY1 + dx); 
+                        ocx.lineTo(effPad, effPad + splitY1 - dx); 
+                        ocx.clip();
+                        drawCover(ocx, sourceImages[0], effPad, effPad, innerW, splitY1 + dx); ocx.restore();
                         
-                        ocx.save(); ocx.beginPath(); ocx.moveTo(0, splitY2-dx); ocx.lineTo(W, splitY2+dx); ocx.lineTo(W, H); ocx.lineTo(0, H); ocx.clip();
-                        drawCover(ocx, sourceImages[2], 0, splitY2 - dx, W, H - (splitY2 - dx)); ocx.restore();
-
-                        ocx.lineWidth = 14; ocx.strokeStyle="#fff";
-                        ocx.beginPath(); ocx.moveTo(0, splitY1-dx); ocx.lineTo(W, splitY1+dx); ocx.stroke();
-                        ocx.beginPath(); ocx.moveTo(0, splitY2-dx); ocx.lineTo(W, splitY2+dx); ocx.stroke();
-                        splitLines.push({ type: 'skew', key: 'skew3_1', yCenter: splitY1, dx: dx, x1: 0, x2: W });
-                        splitLines.push({ type: 'skew', key: 'skew3_2', yCenter: splitY2, dx: dx, x1: 0, x2: W });
+                        ocx.save(); ocx.beginPath(); 
+                        ocx.moveTo(effPad, effPad + splitY1 - dx); 
+                        ocx.lineTo(W - effPad, effPad + splitY1 + dx); 
+                        ocx.lineTo(W - effPad, effPad + splitY2 + dx); 
+                        ocx.lineTo(effPad, effPad + splitY2 - dx); 
+                        ocx.clip();
+                        drawCover(ocx, sourceImages[1], effPad, effPad + splitY1 - dx, innerW, (splitY2+dx) - (splitY1-dx)); ocx.restore();
+                        
+                        ocx.save(); ocx.beginPath(); 
+                        ocx.moveTo(effPad, effPad + splitY2 - dx); 
+                        ocx.lineTo(W - effPad, effPad + splitY2 + dx); 
+                        ocx.lineTo(W - effPad, H - effPad); 
+                        ocx.lineTo(effPad, H - effPad); 
+                        ocx.clip();
+                        drawCover(ocx, sourceImages[2], effPad, effPad + splitY2 - dx, innerW, innerH - (splitY2 - dx)); ocx.restore();
+ 
+                        ocx.lineWidth = 14; ocx.strokeStyle=bg;
+                        ocx.beginPath(); ocx.moveTo(effPad, effPad + splitY1 - dx); ocx.lineTo(W - effPad, effPad + splitY1 + dx); ocx.stroke();
+                        ocx.beginPath(); ocx.moveTo(effPad, effPad + splitY2 - dx); ocx.lineTo(W - effPad, effPad + splitY2 + dx); ocx.stroke();
+                        splitLines.push({ type: 'skew', key: 'skew3_1', yCenter: effPad + splitY1, dx: dx, x1: effPad, x2: W - effPad });
+                        splitLines.push({ type: 'skew', key: 'skew3_2', yCenter: effPad + splitY2, dx: dx, x1: effPad, x2: W - effPad });
                     }
                 }
             } else if(currentMode === "pip") {
@@ -1168,16 +1453,14 @@
 
                 off.width = W; off.height = H;
                 
-                // === 画背景 (优先使用第一张图) ===
                 const bgItem = sourceImages[0];
                 if(blur > 0) {
                     ocx.filter = `blur(${blur}px) brightness(0.85)`;
                 }
-                const bExp = blur * 2; // 稍微向外溢出绘制，彻底解决高斯模糊后画布边缘出现白边的问题
+                const bExp = blur * 2;
                 drawCover(ocx, bgItem, -bExp, -bExp, W + bExp*2, H + bExp*2);
                 ocx.filter = "none";
                 
-                // === 画中心前景图 (如果有第二张就用第二张，没有就重用第一张) ===
                 if (innerScale > 0) {
                     const fgItem = sourceImages.length > 1 ? sourceImages[1] : sourceImages[0];
                     
@@ -1186,7 +1469,6 @@
                     
                     let innerW = maxInnerW * innerScale;
                     let innerH = innerW / innerRatio;
-                    // 如果高度超标，则以高度为基推算宽度
                     if (innerH > maxInnerH * innerScale) {
                         innerH = maxInnerH * innerScale;
                         innerW = innerH * innerRatio;
@@ -1195,7 +1477,6 @@
                     const ix = (W - innerW) / 2;
                     const iy = (H - innerH) / 2;
                     
-                    // 添加一层高级的软阴影，让中心图更有立体悬浮感
                     ocx.shadowColor = "rgba(0,0,0,0.6)";
                     ocx.shadowBlur = W * 0.02;     
                     ocx.shadowOffsetY = W * 0.01;  
@@ -1222,12 +1503,15 @@
                     } else if (line.type === 'v') {
                         ocx.moveTo(line.x, line.y1); ocx.lineTo(line.x, line.y2);
                     } else if (line.type === 'skew') {
-                        ocx.moveTo(0, line.yCenter - line.dx); ocx.lineTo(line.x2, line.yCenter + line.dx);
+                        ocx.moveTo(effPad, line.yCenter - line.dx); ocx.lineTo(line.x2, line.yCenter + line.dx);
                     }
                     ocx.stroke();
                     ocx.restore();
                 }
             }
+
+            // 在最上层叠加绘制复古边框
+            drawRetroBorder(ocx, off.width, off.height, borderStyle, borderColor, outerW, gapW, innerW, borderRadiusVal);
 
             cvs.width = off.width;
             cvs.height = off.height;
@@ -1299,7 +1583,7 @@
                     mode: currentMode,
                     params: {}
                 };
-                document.querySelectorAll('#settings-panel input, #settings-panel select').forEach(el => {
+                document.querySelectorAll('#settings-panel input, #settings-panel select, #border-panel input, #border-panel select').forEach(el => {
                     if(el.id && el.type !== 'file') {
                         config.params[el.id] = el.type === 'checkbox' ? el.checked : el.value;
                     }
@@ -1345,6 +1629,7 @@
                                     customBgImg = img;
                                     const clearBtn = document.getElementById("param-bg-img-clear");
                                     if(clearBtn) clearBtn.style.display = "block";
+                                    updateBorderUI();
                                     triggerRender();
                                 };
                                 img.src = data.bgImg;
@@ -1352,8 +1637,10 @@
                                 customBgImg = null;
                                 const clearBtn = document.getElementById("param-bg-img-clear");
                                 if(clearBtn) clearBtn.style.display = 'none';
+                                updateBorderUI();
                                 triggerRender();
                             }
+                            updateBorderUI();
                             triggerRender();
                             alert("模板排版配置已加载");
                         }
@@ -1442,5 +1729,126 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <!-- 注入结束 -->
+<!-- ZhiRenDaShu Unified Premium UX Enhancement -->
+<style>
+#modern-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(22, 26, 36, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 100000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#modern-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+</style>
+<div id="modern-toast"></div>
+<script>
+(function() {
+    // 1. Alert Override with Modern Toast
+    window.showToast = function(msg, type="info") {
+        const toast = document.getElementById("modern-toast");
+        if (!toast) return;
+        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
+        toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
+        toast.classList.add("show");
+        if(window._toastTimer) clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    };
+    window.alert = function(msg) {
+        window.showToast(msg, 'error');
+    };
+
+    // 2. Double-Click Range Reset
+    function initRangeResets() {
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            if (slider._hasDblclickReset) return;
+            slider._hasDblclickReset = true;
+            const defVal = slider.getAttribute('value') || slider.value || '0';
+            slider.addEventListener('dblclick', () => {
+                slider.value = defVal;
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                slider.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    }
+
+    // 3. Eyedropper API integration for color inputs
+    function initEyedropper() {
+        if (!window.EyeDropper) return;
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            if (colorInput.dataset.hasEyedropper) return;
+            colorInput.dataset.hasEyedropper = "true";
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '🎨';
+            btn.title = '屏幕吸色';
+            btn.style.marginLeft = '6px';
+            btn.style.padding = '4px 6px';
+            btn.style.background = 'rgba(255,255,255,0.06)';
+            btn.style.border = '1px solid rgba(255,255,255,0.1)';
+            btn.style.borderRadius = '6px';
+            btn.style.color = '#fff';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '0.75rem';
+            btn.style.display = 'inline-flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.height = '28px';
+            btn.style.transition = '0.2s';
+            btn.style.verticalAlign = 'middle';
+            
+            btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.12)';
+            btn.onmouseout = () => btn.style.background = 'rgba(255,255,255,0.06)';
+            
+            if (colorInput.nextSibling) {
+                colorInput.parentNode.insertBefore(btn, colorInput.nextSibling);
+            } else {
+                colorInput.parentNode.appendChild(btn);
+            }
+            
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                try {
+                    const dropper = new EyeDropper();
+                    const result = await dropper.open();
+                    colorInput.value = result.sRGBHex;
+                    colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    colorInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch(err) {}
+            };
+        });
+    }
+
+    // Initialize all components
+    function initAll() {
+        initRangeResets();
+        initEyedropper();
+    }
+    
+    document.addEventListener("DOMContentLoaded", initAll);
+    if (document.readyState === "interactive" || document.readyState === "complete") {
+        initAll();
+    }
+})();
+</script>
+<!-- Unified Premium UX End -->
 </body>
 </html>

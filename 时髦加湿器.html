@@ -31,9 +31,11 @@
 
         .main-container { flex: 1; display: flex; gap: 24px; padding: 16px 24px; max-width: 1800px; margin: 0 auto; width: 100%; min-height: 0; }
 
-        .preview-area { flex: 1; background: repeating-conic-gradient(rgba(255,255,255,.028) 0% 25%, transparent 0% 50%) 0 0/28px 28px; border-radius: var(--radius); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: all 0.3s; box-shadow: inset 0 20px 140px rgba(0,0,0,0.7); }
+        .preview-area { flex: 1; background-color: #080a0f !important;
+            background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important; border-radius: var(--radius); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: all 0.3s; box-shadow: inset 0 20px 140px rgba(0,0,0,0.7); }
         .preview-area.drag-active { background: rgba(129, 140, 248, 0.05); }
-        #inner-drop-zone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; width:440px; height:280px; max-width:88vw; border-radius:24px; border:2px dashed rgba(129,140,248,.35); background:rgba(129,140,248,.04); transition:0.3s; z-index:5; /* 未载入图片时可交互，JS载入后隐藏 */ }
+        #inner-drop-zone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; width:440px; height:280px; max-width:88vw; border-radius:24px; border: 2px dashed rgba(99, 102, 241, 0.28) !important; background: rgba(99, 102, 241, 0.03) !important; transition:0.3s; z-index:5; /* 未载入图片时可交互，JS载入后隐藏 */ }
         .preview-area:hover #inner-drop-zone { border-color:var(--accent-primary); background:rgba(129,140,248,.1); }
         .dz-icon { font-size:2.8rem; line-height:1; }
         .dz-title { font-size:1.05rem; font-weight:700; color:#fff; }
@@ -79,7 +81,72 @@
         #modern-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-    </style>
+    
+
+
+
+/* ==================== Unified Canvas & Workspace Design System ==================== */
+/* 1. Workspace Backdrop: Slate navy (#080a0f) + Center Radial Glow + Inner Shadow */
+.preview-area, #main-preview-box, .canvas-container-wrap, .preview-pane, .canvas-area, #compare-container {
+    background-color: #080a0f !important;
+    background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 2. Artboard / Canvas Card: Elegant 24px Drop Shadow + Subtle 1px White Border */
+#main-canvas, #canvas, .canvas-box, .canvas-container, #ratio-frame, #canvas-container, #display-canvas, .stage {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 3. Transparent Checkerboard Pattern (Only inside the artboards of tools that support transparency) */
+#main-canvas, .canvas-box, #ratio-frame, #canvas-container {
+    background-image: repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0% 25%, transparent 0% 50%) !important;
+    background-size: 20px 20px !important;
+    background-color: #11131a !important;
+}
+
+/* 4. Unified Drag-and-Drop Zones: Dotted Indigo Border + Translucent Indigo Background + Micro Glow on Hover */
+#inner-drop-zone, #drop-zone, #upload-zone, .upload-zone {
+    border: 2px dashed rgba(99, 102, 241, 0.28) !important;
+    background: rgba(99, 102, 241, 0.03) !important;
+    transition: all 0.3s ease !important;
+}
+#inner-drop-zone:hover, #inner-drop-zone.dragover,
+#drop-zone:hover, #drop-zone.dragover,
+#upload-zone:hover, #upload-zone.drag-over,
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* 视觉套件专属高亮对齐 */
+:root {
+    --accent: #6366f1 !important;
+    --accent-primary: #6366f1 !important;
+}
+.badge-pill, .header-badge {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    color: #a5b4fc !important;
+}
+input[type="range"] {
+    accent-color: #6366f1 !important;
+}
+.btn-primary, #export-btn {
+    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4) !important;
+    color: #fff !important;
+}
+.btn-primary:hover, #export-btn:hover {
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.6) !important;
+    color: #fff !important;
+}
+select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+</style>
 </head>
 <body>
     <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
@@ -604,5 +671,126 @@
 
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
+<!-- ZhiRenDaShu Unified Premium UX Enhancement -->
+<style>
+#modern-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(22, 26, 36, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 100000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#modern-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+</style>
+<div id="modern-toast"></div>
+<script>
+(function() {
+    // 1. Alert Override with Modern Toast
+    window.showToast = function(msg, type="info") {
+        const toast = document.getElementById("modern-toast");
+        if (!toast) return;
+        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
+        toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
+        toast.classList.add("show");
+        if(window._toastTimer) clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    };
+    window.alert = function(msg) {
+        window.showToast(msg, 'error');
+    };
+
+    // 2. Double-Click Range Reset
+    function initRangeResets() {
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            if (slider._hasDblclickReset) return;
+            slider._hasDblclickReset = true;
+            const defVal = slider.getAttribute('value') || slider.value || '0';
+            slider.addEventListener('dblclick', () => {
+                slider.value = defVal;
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                slider.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    }
+
+    // 3. Eyedropper API integration for color inputs
+    function initEyedropper() {
+        if (!window.EyeDropper) return;
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            if (colorInput.dataset.hasEyedropper) return;
+            colorInput.dataset.hasEyedropper = "true";
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '🎨';
+            btn.title = '屏幕吸色';
+            btn.style.marginLeft = '6px';
+            btn.style.padding = '4px 6px';
+            btn.style.background = 'rgba(255,255,255,0.06)';
+            btn.style.border = '1px solid rgba(255,255,255,0.1)';
+            btn.style.borderRadius = '6px';
+            btn.style.color = '#fff';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '0.75rem';
+            btn.style.display = 'inline-flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.height = '28px';
+            btn.style.transition = '0.2s';
+            btn.style.verticalAlign = 'middle';
+            
+            btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.12)';
+            btn.onmouseout = () => btn.style.background = 'rgba(255,255,255,0.06)';
+            
+            if (colorInput.nextSibling) {
+                colorInput.parentNode.insertBefore(btn, colorInput.nextSibling);
+            } else {
+                colorInput.parentNode.appendChild(btn);
+            }
+            
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                try {
+                    const dropper = new EyeDropper();
+                    const result = await dropper.open();
+                    colorInput.value = result.sRGBHex;
+                    colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    colorInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch(err) {}
+            };
+        });
+    }
+
+    // Initialize all components
+    function initAll() {
+        initRangeResets();
+        initEyedropper();
+    }
+    
+    document.addEventListener("DOMContentLoaded", initAll);
+    if (document.readyState === "interactive" || document.readyState === "complete") {
+        initAll();
+    }
+})();
+</script>
+<!-- Unified Premium UX End -->
 </body>
 </html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>数码胶片 · DigiCamFX — 千禧年 CCD 相机模拟器</title>
+  <meta name="description" content="在浏览器中还原 2000 年代数码相机的真实质感。CCD 色差、胶片颗粒、高光溢出，完全离线，隐私优先。" />
+  <meta name="theme-color" content="#09090e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="数码胶片" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="bg-grad" aria-hidden="true"></div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     APP 壳体 — 全屏三栏编辑器
+══════════════════════════════════════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- ① 顶栏 -->
+  <header id="topbar" role="banner">
+    <div class="topbar-brand">
+      <div class="brand-icon" aria-hidden="true">📷</div>
+      <div>
+        <span class="brand-name">数码胶片</span>
+        <span class="brand-sub">DigiCamFX · CCD 模拟器</span>
+      </div>
+    </div>
+
+    <nav class="topbar-nav" aria-label="主导航">
+      <a href="#gallery-section">滤镜库</a>
+      <a href="#how-section">使用说明</a>
+      <a href="#faq-section">常见问题</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <div class="topbar-status" role="status" aria-live="polite">
+        <span class="status-dot"></span>
+        <span id="topbar-status-text">系统就绪</span>
+      </div>
+      <!-- 移动端：控制面板开关 -->
+      <button id="mobile-controls-btn" class="btn btn-ghost"
+              aria-label="打开参数控制面板" aria-expanded="false"
+              style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        参数
+      </button>
+    </div>
+  </header>
+
+  <!-- ② 编辑器主体 -->
+  <div id="editor-body">
+
+    <!-- ── 左侧：相机选择 ── -->
+    <aside id="camera-sidebar" aria-label="相机机型选择">
+      <div class="sidebar-header">
+        <div class="sidebar-title">相机机型</div>
+      </div>
+      <div class="camera-list" id="camera-list" role="radiogroup"
+           aria-label="选择滤镜预设"></div>
+      <div class="sidebar-hint">
+        按键盘 <kbd>1</kbd>–<kbd>7</kbd> 快速切换
+      </div>
+    </aside>
+
+    <!-- ── 中央：画布区 ── -->
+    <main id="canvas-area" role="main" aria-label="图像编辑区">
+
+      <!-- 画布工具栏 -->
+      <div class="canvas-toolbar">
+        <div class="canvas-toolbar-left">
+          <span class="toolbar-chip gold" id="chip-filter">Canon IXUS</span>
+          <span class="toolbar-chip green" id="chip-status">就绪</span>
+          <span class="toolbar-chip" id="chip-size" style="display:none"></span>
+        </div>
+        <div class="canvas-toolbar-right">
+          <button class="toolbar-btn" id="btn-new-image" aria-label="加载新图片">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            新图片
+          </button>
+          <button class="toolbar-btn" id="btn-reset-params" aria-label="重置所有参数">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9M3 3v6h6"/></svg>
+            重置
+          </button>
+        </div>
+      </div>
+
+      <!-- 移动端相机选择条 -->
+      <div id="mobile-camera-strip" aria-label="相机机型（横向滚动）"></div>
+
+      <!-- 视图切换条（上传图片后显示） -->
+      <div class="view-toggle-bar" id="view-toggle-bar" style="display:none"
+           role="toolbar" aria-label="视图模式选择">
+        <div class="view-toggle-group">
+          <button class="view-btn active" data-viewmode="processed" id="vbtn-processed">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/></svg>
+            处理后
+          </button>
+          <button class="view-btn" data-viewmode="split" id="vbtn-split">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 7h5M17 7h5M2 17h5M17 17h5"/></svg>
+            分割对比
+          </button>
+          <button class="view-btn" data-viewmode="sidebyside" id="vbtn-sidebyside">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="9" height="18" rx="1"/><rect x="13" y="3" width="9" height="18" rx="1"/></svg>
+            并排对比
+          </button>
+        </div>
+      </div>
+
+      <!-- 上传区（无图时显示） -->
+      <div id="upload-zone" role="button" tabindex="0"
+           aria-label="上传图片：点击或拖放">
+        <div class="upload-icon-wrap" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-text-group">
+          <p class="upload-main">将图片拖放到此处</p>
+          <p class="upload-sub">
+            或 <span class="upload-link" id="upload-trigger"
+                    role="button" tabindex="0">点击选择文件</span><br>
+            支持批量上传多张图片
+          </p>
+        </div>
+        <div class="upload-hint">PNG · JPG · WEBP · 最大 20MB</div>
+        <input type="file" id="file-input" accept="image/*" multiple hidden />
+      </div>
+
+      <!-- 工作区（有图后显示） -->
+      <div id="workspace" style="display:none">
+        <!-- 处理后全图（默认模式） -->
+        <div id="compare-container" aria-label="图片预览">
+          <canvas id="display-canvas" aria-label="图片预览"></canvas>
+          <!-- 分割线手柄（仅分割对比模式显示） -->
+          <div id="compare-handle" role="slider"
+               aria-label="前后对比分割线" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+               tabindex="0" style="display:none">
+            <div class="compare-knob" aria-hidden="true">◄ ►</div>
+          </div>
+          <span class="compare-label compare-label-left" aria-hidden="true" style="display:none">原图</span>
+          <span class="compare-label compare-label-right" aria-hidden="true" style="display:none">处理后</span>
+        </div>
+
+        <!-- 并排对比容器（并排模式时显示） -->
+        <div id="compare-sidebyside" aria-label="原图与处理后并排对比" style="display:none">
+          <div class="sbs-panel">
+            <canvas id="canvas-orig-sbs"></canvas>
+            <span class="sbs-label">原图</span>
+          </div>
+          <div class="sbs-divider"></div>
+          <div class="sbs-panel">
+            <canvas id="canvas-proc-sbs"></canvas>
+            <span class="sbs-label">处理后</span>
+          </div>
+        </div>
+
+        <!-- 批量缩略图条 -->
+        <div id="batch-strip-wrap" aria-label="批量图片队列">
+          <div class="batch-strip-header">
+            <span class="batch-strip-title">批量队列</span>
+            <span id="batch-count" style="font-family:var(--mono);font-size:0.6rem;color:var(--text-3)"></span>
+          </div>
+          <div id="batch-strip" role="list" aria-label="已上传图片列表"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── 右侧：参数控制（桌面） ── -->
+    <aside id="controls-sidebar" aria-label="滤镜参数控制">
+
+      <!-- 信号参数 -->
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">信号参数</div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>强度</span>
+            <span class="ctrl-label-val" id="val-intensity">80%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-intensity"
+                 min="0" max="100" value="80" aria-label="滤镜强度" />
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>胶片颗粒</span>
+            <span class="ctrl-label-val" id="val-grain">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-grain"
+                 min="0" max="100" value="50" aria-label="颗粒强度" />
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>色差</span>
+            <span class="ctrl-label-val" id="val-chroma">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-chroma"
+                 min="0" max="100" value="50" aria-label="色差强度" />
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>暗角</span>
+            <span class="ctrl-label-val" id="val-vignette">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-vignette"
+                 min="0" max="100" value="50" aria-label="暗角强度" />
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>高光溢出</span>
+            <span class="ctrl-label-val" id="val-bloom">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-bloom"
+                 min="0" max="100" value="50" aria-label="高光溢出强度" />
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>JPEG 压缩块</span>
+            <span class="ctrl-label-val" id="val-artifacts">30%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-artifacts"
+                 min="0" max="100" value="30" aria-label="JPEG 压缩失真强度" />
+        </div>
+
+        <!-- 漏光 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>漏光</span>
+            <span class="ctrl-label-val" id="val-lightleak">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-lightleak"
+                 min="0" max="100" value="50" aria-label="漏光强度" />
+        </div>
+
+        <!-- 胶片缺陷 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>划痕尘点</span>
+            <span class="ctrl-label-val" id="val-imperfections">30%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-imperfections"
+                 min="0" max="100" value="30" aria-label="胶片缺陷" />
+        </div>
+      </div>
+
+      <!-- 胶片边框 & 闪光 -->
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">边框 &amp; 闪光</div>
+
+        <!-- 胶片边框 -->
+        <div class="ctrl-label" style="margin-bottom:8px">
+          <span>胶片边框</span>
+        </div>
+        <div class="ts-mode-pills" id="border-pills" role="radiogroup" aria-label="胶片边框样式">
+          <button class="ts-pill active" data-border="none"   aria-pressed="true">无</button>
+          <button class="ts-pill" data-border="thin"          aria-pressed="false">细边框</button>
+          <button class="ts-pill" data-border="sprocket"      aria-pressed="false">齿孔胶片</button>
+        </div>
+
+        <!-- 闪光点开关 -->
+        <div class="ctrl-toggle-row" style="margin-top:12px">
+          <label class="ctrl-toggle-label" for="toggle-flare-chk">闪光点（Huji 风）</label>
+          <label class="toggle-pill" aria-label="闪光点">
+            <input type="checkbox" id="toggle-flare-chk" />
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 时间戳 -->
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">时间戳</div>
+
+        <div class="ctrl-toggle-row">
+          <label class="ctrl-toggle-label" for="toggle-ts-chk">显示日期水印</label>
+          <label class="toggle-pill" aria-label="显示日期水印">
+            <input type="checkbox" id="toggle-ts-chk" checked />
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+
+        <!-- 时间戳样式 -->
+        <div class="ctrl-label" style="margin-bottom:8px;margin-top:12px">
+          <span>水印样式</span>
+        </div>
+        <div class="ts-mode-pills" id="ts-mode-pills" role="radiogroup" aria-label="时间戳样式">
+          <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">经典橙</button>
+          <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">LCD 绿</button>
+          <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">点阵</button>
+          <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">8-bit</button>
+          <button class="ts-pill" data-tsmode="white" aria-pressed="false">纯白</button>
+        </div>
+
+        <input type="date" id="date-input" class="ctrl-date-input"
+               value="2005-10-24" aria-label="水印日期" style="margin-top:10px" />
+      </div>
+
+
+      <!-- 系统信息 -->
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">系统信息</div>
+        <div class="ctrl-info-grid">
+          <div class="ctrl-info-row">
+            <span class="ctrl-info-key">处理引擎</span>
+            <span class="ctrl-info-val gold">Canvas 2D</span>
+          </div>
+          <div class="ctrl-info-row">
+            <span class="ctrl-info-key">隐私模式</span>
+            <span class="ctrl-info-val green">100% 本地</span>
+          </div>
+          <div class="ctrl-info-row">
+            <span class="ctrl-info-key">当前状态</span>
+            <span class="ctrl-info-val green" id="ctrl-status">就绪</span>
+          </div>
+          <div class="ctrl-info-row">
+            <span class="ctrl-info-key">快捷键</span>
+            <span class="ctrl-info-val" style="font-size:0.58rem">← → 对比 · R 重置</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div><!-- /#editor-body -->
+
+  <!-- ③ 导出栏 -->
+  <div id="export-bar" role="toolbar" aria-label="导出工具栏">
+    <div class="export-bar-left">
+      <button class="btn btn-primary" id="btn-export-png" aria-label="导出 PNG 格式">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导出 PNG
+      </button>
+      <button class="btn btn-blue" id="btn-export-jpg" aria-label="导出 JPEG 格式">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导出 JPG
+      </button>
+      <button class="btn btn-green" id="btn-export-all" aria-label="批量下载所有图片" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+        </svg>
+        批量下载
+      </button>
+    </div>
+    <div class="export-bar-right">
+      <span id="export-size-info" style="font-family:var(--mono);font-size:0.6rem;color:var(--text-3)"></span>
+    </div>
+  </div>
+
+</div><!-- /#app-shell -->
+
+<!-- 移动端控制面板抽屉 -->
+<div id="mobile-controls-drawer" role="dialog" aria-label="参数控制面板" aria-modal="true">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <span style="font-family:var(--mono);font-size:0.65rem;color:var(--gold);font-weight:700;letter-spacing:0.15em">参数调节</span>
+    <button id="mobile-controls-close" class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem">关闭</button>
+  </div>
+  <!-- 信号参数（复制） -->
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>强度</span><span class="ctrl-label-val" id="m-val-intensity">80%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-intensity" min="0" max="100" value="80" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>胶片颗粒</span><span class="ctrl-label-val" id="m-val-grain">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-grain" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>色差</span><span class="ctrl-label-val" id="m-val-chroma">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-chroma" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>暗角</span><span class="ctrl-label-val" id="m-val-vignette">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-vignette" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>高光溢出</span><span class="ctrl-label-val" id="m-val-bloom">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-bloom" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>JPEG 压缩块</span><span class="ctrl-label-val" id="m-val-artifacts">30%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-artifacts" min="0" max="100" value="30" />
+  </div>
+  <div style="height:1px;background:var(--border);margin:12px 0"></div>
+  <div class="ctrl-toggle-row">
+    <label class="ctrl-toggle-label">显示日期水印</label>
+    <label class="toggle-pill">
+      <input type="checkbox" id="m-toggle-ts" checked />
+      <span class="toggle-track"></span>
+      <span class="toggle-thumb"></span>
+    </label>
+  </div>
+  <input type="date" id="m-date-input" class="ctrl-date-input" value="2005-10-24" style="margin-top:8px" />
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     内容区（营销页）
+══════════════════════════════════════════════════════════════ -->
+<div id="content-area">
+
+  <!-- 滤镜库 -->
+  <section id="gallery-section" class="section">
+    <div class="section-label">滤镜库</div>
+    <h2 class="section-title">七款相机预设<br>重现千禧年代质感</h2>
+    <div class="section-sep"></div>
+    <p class="section-sub">点击任意滤镜加载到编辑器，每款预设都经过精心调校，还原特定相机型号的 CCD 色彩科学。</p>
+
+    <div class="gallery-grid" id="gallery-grid" role="list" aria-label="滤镜预设展示"></div>
+
+    <div class="stats-grid">
+      <div class="stat-block">
+        <div class="stat-num">07</div>
+        <div class="stat-lbl">相机预设</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">¥0</div>
+        <div class="stat-lbl">使用费用</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">∞</div>
+        <div class="stat-lbl">导出次数</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">0 KB</div>
+        <div class="stat-lbl">上传到服务器</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使用步骤 -->
+  <section id="how-section" class="section">
+    <div class="section-label">使用步骤</div>
+    <h2 class="section-title">三步，完成<br>千禧年时光穿越</h2>
+    <div class="section-sep"></div>
+
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+        </div>
+        <h3>上传图片</h3>
+        <p>拖放或点击上传，支持批量处理多张图片，所有数据完全在您的设备本地处理。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M19.07 4.93A10 10 0 0 0 4.93 19.07"/>
+            <path stroke-linecap="round" d="M4.93 4.93A10 10 0 0 0 19.07 19.07"/>
+          </svg>
+        </div>
+        <h3>选择相机预设</h3>
+        <p>从 Canon IXUS、Sony T7、Kodak C300 等七款经典相机中选择，精细调节颗粒、色差、暗角等参数。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+        </div>
+        <h3>导出保存</h3>
+        <p>一键导出 PNG 或 JPG，无水印，无限制。支持批量下载，直接发布到社交媒体。</p>
+      </div>
+    </div>
+
+    <!-- CCD 引擎分析 -->
+    <div class="ccd-box">
+      <div>
+        <h3><span>›</span> CCD 引擎解析</h3>
+        <p>
+          数码胶片不只是简单叠加滤镜。我们模拟了 2000 年代初 CCD 传感器的<strong>非线性响应曲线</strong>，
+          重建了早期数码相机的信号处理路径，还原其独特的硬件缺陷。
+        </p>
+        <div class="ccd-features">
+          <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 色差算法（Chromatic Aberration）</div>
+          <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 拜尔矩阵去马赛克噪点</div>
+          <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 高光溢出阈值（Bloom）</div>
+          <div class="ccd-feat"><span class="ccd-ok">[OK]</span> ISO 800+ 数字颗粒感</div>
+          <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 暗部 / 亮部分区调色</div>
+          <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 径向镜头暗角衰减</div>
+        </div>
+      </div>
+      <div class="sensor-vis">
+        <div class="sensor-vis-label">SENSOR_READOUT</div>
+        <div class="sensor-vis-mp">8.0 MP</div>
+        <div class="sensor-vis-sub">CCD · 千禧年代</div>
+        <span class="sensor-corner sc-tl"></span>
+        <span class="sensor-corner sc-tr"></span>
+        <span class="sensor-corner sc-bl"></span>
+        <span class="sensor-corner sc-br"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq-section" class="section">
+    <div class="section-label">常见问题</div>
+    <h2 class="section-title">有疑问？</h2>
+    <div class="section-sep"></div>
+    <div class="faq-list" id="faq-list" role="list"></div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer id="site-footer" role="contentinfo">
+    <div class="footer-brand-row">
+      <div class="brand-icon" aria-hidden="true">📷</div>
+      <div>
+        <span class="brand-name">数码胶片 · DigiCamFX</span>
+        <span class="brand-sub">完全离线 · 隐私优先 · 免费使用</span>
+      </div>
+    </div>
+    <nav class="footer-links" aria-label="页脚导航">
+      <a href="#app-shell">编辑器</a>
+      <a href="#gallery-section">滤镜库</a>
+      <a href="#how-section">使用说明</a>
+      <a href="#faq-section">常见问题</a>
+    </nav>
+    <div class="footer-copy">
+      © 2025 数码胶片 · Canvas 2D · 所有处理在本地完成，无任何数据上传
+    </div>
+  </footer>
+
+</div><!-- /#content-area -->
+
+<!-- Modern Toast Notification Container -->
+<style>
+#modern-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(22, 26, 36, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 100000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#modern-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+<div id="modern-toast"></div>
+
+<!-- Scripts -->
+<script src="js/filters.js"></script>
+<script src="js/processor.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
+
