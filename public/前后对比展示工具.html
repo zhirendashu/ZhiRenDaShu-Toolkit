@@ -782,7 +782,7 @@ select:focus, input[type="text"]:focus {
                 gsap.fromTo(state, {splitPos: 0}, {splitPos: 1, duration: dur, ease: "power1.inOut"});
             };
             
-            document.getElementById('export-btn').onclick = () => { const a = document.createElement('a'); a.download = `Comparison-${Date.now()}.jpg`; a.href = cvs.toDataURL('image/jpeg', 0.95); a.click(); };
+            document.getElementById('export-btn').onclick = () => { triggerMobileSave(cvs.toDataURL('image/jpeg', 0.95), `Comparison-${Date.now()}.jpg`); };
             document.getElementById('record-btn').onclick = function() {
                 if(!state.isRecording) { generateAutoVideo(); }
                 else { state.isRecording = false; }
@@ -956,6 +956,121 @@ select:focus, input[type="text"]:focus {
             el.style.width = w; el.style.height = h;
             el.style.transform = r ? `translate(-50%, -50%) rotate(${r}deg)` : 'none';
         }
+
+async function triggerMobileSave(blobOrUrl, defaultFileName) {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let blob = blobOrUrl;
+    if (typeof blobOrUrl === 'string') {
+        if (blobOrUrl.startsWith('data:')) {
+            const res = await fetch(blobOrUrl);
+            blob = await res.blob();
+        } else {
+            try {
+                const res = await fetch(blobOrUrl);
+                blob = await res.blob();
+            } catch (e) {}
+        }
+    }
+    const objectUrl = blob instanceof Blob ? URL.createObjectURL(blob) : blobOrUrl;
+    const finalUrl = typeof blobOrUrl === 'string' && !blobOrUrl.startsWith('data:') ? blobOrUrl : objectUrl;
+
+    if (isMobile && navigator.canShare && navigator.share && blob instanceof Blob) {
+        try {
+            const file = new File([blob], defaultFileName, { type: blob.type || 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: '保存图片',
+                    text: '选择“存储图像”保存到相册'
+                });
+                return;
+            }
+        } catch (e) {
+            console.warn('Share API failed, showing manual save dialog...', e);
+            if (e.name === 'AbortError') return;
+        }
+    }
+
+    if (isMobile) {
+        const existing = document.getElementById('mobile-save-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'mobile-save-overlay';
+        overlay.className = 'mobile-save-overlay';
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            .mobile-save-overlay {
+                position: fixed; inset: 0; z-index: 99999;
+                background: rgba(13, 15, 20, 0.9); backdrop-filter: blur(15px);
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                padding: 20px; animation: fadeInSave 0.3s ease;
+            }
+            .mobile-save-card {
+                background: rgba(30, 35, 51, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 20px; padding: 20px; max-width: 90%; max-height: 85vh;
+                display: flex; flex-direction: column; align-items: center; gap: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: slideUpSave 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .mobile-save-img {
+                max-width: 100%; max-height: 50vh; border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1); object-fit: contain;
+                -webkit-touch-callout: default; pointer-events: auto;
+            }
+            .mobile-save-title {
+                font-size: 1.1rem; font-weight: 600; color: #fff; text-align: center;
+                background: linear-gradient(135deg, #5b8dee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            }
+            .mobile-save-tip {
+                font-size: 0.85rem; color: #94a3b8; text-align: center; line-height: 1.4; padding: 0 10px;
+            }
+            .mobile-save-btn {
+                background: linear-gradient(135deg, #5b8dee, #818cf8); border: none; color: white;
+                padding: 10px 24px; border-radius: 100px; font-size: 0.9rem; font-weight: 600;
+                cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(91, 141, 238, 0.3);
+            }
+            .mobile-save-btn:active { transform: scale(0.95); }
+            @keyframes fadeInSave { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes slideUpSave { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        `;
+        document.head.appendChild(style);
+
+        overlay.innerHTML = `
+            <div class="mobile-save-card">
+                <div class="mobile-save-title">图片保存指南</div>
+                <img class="mobile-save-img" src="${finalUrl}" alt="Generated Image" />
+                <div class="mobile-save-tip">💡 提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
+                <button class="mobile-save-btn">我知道了</button>
+            </div>
+        `;
+
+        overlay.querySelector('.mobile-save-btn').onclick = () => {
+            overlay.remove();
+            if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+        };
+        
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+                if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+            }
+        };
+
+        document.body.appendChild(overlay);
+        return;
+    }
+
+    const a = document.createElement('a');
+    a.href = finalUrl;
+    a.download = defaultFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    if (blob instanceof Blob && objectUrl.startsWith('blob:')) {
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+    }
+}
 
         window.onresize = resizeCanvas;
         resizeCanvas();
