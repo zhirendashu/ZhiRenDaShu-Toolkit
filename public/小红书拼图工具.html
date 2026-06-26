@@ -481,8 +481,8 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 <div class="control-row">
                     <span>预设风格</span>
                     <select id="param-border-preset" style="width: 50%; font-size: 0.8rem;">
-                        <option value="none" selected>无相框 (默认)</option>
-                        <option value="beams">🍊 经典 BEAMS 橙色双线</option>
+                        <option value="none">无相框</option>
+                        <option value="beams" selected>🍊 经典 BEAMS 橙色双线 (默认)</option>
                         <option value="retro-black">🖤 昭和复古黑色双线</option>
                         <option value="vintage-gold">🏆 复古白金/红金双线</option>
                         <option value="minimal-bold">🔳 极简主义单粗线框</option>
@@ -493,9 +493,9 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 <div class="control-row">
                     <span>相框样式</span>
                     <select id="param-border-style" style="width: 50%; font-size: 0.8rem;">
-                        <option value="none" selected>无相框</option>
+                        <option value="none">无相框</option>
                         <option value="single">单层粗边</option>
-                        <option value="double">复古双线 (推荐)</option>
+                        <option value="double" selected>复古双线 (推荐)</option>
                     </select>
                 </div>
                 <div class="control-row">
@@ -504,15 +504,15 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 </div>
                 <div class="control-row">
                     <span>外框厚度 (Outer)</span>
-                    <input type="range" id="param-border-outer" min="4" max="150" value="28" style="width: 50%;">
+                    <input type="range" id="param-border-outer" min="4" max="150" value="48" style="width: 50%;">
                 </div>
                 <div class="control-row" id="row-border-gap">
                     <span>双线间距 (Gap)</span>
-                    <input type="range" id="param-border-gap" min="2" max="100" value="16" style="width: 50%;">
+                    <input type="range" id="param-border-gap" min="2" max="100" value="32" style="width: 50%;">
                 </div>
                 <div class="control-row" id="row-border-inner">
                     <span>内线粗细 (Inner)</span>
-                    <input type="range" id="param-border-inner" min="1" max="30" value="3" style="width: 50%;">
+                    <input type="range" id="param-border-inner" min="1" max="30" value="13" style="width: 50%;">
                 </div>
                 <div class="control-row" id="row-border-overlay">
                     <span>内线叠在图上</span>
@@ -523,7 +523,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 </div>
                 <div class="control-row">
                     <span>线框圆角 (Radius)</span>
-                    <input type="range" id="param-border-radius" min="0" max="200" value="32" style="width: 50%;">
+                    <input type="range" id="param-border-radius" min="0" max="200" value="0" style="width: 50%;">
                 </div>
             </div>
 
@@ -881,7 +881,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
         const BORDER_PRESETS = {
             none: { style: 'none', color: '#ff5a1f', outer: 28, gap: 16, inner: 3, radius: 32, overlay: 'false' },
-            beams: { style: 'double', color: '#ff5a1f', outer: 28, gap: 16, inner: 3, radius: 32, overlay: 'false' },
+            beams: { style: 'double', color: '#ff5a1f', outer: 48, gap: 32, inner: 13, radius: 0, overlay: 'false' },
             'retro-black': { style: 'double', color: '#111111', outer: 24, gap: 14, inner: 3, radius: 24, overlay: 'false' },
             'vintage-gold': { style: 'double', color: '#d4af37', outer: 20, gap: 12, inner: 2, radius: 20, overlay: 'false' },
             'minimal-bold': { style: 'single', color: '#000000', outer: 16, gap: 12, inner: 2, radius: 16, overlay: 'false' },
