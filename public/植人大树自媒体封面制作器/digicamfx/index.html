@@ -8,9 +8,7 @@
   <meta name="theme-color" content="#09090e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="数码胶片" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css" />
+  <meta name="apple-mobile-web-app-title" content="数码胶片" />  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
@@ -192,6 +190,16 @@
                  min="0" max="100" value="80" aria-label="滤镜强度" />
         </div>
 
+        <!-- 色温 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>色温 ❄/☀</span>
+            <span class="ctrl-label-val" id="val-warmth">±0 (自动)</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-warmth"
+                 min="0" max="100" value="50" aria-label="色温冷暖偏移" />
+        </div>
+
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span>胶片颗粒</span>
@@ -255,6 +263,16 @@
           </div>
           <input type="range" class="ctrl-slider" id="slider-imperfections"
                  min="0" max="100" value="30" aria-label="胶片缺陷" />
+        </div>
+
+        <!-- 横条纹·断墨 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>横条纹·断墨</span>
+            <span class="ctrl-label-val" id="val-scanlines">0%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-scanlines"
+                 min="0" max="100" value="0" aria-label="打印机断墨横条纹" />
         </div>
       </div>
 
@@ -545,38 +563,6 @@
 
 </div><!-- /#content-area -->
 
-<!-- Modern Toast Notification Container -->
-<style>
-#modern-toast {
-  position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-20px);
-  background: rgba(22, 26, 36, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  padding: 12px 24px;
-  border-radius: 100px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  z-index: 100000;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-#modern-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-</style>
-<div id="modern-toast"></div>
-
 <!-- Scripts -->
 <script src="js/filters.js"></script>
 <script src="js/processor.js"></script>
@@ -584,4 +570,3 @@
 
 </body>
 </html>
-

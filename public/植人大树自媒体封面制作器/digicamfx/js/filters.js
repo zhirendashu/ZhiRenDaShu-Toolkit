@@ -273,4 +273,23 @@ const FILTERS = [
     }
   },
 
+  // ── ⑥ Olympus μ[mju:] ──────────────────────────────────────────
+  {
+    id: 'olympus_mju',
+    name: 'Olympus μ[mju:]',
+    year: '2002',
+    tag: 'IMG_008',
+    description: '自然胶片层次 · 软对比度 · 谐谐粒粒山有机感',
+    accentColor: '#78716c',
+    params: {
+      brightness: 2,   contrast: 0.95, saturation: 1.05, warmth: 5, tint: 2,
+      shadowTint:    { r: 2,  g: 2,  b: -2  },
+      highlightTint: { r: 6,  g: 5,  b:  0  },
+      baseNoise: 20, baseChromaticAberration: 1.0, baseVignette: 0.40,
+      baseBloom: 0.22, bloomThreshold: 200, baseJpegArtifacts: 0.30,
+      baseLightLeak: 0.12, baseImperfections: 0.22,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
 ];

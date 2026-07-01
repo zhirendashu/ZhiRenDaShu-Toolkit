@@ -8,7 +8,7 @@ class DigiCamProcessor {
    * @param {Object} filterParams   - Camera preset parameters
    * @param {Object} userParams     - { intensity, grain, chroma, vignette, bloom, lightleak, imperfections } 0-100
    * @param {Object} stampParams    - { enabled: bool, date: string, mode: string }
-   * @param {Object} effectParams   - { filmBorder, flashFlare, seed, lut, lutStrength }
+   * @param {Object} effectParams   - { filmBorder, flashFlare, seed }
    * @returns {HTMLCanvasElement}   - Fully processed canvas
    */
   static process(srcImageData, filterParams, userParams, stampParams, effectParams = {}) {
@@ -17,19 +17,7 @@ class DigiCamProcessor {
     let src = srcImageData.data;
     const seed = effectParams.seed || 42;
 
-    // ── PASS 0: Film LUT (applied before CCD grade) ──────────────
-    // Apply to a copy so we don't mutate the original
-    let workData;
-    if (effectParams.lut) {
-      const copy = new ImageData(
-        new Uint8ClampedArray(srcImageData.data),
-        w, h
-      );
-      lutEngine.apply(copy, effectParams.lut, effectParams.lutStrength ?? 1.0);
-      workData = copy.data;
-    } else {
-      workData = src;
-    }
+    const workData = src;
 
     // Normalize user params to multipliers
     const intensity      = userParams.intensity / 100;
@@ -39,12 +27,14 @@ class DigiCamProcessor {
     const bloomMult      = (userParams.bloom         / 50);
     const lightLeakMult  = ((userParams.lightleak      ?? 50) / 50);
     const imperfectMult  = ((userParams.imperfections  ?? 30) / 50);
+    // 用户色温偏移：-100~+100 映射到 -20~+20（叠加到预设 warmth 上）
+    const userWarmthOffset = ((userParams.warmth ?? 0) - 50) / 50 * 20;
 
     // Effective filter parameters scaled by intensity
     const brightness = filterParams.brightness * intensity;
     const contrast   = 1 + (filterParams.contrast - 1) * intensity;
     const saturation = 1 + (filterParams.saturation - 1) * intensity;
-    const warmth     = filterParams.warmth * intensity;
+    const warmth     = filterParams.warmth * intensity + userWarmthOffset;
     const tint       = (filterParams.tint || 0) * intensity;
     const noise      = filterParams.baseNoise * grainMult * intensity;
     const shadowR    = filterParams.shadowTint.r * intensity;
@@ -182,6 +172,18 @@ class DigiCamProcessor {
       ctx.fillRect(0, 0, w, h);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ── PASS 5.7: Print Banding (断墨横条纹) ────────────────────────────
+    const bandingStr = (userParams.scanlines ?? 0) / 100 * intensity;
+    if (bandingStr > 0.005) {
+      DigiCamProcessor._printBanding(ctx, w, h, bandingStr, seed);
+    }
+
+    // ── PASS 5.8: CRT Scanlines (屏幕扫描线) ──────────────────────────
+    const crtStr = (userParams.crtlines ?? 0) / 100;
+    if (crtStr > 0.005) {
+      DigiCamProcessor._crtScanlines(ctx, w, h, crtStr);
     }
 
     // ── PASS 6: Film Border (last — frames everything) ────────────
@@ -764,5 +766,116 @@ class DigiCamProcessor {
       img.src = dataUrl;
     });
   }
-}
 
+  // ── Print Banding \u2014 \u65ad\u58a8\u6a2a\u6761\u7eb9\uff08\u6253\u5370\u673a\u65ad\u58a8\u6548\u679c\uff09 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u6a21\u62df\u5566\u5e72\u5f0f/\u5496\u5561\u673a\u68b0\u5e08/\u5c0f\u5236\u5265\u673a\u65ad\u58a8\uff1a\u4e0d\u89c4\u5219\u95f4\u8ddd\u7684\u6a2a\u5411\u6bb5\u843d\u53d8\u6697\uff0c\u9a54\u9a7e\u771f\u5b9e\u624b\u611f\u3002
+  static _printBanding(ctx, w, h, strength, seed) {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const px = imgData.data;
+
+    // \u4f2a\u968f\u673a\u751f\u6210\u5668\uff08\u57fa\u4e8e seed\uff0c\u786e\u4fdd\u540c\u4e00\u5f20\u56fe\u6bcf\u6b21\u5904\u7406\u7ed3\u679c\u76f8\u540c\uff09
+    let rng = seed ^ 0xdeadbeef;
+    const rand = () => {
+      rng = (rng * 1664525 + 1013904223) & 0xffffffff;
+      return (rng >>> 0) / 0xffffffff;
+    };
+
+    // \u6839\u636e\u5f3a\u5ea6\u8ba1\u7b97\u6761\u7eb9\u53c2\u6570
+    const maxDark   = Math.min(0.88, strength * 1.4);   // \u6700\u5927\u53d8\u6697\u5e45\u5ea6
+    const bandFreq  = Math.max(3, Math.round(4 + (1 - strength) * 20)); // \u4e0d\u89c4\u5219\u6761\u7eb9\u57fa\u51c6\u95f4\u8ddd
+
+    // \u9884\u751f\u6210\u6bcf\u884c\u7684\u66b4\u6f0f\u7cfb\u6570\u8868\uff08\u907f\u514d\u5faa\u73af\u5185\u91cd\u590d\u8ba1\u7b97\uff09
+    const rowDark = new Float32Array(h);
+    let   rowIdx  = 0;
+    while (rowIdx < h) {
+      // \u4e0d\u89c4\u5219\u8df3\u8fdc\uff1a\u4e0b\u4e00\u6761\u66b4\u6f0f\u5e26\u51fa\u73b0\u5728\u968f\u673a\u4f4d\u7f6e
+      const skip  = Math.round(bandFreq * (0.5 + rand() * 1.2));
+      rowIdx += skip;
+      if (rowIdx >= h) break;
+
+      // \u66b4\u6f0f\u5e26\u5bbd\u5ea6\uff1a1\u20134\u884c
+      const bw    = Math.round(1 + rand() * 3);
+      // \u66b4\u6f0f\u5e26\u6df1\u5ea6\uff1a\u8f7b\u5ea6\u968f\u673a\u5316\uff0c\u8ba9\u5f3a\u5ea6\u53c2\u6570\u5c45\u4e3b\u5bfc
+      const dark  = maxDark * (0.35 + rand() * 0.65);
+
+      for (let by = 0; by < bw && rowIdx + by < h; by++) {
+        rowDark[rowIdx + by] = dark;
+      }
+      rowIdx += bw;
+    }
+
+    // \u5e94\u7528\u5230\u50cf\u7d20\u6570\u636e\uff1a\u6bcf\u884c\u5199\u5165\u53d8\u6697\u7cfb\u6570
+    for (let y = 0; y < h; y++) {
+      const d = rowDark[y];
+      if (d < 0.001) continue;
+      const mul = 1 - d;
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        px[i]     = Math.round(px[i]     * mul);
+        px[i + 1] = Math.round(px[i + 1] * mul);
+        px[i + 2] = Math.round(px[i + 2] * mul);
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    // \u53e0\u52a0\u4e00\u5c42\u6a2a\u5411\u8fd0\u52a8\u6a21\u7cca\uff0c\u8ba9\u6761\u7eb9\u8fb9\u7f18\u6709\u8f7b\u5fae\u6e17\u5f00\u5c42\uff08\u66f4\u771f\u5b9e\uff09
+    if (strength > 0.12) {
+      const fadeCanvas = document.createElement('canvas');
+      fadeCanvas.width  = w;
+      fadeCanvas.height = h;
+      const fCtx = fadeCanvas.getContext('2d');
+
+      // \u518d\u6b21\u904d\u5386 rowDark\uff0c\u7ed8\u5236\u6a2a\u7ebf\u53e0\u5c42\uff08\u4f7f\u7528 rgba \u900f\u660e\u5ea6\u590d\u73b0\u56e0\u78a8\u76f8\u673a\u611f\u5149\u7247\u5354\u5185\u5bfc\u81f4\u7684\u5fae\u5149\u6a2a\u7eb9\uff09
+      for (let y = 0; y < h; y++) {
+        const d = rowDark[y];
+        if (d < 0.05) continue;
+        // \u6761\u7eb9\u8fb9\u7f18\u8f7b\u5fae\u80fd\u9009\u62e9\u6027\u66dd\u5149\u8fc7\u5ea6
+        fCtx.fillStyle = `rgba(255,255,255,${(d * 0.08).toFixed(3)})`;
+        fCtx.fillRect(0, y, w, 1);
+      }
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 0.18;
+      ctx.drawImage(fadeCanvas, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  // ── CRT Scanlines — CRT屏幕扫描线效果 ───────────────────────────────
+  // 均匀細密的半透明水平线条，模拟 CRT 显示器或早期数码相机 LCD屏刷新线质感。
+  static _crtScanlines(ctx, w, h, strength) {
+    // strength: 0–1
+    // 每 2px 一条暗线（经典 CRT 间距）
+    const lineAlpha   = Math.min(0.75, strength * 0.85);   // 暗线透明度
+    const brightAlpha = Math.min(0.12, strength * 0.10);   // 亮行微亮化（屏光感）
+
+    // 层 1：每隔一行归暗（multiply 保留颜色）
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgba(0,0,0,${lineAlpha.toFixed(3)})`;
+    for (let y = 0; y < h; y += 2) {
+      ctx.fillRect(0, y, w, 1);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 层 2：亮行微亮（screen 叠加微光），增强屏幕感
+    if (brightAlpha > 0.008) {
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = `rgba(180,220,255,${brightAlpha.toFixed(3)})`;
+      for (let y = 1; y < h; y += 2) {
+        ctx.fillRect(0, y, w, 1);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // 层 3：整体蒙上极淡蓝绿色调触发 LCD 屏幕的冷色偏移（属于微微突出操作，可选）
+    if (strength > 0.3) {
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = (strength - 0.3) * 0.06;
+      ctx.fillStyle = '#001820';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+}

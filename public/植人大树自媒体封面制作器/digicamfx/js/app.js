@@ -12,34 +12,6 @@
 'use strict';
 
 // ═══════════════════════════════════════════════════════════════
-//  Toast 提示与 Alert 覆盖
-// ═══════════════════════════════════════════════════════════════
-window.showToast = function(msg, type = "info") {
-  const toast = document.getElementById('modern-toast');
-  if (!toast) return;
-  const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
-  toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
-  toast.classList.add("show");
-  if (window._toastTimer) clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
-};
-window.alert = function(msg) {
-  window.showToast(msg, 'error');
-};
-
-// 默认滑块参数常量
-const DEFAULTS = {
-  intensity: 80,
-  grain:     50,
-  chroma:    50,
-  vignette:  50,
-  bloom:     50,
-  artifacts: 30,
-  lightleak:      50,
-  imperfections:  30,
-};
-
-// ═══════════════════════════════════════════════════════════════
 //  全局状态（移植时可替换为 Zustand / Redux）
 // ═══════════════════════════════════════════════════════════════
 const State = (() => {
@@ -64,7 +36,19 @@ const State = (() => {
     draggingHandle: false,
 
     // 处理参数
-    params: { ...DEFAULTS },
+    params: {
+      intensity: 80,
+      grain:     50,
+      chroma:    50,
+      vignette:  50,
+      bloom:     50,
+      artifacts: 30,
+      lightleak:      50,
+      imperfections:  30,
+      scanlines:       0,
+      crtlines:        0,
+      warmth:         50,   // 50 = 跟随预设，<50 加冷，>50 加暖
+    },
 
     // 时间戳
     timestampOn:   true,
@@ -131,7 +115,6 @@ function init() {
   bindButtons();
   bindKeyboard();
   bindMobileControls();
-  registerServiceWorker();
 
   const ro = new ResizeObserver(() => {
     if (State.get().processedCanvas) renderCompare();
@@ -710,14 +693,43 @@ function bindViewToggle() {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  胶片边框 & 闪光点效果
+// ══════════════════════════════════════════════════════════════
+function bindFilmEffects() {
+  // 胶片边框选择
+  document.querySelectorAll('#border-pills .ts-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const border = pill.dataset.border;
+      State.patch('filmBorder', border);
+      document.querySelectorAll('#border-pills .ts-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.border === border);
+        p.setAttribute('aria-pressed', p.dataset.border === border ? 'true' : 'false');
+      });
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  });
+
+  // 闪光点（Huji 风）开关
+  const flareChk = $('toggle-flare-chk');
+  if (flareChk) {
+    flareChk.addEventListener('change', () => {
+      State.patch('flashFlare', flareChk.checked);
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 //  时间戳样式选择
 // ══════════════════════════════════════════════════════════════
 function bindTimestampMode() {
-  document.querySelectorAll('.ts-pill').forEach(pill => {
+  // 仅处理带有 data-tsmode 的 pill，避免胶片边框 pills 混入
+  document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const mode = pill.dataset.tsmode;
+      if (!mode) return;
       State.patch('tsMode', mode);
-      document.querySelectorAll('.ts-pill').forEach(p => {
+      document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(p => {
         p.classList.toggle('active', p.dataset.tsmode === mode);
         p.setAttribute('aria-pressed', p.dataset.tsmode === mode ? 'true' : 'false');
       });
@@ -729,18 +741,6 @@ function bindTimestampMode() {
 // ═══════════════════════════════════════════════════════════════
 //  滑块
 // ═══════════════════════════════════════════════════════════════
-// 参数名中文映射
-const PARAM_NAMES = {
-  intensity: '处理强度',
-  grain: '胶片颗粒',
-  chroma: '色差',
-  vignette: '暗角',
-  bloom: '高光溢出',
-  artifacts: 'JPEG压缩块',
-  lightleak: '漏光强度',
-  imperfections: '划痕尘点',
-};
-
 function bindSliders() {
   const pairs = [
     ['intensity',      'slider-intensity',      'val-intensity'],
@@ -751,6 +751,9 @@ function bindSliders() {
     ['artifacts',      'slider-artifacts',      'val-artifacts'],
     ['lightleak',      'slider-lightleak',      'val-lightleak'],
     ['imperfections',  'slider-imperfections',  'val-imperfections'],
+    ['scanlines',      'slider-scanlines',      'val-scanlines'],
+    ['crtlines',       'slider-crtlines',       'val-crtlines'],
+    ['warmth',         'slider-warmth',         'val-warmth'],
   ];
   // 桌面版
   pairs.forEach(([key, sliderId, valId]) => {
@@ -758,7 +761,6 @@ function bindSliders() {
     slider.value = State.get().params[key];
     valEl.textContent = slider.value + '%';
     updateSliderTrack(slider);
-    
     slider.addEventListener('input', () => {
       const v = parseInt(slider.value);
       valEl.textContent = v + '%';
@@ -769,20 +771,6 @@ function bindSliders() {
       if (ms) { ms.value = v; $('m-val-' + key).textContent = v + '%'; updateSliderTrack(ms); }
       if (State.get().srcImageData) scheduleProcess();
     });
-
-    // 双击重置
-    slider.addEventListener('dblclick', () => {
-      const v = DEFAULTS[key];
-      slider.value = v;
-      valEl.textContent = v + '%';
-      State.get().params[key] = v;
-      updateSliderTrack(slider);
-      // 同步移动端滑块
-      const ms = $('m-slider-' + key);
-      if (ms) { ms.value = v; $('m-val-' + key).textContent = v + '%'; updateSliderTrack(ms); }
-      if (State.get().srcImageData) scheduleProcess();
-      window.showToast(`${PARAM_NAMES[key]} 已重置`, "success");
-    });
   });
 
   // 移动端版（同步）
@@ -792,7 +780,6 @@ function bindSliders() {
     ms.value = State.get().params[key];
     mv.textContent = ms.value + '%';
     updateSliderTrack(ms);
-    
     ms.addEventListener('input', () => {
       const v = parseInt(ms.value);
       mv.textContent = v + '%';
@@ -803,19 +790,26 @@ function bindSliders() {
       if (ds) { ds.value = v; $('val-' + key).textContent = v + '%'; updateSliderTrack(ds); }
       if (State.get().srcImageData) scheduleProcess();
     });
+  });
 
-    // 双击重置
-    ms.addEventListener('dblclick', () => {
-      const v = DEFAULTS[key];
-      ms.value = v;
-      mv.textContent = v + '%';
-      State.get().params[key] = v;
-      updateSliderTrack(ms);
-      // 同步桌面滑块
-      const ds = $('slider-' + key);
-      if (ds) { ds.value = v; $('val-' + key).textContent = v + '%'; updateSliderTrack(ds); }
+  // \u8272\u6e29\u6ed1\u5757\u7279\u6b8a\u663e\u793a\uff1a50\u2192\u00b10\uff0c<50\u2192\u51b7\uff0c>50\u2192\u6696
+  const warmthFmt = v => {
+    const off = v - 50;
+    if (off === 0) return '\u00b10 (\u81ea\u52a8)';
+    return (off > 0 ? '\u6696 +' : '\u51b7 ') + (off > 0 ? off : Math.abs(off));
+  };
+  ['slider-warmth', 'm-slider-warmth'].forEach(sid => {
+    const sl = $(sid); if (!sl) return;
+    const vl = $(sid.replace('slider-', 'val-')); if (!vl) return;
+    vl.textContent = warmthFmt(parseInt(sl.value));
+    sl.addEventListener('input', () => {
+      const v = parseInt(sl.value);
+      vl.textContent = warmthFmt(v);
+      State.get().params.warmth = v;
+      updateSliderTrack(sl);
+      const other = $(sid === 'slider-warmth' ? 'm-slider-warmth' : 'slider-warmth');
+      if (other) { other.value = v; const ov=$(other.id.replace('slider-','val-')); if(ov) ov.textContent=warmthFmt(v); updateSliderTrack(other); }
       if (State.get().srcImageData) scheduleProcess();
-      window.showToast(`${PARAM_NAMES[key]} 已重置`, "success");
     });
   });
 }
@@ -864,26 +858,26 @@ function bindButtons() {
 }
 
 function resetParams() {
-  State.get().params = { ...DEFAULTS };
-  ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections'].forEach(k => {
+  const defaults = {
+    intensity: 80, grain: 50, chroma: 50,
+    vignette: 50, bloom: 50, artifacts: 30,
+    lightleak: 50, imperfections: 30, scanlines: 0, crtlines: 0, warmth: 50,
+  };
+  State.get().params = { ...defaults };
+  ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections','scanlines','crtlines','warmth'].forEach(k => {
     const sl = $('slider-' + k), vl = $('val-' + k);
-    if (sl) { sl.value = DEFAULTS[k]; vl.textContent = DEFAULTS[k] + '%'; updateSliderTrack(sl); }
+    if (sl) { sl.value = defaults[k]; vl.textContent = defaults[k] + '%'; updateSliderTrack(sl); }
     const ms = $('m-slider-' + k), mv = $('m-val-' + k);
-    if (ms) { ms.value = DEFAULTS[k]; mv.textContent = DEFAULTS[k] + '%'; updateSliderTrack(ms); }
+    if (ms) { ms.value = defaults[k]; mv.textContent = defaults[k] + '%'; updateSliderTrack(ms); }
   });
   if (State.get().srcImageData) processAndRender();
-  window.showToast("所有参数已重置为默认值", "success");
 }
 
 function exportCurrent(fmt) {
   const { processedCanvas, imageName, filterId } = State.get();
-  if (!processedCanvas) {
-    window.showToast("请先上传需要处理的图片", "error");
-    return;
-  }
+  if (!processedCanvas) return;
   const base = (imageName || 'photo').replace(/\.[^.]+$/, '');
   downloadCanvas(processedCanvas, `digicamfx_${base}_${filterId}.${fmt}`, fmt);
-  window.showToast(`图片已成功导出 (${fmt.toUpperCase()})`, "success");
 }
 
 async function exportAll() {
@@ -891,7 +885,6 @@ async function exportAll() {
   if (!items.length) { exportCurrent('jpg'); return; }
   const btn = $('btn-export-all');
   btn.textContent = '处理中…'; btn.disabled = true;
-  window.showToast(`正在批量处理并下载 ${items.length} 张图片，请稍后...`, "info");
   for (let i = 0; i < items.length; i++) {
     await loadBatchAt(i);
     await new Promise(r => setTimeout(r, 80));
@@ -901,131 +894,20 @@ async function exportAll() {
   }
   btn.textContent = '批量下载'; btn.disabled = false;
   setStatus('批量完成');
-  window.showToast(`批量下载已完成，共 ${items.length} 张图片！`, "success");
-}
-
-async function triggerMobileSave(blobOrUrl, defaultFileName) {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  let blob = blobOrUrl;
-  if (typeof blobOrUrl === 'string') {
-    if (blobOrUrl.startsWith('data:')) {
-      const res = await fetch(blobOrUrl);
-      blob = await res.blob();
-    } else {
-      try {
-        const res = await fetch(blobOrUrl);
-        blob = await res.blob();
-      } catch (e) {}
-    }
-  }
-  const objectUrl = blob instanceof Blob ? URL.createObjectURL(blob) : blobOrUrl;
-  const finalUrl = typeof blobOrUrl === 'string' && !blobOrUrl.startsWith('data:') ? blobOrUrl : objectUrl;
-
-  if (isMobile && navigator.canShare && navigator.share && blob instanceof Blob) {
-    try {
-      const file = new File([blob], defaultFileName, { type: blob.type || 'image/png' });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: '保存图片',
-          text: '选择“存储图像”保存到相册'
-        });
-        return;
-      }
-    } catch (e) {
-      console.warn('Share API failed, showing manual save dialog...', e);
-      if (e.name === 'AbortError') return;
-    }
-  }
-
-  if (isMobile) {
-    const existing = document.getElementById('mobile-save-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'mobile-save-overlay';
-    overlay.className = 'mobile-save-overlay';
-    
-    const style = document.createElement('style');
-    style.textContent = `
-      .mobile-save-overlay {
-        position: fixed; inset: 0; z-index: 99999;
-        background: rgba(13, 15, 20, 0.9); backdrop-filter: blur(15px);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        padding: 20px; animation: fadeInSave 0.3s ease;
-      }
-      .mobile-save-card {
-        background: rgba(30, 35, 51, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px; padding: 20px; max-width: 90%; max-height: 85vh;
-        display: flex; flex-direction: column; align-items: center; gap: 15px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: slideUpSave 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      }
-      .mobile-save-img {
-        max-width: 100%; max-height: 50vh; border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1); object-fit: contain;
-        -webkit-touch-callout: default; pointer-events: auto;
-      }
-      .mobile-save-title {
-        font-size: 1.1rem; font-weight: 600; color: #fff; text-align: center;
-        background: linear-gradient(135deg, #5b8dee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      }
-      .mobile-save-tip {
-        font-size: 0.85rem; color: #94a3b8; text-align: center; line-height: 1.4; padding: 0 10px;
-      }
-      .mobile-save-btn {
-        background: linear-gradient(135deg, #5b8dee, #818cf8); border: none; color: white;
-        padding: 10px 24px; border-radius: 100px; font-size: 0.9rem; font-weight: 600;
-        cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(91, 141, 238, 0.3);
-      }
-      .mobile-save-btn:active { transform: scale(0.95); }
-      @keyframes fadeInSave { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes slideUpSave { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    `;
-    document.head.appendChild(style);
-
-    overlay.innerHTML = `
-      <div class="mobile-save-card">
-        <div class="mobile-save-title">图片保存指南</div>
-        <img class="mobile-save-img" src="${finalUrl}" alt="Generated Image" />
-        <div class="mobile-save-tip">💡 提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
-        <button class="mobile-save-btn">我知道了</button>
-      </div>
-    `;
-
-    overlay.querySelector('.mobile-save-btn').onclick = () => {
-      overlay.remove();
-      if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
-    };
-    
-    overlay.onclick = (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-        if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
-      }
-    };
-
-    document.body.appendChild(overlay);
-    return;
-  }
-
-  const a = document.createElement('a');
-  a.href = finalUrl;
-  a.download = defaultFileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  if (blob instanceof Blob && objectUrl.startsWith('blob:')) {
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-  }
 }
 
 function downloadCanvas(canvas, name, fmt) {
+  const a = document.createElement('a');
+  a.download = name;
   if (fmt === 'png') {
     canvas.toBlob(blob => {
-      triggerMobileSave(blob, name);
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     }, 'image/png');
   } else {
-    triggerMobileSave(canvas.toDataURL('image/jpeg', 0.92), name);
+    a.href = canvas.toDataURL('image/jpeg', 0.92);
+    a.click();
   }
 }
 
@@ -1093,139 +975,6 @@ function setStatus(msg) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  PWA Service Worker
-// ═══════════════════════════════════════════════════════════════
-function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  LUT 芯片渲染
-// ═══════════════════════════════════════════════════════════════
-function renderLUTChips() {
-  const container = $('lut-chips');
-  if (!container) return;
-  container.innerHTML = '';
-
-  LUT_PRESETS.forEach(preset => {
-    const chip = el('button', {
-      class: 'lut-chip' + (preset.id === State.get().lutId ? ' active' : ''),
-      'data-lutid': preset.id,
-      role: 'option',
-      'aria-selected': preset.id === State.get().lutId ? 'true' : 'false',
-      title: preset.desc,
-    });
-    const dot  = el('span', { class: 'lut-chip-dot', style: `background:${preset.color}` });
-    const info = el('div', { class: 'lut-chip-info' });
-    info.append(
-      el('span', { class: 'lut-chip-name' }, [preset.name]),
-      el('span', { class: 'lut-chip-tag'  }, [preset.tag]),
-    );
-    chip.append(dot, info);
-    chip.addEventListener('click', () => selectLUT(preset.id));
-    container.appendChild(chip);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  胶片边框 & 闪光绑定
-// ═══════════════════════════════════════════════════════════════
-function bindFilmEffects() {
-  // ── 胶片边框 pills ──────────────────────────────────────────
-  document.querySelectorAll('#border-pills .ts-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const border = pill.dataset.border;
-      State.patch('filmBorder', border);
-      document.querySelectorAll('#border-pills .ts-pill').forEach(p => {
-        p.classList.toggle('active', p.dataset.border === border);
-        p.setAttribute('aria-pressed', p.dataset.border === border ? 'true' : 'false');
-      });
-      if (State.get().srcImageData) scheduleProcess();
-    });
-  });
-
-  // ── 闪光点开关 ────────────────────────────────────────────
-  const flareChk = $('toggle-flare-chk');
-  if (flareChk) {
-    flareChk.checked = State.get().flashFlare;
-    flareChk.addEventListener('change', () => {
-      State.patch('flashFlare', flareChk.checked);
-      if (State.get().srcImageData) scheduleProcess();
-    });
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  LUT 选择 & 强度滑块绑定
-// ═══════════════════════════════════════════════════════════════
-function bindLUT() {
-  // 强度滑块
-  const strengthSlider = $('slider-lut-strength');
-  const strengthVal    = $('val-lut-strength');
-  if (strengthSlider) {
-    strengthSlider.value = State.get().lutStrength;
-    if (strengthVal) strengthVal.textContent = State.get().lutStrength + '%';
-    updateSliderTrack(strengthSlider);
-    strengthSlider.addEventListener('input', () => {
-      const v = parseInt(strengthSlider.value);
-      if (strengthVal) strengthVal.textContent = v + '%';
-      State.patch('lutStrength', v);
-      updateSliderTrack(strengthSlider);
-      if (State.get().srcImageData && State.get().lutId !== 'none') scheduleProcess();
-    });
-  }
-}
-
-async function selectLUT(id) {
-  // 更新 chip 高亮
-  document.querySelectorAll('.lut-chip').forEach(c => {
-    const active = c.dataset.lutid === id;
-    c.classList.toggle('active', active);
-    c.setAttribute('aria-selected', active ? 'true' : 'false');
-  });
-
-  State.patch('lutId', id);
-
-  const preset = LUT_PRESETS.find(p => p.id === id);
-  if (!preset || !preset.file) {
-    // 关闭 LUT
-    State.set({ loadedLUT: null });
-    $('lut-strength-row').style.display = 'none';
-    $('lut-status').style.display       = 'none';
-    if (State.get().srcImageData) scheduleProcess();
-    return;
-  }
-
-  // 显示强度滑块 & 加载状态
-  $('lut-strength-row').style.display = '';
-  $('lut-status').style.display       = '';
-  $('lut-status-dot').className       = 'lut-status-dot loading';
-  $('lut-status-text').textContent    = `加载 ${preset.name}…`;
-
-  try {
-    const lut = await lutEngine.load(preset.file);
-    if (lut) {
-      State.patch('loadedLUT', lut);
-      $('lut-status-dot').className    = 'lut-status-dot ready';
-      $('lut-status-text').textContent = `${preset.name} · ${lut.size}³ LUT`;
-    } else {
-      throw new Error('load failed');
-    }
-  } catch (e) {
-    State.patch('loadedLUT', null);
-    $('lut-status-dot').className    = 'lut-status-dot error';
-    $('lut-status-text').textContent = '加载失败，请重试';
-    console.warn('[LUT]', e);
-    return;
-  }
-
-  if (State.get().srcImageData) scheduleProcess();
-}
-
-// ═══════════════════════════════════════════════════════════════
 //  启动
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init);
-
