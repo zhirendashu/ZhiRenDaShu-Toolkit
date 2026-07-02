@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -6,7 +6,9 @@
   <title>数码胶片 · DigiCamFX — 千禧年 CCD 相机模拟器</title>
   <meta name="description" content="在浏览器中还原 2000 年代数码相机的真实质感。CCD 色差、胶片颗粒、高光溢出，完全离线，隐私优先。" />
   <meta name="theme-color" content="#09090e" />
-  <style>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="数码胶片" />  <style>
 /* ═══════════════════════════════════════════════════════════════════
    数码胶片 DigiCamFX — Design System v2
    全新设计语言：暗室金 · 极简专业 · 移动优先
@@ -378,9 +380,7 @@ input, select { font: inherit; }
 #compare-container {
   flex: 1; min-height: 0;
   position: relative;
-  background-color: #080a0f !important;
-  background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
+  background: #050508;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1055,7 +1055,79 @@ input, select { font: inherit; }
   color: var(--gold-light);
 }
 
+/* ── LUT 胶片色彩芯片网格 ───────────────────────────────── */
+.lut-chip-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+.lut-chip-grid::-webkit-scrollbar { width: 3px; }
+.lut-chip-grid::-webkit-scrollbar-track { background: transparent; }
+.lut-chip-grid::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
 
+.lut-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  cursor: pointer; text-align: left;
+  transition: all var(--dur) var(--ease);
+  min-height: 0;
+}
+.lut-chip:hover {
+  border-color: var(--border-2);
+  background: var(--bg-4);
+}
+.lut-chip.active {
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+}
+.lut-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.lut-chip-info {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1; min-width: 0;
+}
+.lut-chip-name {
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--text-1); line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1;
+}
+.lut-chip.active .lut-chip-name { color: var(--gold-light); }
+.lut-chip-tag {
+  font-family: var(--mono); font-size: 0.54rem;
+  color: var(--text-3); letter-spacing: 0.08em;
+  flex-shrink: 0;
+  background: var(--bg-4); padding: 1px 4px;
+  border-radius: 3px; border: 1px solid var(--border);
+}
+
+/* LUT 状态栏 */
+.lut-status-bar {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px; padding: 5px 8px;
+  border-radius: var(--r); background: var(--bg-3);
+  font-family: var(--mono); font-size: 0.62rem; color: var(--text-2);
+}
+.lut-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--text-3);
+}
+.lut-status-dot.loading {
+  background: #f59e0b;
+  animation: lut-pulse 0.8s ease-in-out infinite alternate;
+}
+.lut-status-dot.ready   { background: #22c55e; }
+.lut-status-dot.error   { background: #ef4444; }
+@keyframes lut-pulse { from { opacity: 0.3; } to { opacity: 1; } }
 
 /* ── 背景装饰 */
 #bg-grad {
@@ -1064,70 +1136,6 @@ input, select { font: inherit; }
               radial-gradient(ellipse 40% 30% at 90% 100%, rgba(94,174,255,0.03) 0%, transparent 60%);
 }
 
-  
-
-
-
-/* ==================== Unified Canvas & Workspace Design System ==================== */
-/* 1. Workspace Backdrop: Slate navy (#080a0f) + Center Radial Glow + Inner Shadow */
-.preview-area, #main-preview-box, .canvas-container-wrap, .preview-pane, .canvas-area, #compare-container {
-    background-color: #080a0f !important;
-    background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
-}
-
-/* 2. Artboard / Canvas Card: Elegant 24px Drop Shadow + Subtle 1px White Border */
-#main-canvas, #canvas, .canvas-box, .canvas-container, #ratio-frame, #canvas-container, #display-canvas, .stage {
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
-}
-
-/* 3. Transparent Checkerboard Pattern (Only inside the artboards of tools that support transparency) */
-#main-canvas, .canvas-box, #ratio-frame, #canvas-container {
-    background-image: repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0% 25%, transparent 0% 50%) !important;
-    background-size: 20px 20px !important;
-    background-color: #11131a !important;
-}
-
-/* 4. Unified Drag-and-Drop Zones: Dotted Indigo Border + Translucent Indigo Background + Micro Glow on Hover */
-#inner-drop-zone, #drop-zone, #upload-zone, .upload-zone {
-    border: 2px dashed rgba(99, 102, 241, 0.28) !important;
-    background: rgba(99, 102, 241, 0.03) !important;
-    transition: all 0.3s ease !important;
-}
-#inner-drop-zone:hover, #inner-drop-zone.dragover,
-#drop-zone:hover, #drop-zone.dragover,
-#upload-zone:hover, #upload-zone.drag-over,
-.upload-zone:hover, .upload-zone.drag-over {
-    border-color: #6366f1 !important;
-    background: rgba(99, 102, 241, 0.08) !important;
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) !important;
-}
-
-/* 色彩实验室专属高亮对齐 */
-:root {
-    --accent: #fbbf24 !important;
-}
-.badge-pill, .header-badge {
-    background: rgba(251, 191, 36, 0.15) !important;
-    border: 1px solid rgba(251, 191, 36, 0.3) !important;
-    color: #fef08a !important;
-}
-input[type="range"] {
-    accent-color: #fbbf24 !important;
-}
-.btn-primary, .start-btn, #export-btn, .toolbar-btn.gold {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
-    box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4) !important;
-    color: #000 !important;
-}
-.btn-primary:hover, .start-btn:hover, #export-btn:hover, .toolbar-btn.gold:hover {
-    box-shadow: 0 8px 28px rgba(251, 191, 36, 0.6) !important;
-    color: #000 !important;
-}
-select:focus, input[type="text"]:focus {
-    border-color: #fbbf24 !important;
-    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2) !important;
-}
 </style>
 </head>
 <body>
@@ -1183,7 +1191,7 @@ select:focus, input[type="text"]:focus {
       <div class="camera-list" id="camera-list" role="radiogroup"
            aria-label="选择滤镜预设"></div>
       <div class="sidebar-hint">
-        按键盘 <kbd>1</kbd>–<kbd>9</kbd> 快速切换
+        按键盘 <kbd>1</kbd>–<kbd>7</kbd> 快速切换
       </div>
     </aside>
 
@@ -1269,7 +1277,7 @@ select:focus, input[type="text"]:focus {
           <span class="compare-label compare-label-right" aria-hidden="true" style="display:none">处理后</span>
         </div>
 
-        <!-- 并排对比容器 -->
+        <!-- 并排对比容器（并排模式时显示） -->
         <div id="compare-sidebyside" aria-label="原图与处理后并排对比" style="display:none">
           <div class="sbs-panel">
             <canvas id="canvas-orig-sbs"></canvas>
@@ -1302,48 +1310,115 @@ select:focus, input[type="text"]:focus {
         <div class="ctrl-section-title">信号参数</div>
 
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>强度</span><span class="ctrl-label-val" id="val-intensity">80%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-intensity" min="0" max="100" value="80" aria-label="滤镜强度" />
+          <div class="ctrl-label">
+            <span>强度</span>
+            <span class="ctrl-label-val" id="val-intensity">80%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-intensity"
+                 min="0" max="100" value="80" aria-label="滤镜强度" />
         </div>
+
+        <!-- 色温 -->
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>胶片颗粒</span><span class="ctrl-label-val" id="val-grain">50%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-grain" min="0" max="100" value="50" aria-label="颗粒强度" />
+          <div class="ctrl-label">
+            <span>色温 ❄/☀</span>
+            <span class="ctrl-label-val" id="val-warmth">±0 (自动)</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-warmth"
+                 min="0" max="100" value="50" aria-label="色温冷暖偏移" />
         </div>
+
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>色差</span><span class="ctrl-label-val" id="val-chroma">50%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-chroma" min="0" max="100" value="50" aria-label="色差强度" />
+          <div class="ctrl-label">
+            <span>胶片颗粒</span>
+            <span class="ctrl-label-val" id="val-grain">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-grain"
+                 min="0" max="100" value="50" aria-label="颗粒强度" />
         </div>
+
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>暗角</span><span class="ctrl-label-val" id="val-vignette">50%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-vignette" min="0" max="100" value="50" aria-label="暗角强度" />
+          <div class="ctrl-label">
+            <span>色差</span>
+            <span class="ctrl-label-val" id="val-chroma">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-chroma"
+                 min="0" max="100" value="50" aria-label="色差强度" />
         </div>
+
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>高光溢出</span><span class="ctrl-label-val" id="val-bloom">50%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-bloom" min="0" max="100" value="50" aria-label="高光溢出强度" />
+          <div class="ctrl-label">
+            <span>暗角</span>
+            <span class="ctrl-label-val" id="val-vignette">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-vignette"
+                 min="0" max="100" value="50" aria-label="暗角强度" />
         </div>
+
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>JPEG 压缩块</span><span class="ctrl-label-val" id="val-artifacts">30%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-artifacts" min="0" max="100" value="30" aria-label="JPEG 压缩失真强度" />
+          <div class="ctrl-label">
+            <span>高光溢出</span>
+            <span class="ctrl-label-val" id="val-bloom">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-bloom"
+                 min="0" max="100" value="50" aria-label="高光溢出强度" />
         </div>
+
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>漏光</span><span class="ctrl-label-val" id="val-lightleak">50%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-lightleak" min="0" max="100" value="50" aria-label="漏光强度" />
+          <div class="ctrl-label">
+            <span>JPEG 压缩块</span>
+            <span class="ctrl-label-val" id="val-artifacts">30%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-artifacts"
+                 min="0" max="100" value="30" aria-label="JPEG 压缩失真强度" />
         </div>
+
+        <!-- 漏光 -->
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>划痕尘点</span><span class="ctrl-label-val" id="val-imperfections">30%</span></div>
-          <input type="range" class="ctrl-slider" id="slider-imperfections" min="0" max="100" value="30" aria-label="胶片缺陷" />
+          <div class="ctrl-label">
+            <span>漏光</span>
+            <span class="ctrl-label-val" id="val-lightleak">50%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-lightleak"
+                 min="0" max="100" value="50" aria-label="漏光强度" />
+        </div>
+
+        <!-- 胶片缺陷 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>划痕尘点</span>
+            <span class="ctrl-label-val" id="val-imperfections">30%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-imperfections"
+                 min="0" max="100" value="30" aria-label="胶片缺陷" />
+        </div>
+
+        <!-- 横条纹·断墨 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>横条纹·断墨</span>
+            <span class="ctrl-label-val" id="val-scanlines">0%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-scanlines"
+                 min="0" max="100" value="0" aria-label="打印机断墨横条纹" />
         </div>
       </div>
 
       <!-- 胶片边框 & 闪光 -->
       <div class="ctrl-section">
         <div class="ctrl-section-title">边框 &amp; 闪光</div>
-        <div class="ctrl-label" style="margin-bottom:8px"><span>胶片边框</span></div>
-        <div class="ts-mode-pills" id="border-pills" role="radiogroup" aria-label="胶片边框样式">
-          <button class="ts-pill active" data-border="none" aria-pressed="true">无</button>
-          <button class="ts-pill" data-border="thin" aria-pressed="false">细边框</button>
-          <button class="ts-pill" data-border="sprocket" aria-pressed="false">齿孔胶片</button>
+
+        <!-- 胶片边框 -->
+        <div class="ctrl-label" style="margin-bottom:8px">
+          <span>胶片边框</span>
         </div>
+        <div class="ts-mode-pills" id="border-pills" role="radiogroup" aria-label="胶片边框样式">
+          <button class="ts-pill active" data-border="none"   aria-pressed="true">无</button>
+          <button class="ts-pill" data-border="thin"          aria-pressed="false">细边框</button>
+          <button class="ts-pill" data-border="sprocket"      aria-pressed="false">齿孔胶片</button>
+        </div>
+
+        <!-- 闪光点开关 -->
         <div class="ctrl-toggle-row" style="margin-top:12px">
           <label class="ctrl-toggle-label" for="toggle-flare-chk">闪光点（Huji 风）</label>
           <label class="toggle-pill" aria-label="闪光点">
@@ -1357,6 +1432,7 @@ select:focus, input[type="text"]:focus {
       <!-- 时间戳 -->
       <div class="ctrl-section">
         <div class="ctrl-section-title">时间戳</div>
+
         <div class="ctrl-toggle-row">
           <label class="ctrl-toggle-label" for="toggle-ts-chk">显示日期水印</label>
           <label class="toggle-pill" aria-label="显示日期水印">
@@ -1365,7 +1441,11 @@ select:focus, input[type="text"]:focus {
             <span class="toggle-thumb"></span>
           </label>
         </div>
-        <div class="ctrl-label" style="margin-bottom:8px;margin-top:12px"><span>水印样式</span></div>
+
+        <!-- 时间戳样式 -->
+        <div class="ctrl-label" style="margin-bottom:8px;margin-top:12px">
+          <span>水印样式</span>
+        </div>
         <div class="ts-mode-pills" id="ts-mode-pills" role="radiogroup" aria-label="时间戳样式">
           <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">经典橙</button>
           <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">LCD 绿</button>
@@ -1373,9 +1453,11 @@ select:focus, input[type="text"]:focus {
           <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">8-bit</button>
           <button class="ts-pill" data-tsmode="white" aria-pressed="false">纯白</button>
         </div>
+
         <input type="date" id="date-input" class="ctrl-date-input"
                value="2005-10-24" aria-label="水印日期" style="margin-top:10px" />
       </div>
+
 
       <!-- 系统信息 -->
       <div class="ctrl-section">
@@ -1439,12 +1521,31 @@ select:focus, input[type="text"]:focus {
     <span style="font-family:var(--mono);font-size:0.65rem;color:var(--gold);font-weight:700;letter-spacing:0.15em">参数调节</span>
     <button id="mobile-controls-close" class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem">关闭</button>
   </div>
-  <div class="ctrl-row"><div class="ctrl-label"><span>强度</span><span class="ctrl-label-val" id="m-val-intensity">80%</span></div><input type="range" class="ctrl-slider" id="m-slider-intensity" min="0" max="100" value="80" /></div>
-  <div class="ctrl-row"><div class="ctrl-label"><span>胶片颗粒</span><span class="ctrl-label-val" id="m-val-grain">50%</span></div><input type="range" class="ctrl-slider" id="m-slider-grain" min="0" max="100" value="50" /></div>
-  <div class="ctrl-row"><div class="ctrl-label"><span>色差</span><span class="ctrl-label-val" id="m-val-chroma">50%</span></div><input type="range" class="ctrl-slider" id="m-slider-chroma" min="0" max="100" value="50" /></div>
-  <div class="ctrl-row"><div class="ctrl-label"><span>暗角</span><span class="ctrl-label-val" id="m-val-vignette">50%</span></div><input type="range" class="ctrl-slider" id="m-slider-vignette" min="0" max="100" value="50" /></div>
-  <div class="ctrl-row"><div class="ctrl-label"><span>高光溢出</span><span class="ctrl-label-val" id="m-val-bloom">50%</span></div><input type="range" class="ctrl-slider" id="m-slider-bloom" min="0" max="100" value="50" /></div>
-  <div class="ctrl-row"><div class="ctrl-label"><span>JPEG 压缩块</span><span class="ctrl-label-val" id="m-val-artifacts">30%</span></div><input type="range" class="ctrl-slider" id="m-slider-artifacts" min="0" max="100" value="30" /></div>
+  <!-- 信号参数（复制） -->
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>强度</span><span class="ctrl-label-val" id="m-val-intensity">80%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-intensity" min="0" max="100" value="80" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>胶片颗粒</span><span class="ctrl-label-val" id="m-val-grain">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-grain" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>色差</span><span class="ctrl-label-val" id="m-val-chroma">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-chroma" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>暗角</span><span class="ctrl-label-val" id="m-val-vignette">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-vignette" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>高光溢出</span><span class="ctrl-label-val" id="m-val-bloom">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-bloom" min="0" max="100" value="50" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>JPEG 压缩块</span><span class="ctrl-label-val" id="m-val-artifacts">30%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-artifacts" min="0" max="100" value="30" />
+  </div>
   <div style="height:1px;background:var(--border);margin:12px 0"></div>
   <div class="ctrl-toggle-row">
     <label class="ctrl-toggle-label">显示日期水印</label>
@@ -1465,15 +1566,29 @@ select:focus, input[type="text"]:focus {
   <!-- 滤镜库 -->
   <section id="gallery-section" class="section">
     <div class="section-label">滤镜库</div>
-    <h2 class="section-title">13 款相机预设<br>重现千禧年代质感</h2>
+    <h2 class="section-title">七款相机预设<br>重现千禧年代质感</h2>
     <div class="section-sep"></div>
     <p class="section-sub">点击任意滤镜加载到编辑器，每款预设都经过精心调校，还原特定相机型号的 CCD 色彩科学。</p>
+
     <div class="gallery-grid" id="gallery-grid" role="list" aria-label="滤镜预设展示"></div>
+
     <div class="stats-grid">
-      <div class="stat-block"><div class="stat-num">13</div><div class="stat-lbl">相机预设</div></div>
-      <div class="stat-block"><div class="stat-num">¥0</div><div class="stat-lbl">使用费用</div></div>
-      <div class="stat-block"><div class="stat-num">∞</div><div class="stat-lbl">导出次数</div></div>
-      <div class="stat-block"><div class="stat-num">0 KB</div><div class="stat-lbl">上传到服务器</div></div>
+      <div class="stat-block">
+        <div class="stat-num">07</div>
+        <div class="stat-lbl">相机预设</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">¥0</div>
+        <div class="stat-lbl">使用费用</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">∞</div>
+        <div class="stat-lbl">导出次数</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">0 KB</div>
+        <div class="stat-lbl">上传到服务器</div>
+      </div>
     </div>
   </section>
 
@@ -1482,22 +1597,36 @@ select:focus, input[type="text"]:focus {
     <div class="section-label">使用步骤</div>
     <h2 class="section-title">三步，完成<br>千禧年时光穿越</h2>
     <div class="section-sep"></div>
+
     <div class="steps-row">
       <div class="step-card">
         <div class="step-num">01</div>
-        <div class="step-icon"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
+        <div class="step-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+        </div>
         <h3>上传图片</h3>
         <p>拖放或点击上传，支持批量处理多张图片，所有数据完全在您的设备本地处理。</p>
       </div>
       <div class="step-card">
         <div class="step-num">02</div>
-        <div class="step-icon"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M19.07 4.93A10 10 0 0 0 4.93 19.07"/><path stroke-linecap="round" d="M4.93 4.93A10 10 0 0 0 19.07 19.07"/></svg></div>
+        <div class="step-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M19.07 4.93A10 10 0 0 0 4.93 19.07"/>
+            <path stroke-linecap="round" d="M4.93 4.93A10 10 0 0 0 19.07 19.07"/>
+          </svg>
+        </div>
         <h3>选择相机预设</h3>
-        <p>从 Canon IXUS、Sony T7、VHS 录像带等 13 款经典相机中选择，精细调节颗粒、色差、暗角等参数。</p>
+        <p>从 Canon IXUS、Sony T7、Kodak C300 等七款经典相机中选择，精细调节颗粒、色差、暗角等参数。</p>
       </div>
       <div class="step-card">
         <div class="step-num">03</div>
-        <div class="step-icon"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg></div>
+        <div class="step-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+        </div>
         <h3>导出保存</h3>
         <p>一键导出 PNG 或 JPG，无水印，无限制。支持批量下载，直接发布到社交媒体。</p>
       </div>
@@ -1507,7 +1636,10 @@ select:focus, input[type="text"]:focus {
     <div class="ccd-box">
       <div>
         <h3><span>›</span> CCD 引擎解析</h3>
-        <p>数码胶片不只是简单叠加滤镜。我们模拟了 2000 年代初 CCD 传感器的<strong>非线性响应曲线</strong>，重建了早期数码相机的信号处理路径，还原其独特的硬件缺陷。</p>
+        <p>
+          数码胶片不只是简单叠加滤镜。我们模拟了 2000 年代初 CCD 传感器的<strong>非线性响应曲线</strong>，
+          重建了早期数码相机的信号处理路径，还原其独特的硬件缺陷。
+        </p>
         <div class="ccd-features">
           <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 色差算法（Chromatic Aberration）</div>
           <div class="ccd-feat"><span class="ccd-ok">[OK]</span> 拜尔矩阵去马赛克噪点</div>
@@ -1558,6 +1690,9 @@ select:focus, input[type="text"]:focus {
   </footer>
 
 </div><!-- /#content-area -->
+
+<!-- Scripts -->
+
 
 <script>
 /* ── filters.js ────────────────────────────────────────────── */
@@ -1836,6 +1971,25 @@ const FILTERS = [
     }
   },
 
+  // ── ⑥ Olympus μ[mju:] ──────────────────────────────────────────
+  {
+    id: 'olympus_mju',
+    name: 'Olympus μ[mju:]',
+    year: '2002',
+    tag: 'IMG_008',
+    description: '自然胶片层次 · 软对比度 · 谐谐粒粒山有机感',
+    accentColor: '#78716c',
+    params: {
+      brightness: 2,   contrast: 0.95, saturation: 1.05, warmth: 5, tint: 2,
+      shadowTint:    { r: 2,  g: 2,  b: -2  },
+      highlightTint: { r: 6,  g: 5,  b:  0  },
+      baseNoise: 20, baseChromaticAberration: 1.0, baseVignette: 0.40,
+      baseBloom: 0.22, bloomThreshold: 200, baseJpegArtifacts: 0.30,
+      baseLightLeak: 0.12, baseImperfections: 0.22,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
 ];
 
 
@@ -1869,12 +2023,14 @@ class DigiCamProcessor {
     const bloomMult      = (userParams.bloom         / 50);
     const lightLeakMult  = ((userParams.lightleak      ?? 50) / 50);
     const imperfectMult  = ((userParams.imperfections  ?? 30) / 50);
+    // 用户色温偏移：-100~+100 映射到 -20~+20（叠加到预设 warmth 上）
+    const userWarmthOffset = ((userParams.warmth ?? 0) - 50) / 50 * 20;
 
     // Effective filter parameters scaled by intensity
     const brightness = filterParams.brightness * intensity;
     const contrast   = 1 + (filterParams.contrast - 1) * intensity;
     const saturation = 1 + (filterParams.saturation - 1) * intensity;
-    const warmth     = filterParams.warmth * intensity;
+    const warmth     = filterParams.warmth * intensity + userWarmthOffset;
     const tint       = (filterParams.tint || 0) * intensity;
     const noise      = filterParams.baseNoise * grainMult * intensity;
     const shadowR    = filterParams.shadowTint.r * intensity;
@@ -2012,6 +2168,18 @@ class DigiCamProcessor {
       ctx.fillRect(0, 0, w, h);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ── PASS 5.7: Print Banding (断墨横条纹) ────────────────────────────
+    const bandingStr = (userParams.scanlines ?? 0) / 100 * intensity;
+    if (bandingStr > 0.005) {
+      DigiCamProcessor._printBanding(ctx, w, h, bandingStr, seed);
+    }
+
+    // ── PASS 5.8: CRT Scanlines (屏幕扫描线) ──────────────────────────
+    const crtStr = (userParams.crtlines ?? 0) / 100;
+    if (crtStr > 0.005) {
+      DigiCamProcessor._crtScanlines(ctx, w, h, crtStr);
     }
 
     // ── PASS 6: Film Border (last — frames everything) ────────────
@@ -2594,8 +2762,119 @@ class DigiCamProcessor {
       img.src = dataUrl;
     });
   }
-}
 
+  // ── Print Banding \u2014 \u65ad\u58a8\u6a2a\u6761\u7eb9\uff08\u6253\u5370\u673a\u65ad\u58a8\u6548\u679c\uff09 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u6a21\u62df\u5566\u5e72\u5f0f/\u5496\u5561\u673a\u68b0\u5e08/\u5c0f\u5236\u5265\u673a\u65ad\u58a8\uff1a\u4e0d\u89c4\u5219\u95f4\u8ddd\u7684\u6a2a\u5411\u6bb5\u843d\u53d8\u6697\uff0c\u9a54\u9a7e\u771f\u5b9e\u624b\u611f\u3002
+  static _printBanding(ctx, w, h, strength, seed) {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const px = imgData.data;
+
+    // \u4f2a\u968f\u673a\u751f\u6210\u5668\uff08\u57fa\u4e8e seed\uff0c\u786e\u4fdd\u540c\u4e00\u5f20\u56fe\u6bcf\u6b21\u5904\u7406\u7ed3\u679c\u76f8\u540c\uff09
+    let rng = seed ^ 0xdeadbeef;
+    const rand = () => {
+      rng = (rng * 1664525 + 1013904223) & 0xffffffff;
+      return (rng >>> 0) / 0xffffffff;
+    };
+
+    // \u6839\u636e\u5f3a\u5ea6\u8ba1\u7b97\u6761\u7eb9\u53c2\u6570
+    const maxDark   = Math.min(0.88, strength * 1.4);   // \u6700\u5927\u53d8\u6697\u5e45\u5ea6
+    const bandFreq  = Math.max(3, Math.round(4 + (1 - strength) * 20)); // \u4e0d\u89c4\u5219\u6761\u7eb9\u57fa\u51c6\u95f4\u8ddd
+
+    // \u9884\u751f\u6210\u6bcf\u884c\u7684\u66b4\u6f0f\u7cfb\u6570\u8868\uff08\u907f\u514d\u5faa\u73af\u5185\u91cd\u590d\u8ba1\u7b97\uff09
+    const rowDark = new Float32Array(h);
+    let   rowIdx  = 0;
+    while (rowIdx < h) {
+      // \u4e0d\u89c4\u5219\u8df3\u8fdc\uff1a\u4e0b\u4e00\u6761\u66b4\u6f0f\u5e26\u51fa\u73b0\u5728\u968f\u673a\u4f4d\u7f6e
+      const skip  = Math.round(bandFreq * (0.5 + rand() * 1.2));
+      rowIdx += skip;
+      if (rowIdx >= h) break;
+
+      // \u66b4\u6f0f\u5e26\u5bbd\u5ea6\uff1a1\u20134\u884c
+      const bw    = Math.round(1 + rand() * 3);
+      // \u66b4\u6f0f\u5e26\u6df1\u5ea6\uff1a\u8f7b\u5ea6\u968f\u673a\u5316\uff0c\u8ba9\u5f3a\u5ea6\u53c2\u6570\u5c45\u4e3b\u5bfc
+      const dark  = maxDark * (0.35 + rand() * 0.65);
+
+      for (let by = 0; by < bw && rowIdx + by < h; by++) {
+        rowDark[rowIdx + by] = dark;
+      }
+      rowIdx += bw;
+    }
+
+    // \u5e94\u7528\u5230\u50cf\u7d20\u6570\u636e\uff1a\u6bcf\u884c\u5199\u5165\u53d8\u6697\u7cfb\u6570
+    for (let y = 0; y < h; y++) {
+      const d = rowDark[y];
+      if (d < 0.001) continue;
+      const mul = 1 - d;
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        px[i]     = Math.round(px[i]     * mul);
+        px[i + 1] = Math.round(px[i + 1] * mul);
+        px[i + 2] = Math.round(px[i + 2] * mul);
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    // \u53e0\u52a0\u4e00\u5c42\u6a2a\u5411\u8fd0\u52a8\u6a21\u7cca\uff0c\u8ba9\u6761\u7eb9\u8fb9\u7f18\u6709\u8f7b\u5fae\u6e17\u5f00\u5c42\uff08\u66f4\u771f\u5b9e\uff09
+    if (strength > 0.12) {
+      const fadeCanvas = document.createElement('canvas');
+      fadeCanvas.width  = w;
+      fadeCanvas.height = h;
+      const fCtx = fadeCanvas.getContext('2d');
+
+      // \u518d\u6b21\u904d\u5386 rowDark\uff0c\u7ed8\u5236\u6a2a\u7ebf\u53e0\u5c42\uff08\u4f7f\u7528 rgba \u900f\u660e\u5ea6\u590d\u73b0\u56e0\u78a8\u76f8\u673a\u611f\u5149\u7247\u5354\u5185\u5bfc\u81f4\u7684\u5fae\u5149\u6a2a\u7eb9\uff09
+      for (let y = 0; y < h; y++) {
+        const d = rowDark[y];
+        if (d < 0.05) continue;
+        // \u6761\u7eb9\u8fb9\u7f18\u8f7b\u5fae\u80fd\u9009\u62e9\u6027\u66dd\u5149\u8fc7\u5ea6
+        fCtx.fillStyle = `rgba(255,255,255,${(d * 0.08).toFixed(3)})`;
+        fCtx.fillRect(0, y, w, 1);
+      }
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 0.18;
+      ctx.drawImage(fadeCanvas, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  // ── CRT Scanlines — CRT屏幕扫描线效果 ───────────────────────────────
+  // 均匀細密的半透明水平线条，模拟 CRT 显示器或早期数码相机 LCD屏刷新线质感。
+  static _crtScanlines(ctx, w, h, strength) {
+    // strength: 0–1
+    // 每 2px 一条暗线（经典 CRT 间距）
+    const lineAlpha   = Math.min(0.75, strength * 0.85);   // 暗线透明度
+    const brightAlpha = Math.min(0.12, strength * 0.10);   // 亮行微亮化（屏光感）
+
+    // 层 1：每隔一行归暗（multiply 保留颜色）
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgba(0,0,0,${lineAlpha.toFixed(3)})`;
+    for (let y = 0; y < h; y += 2) {
+      ctx.fillRect(0, y, w, 1);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 层 2：亮行微亮（screen 叠加微光），增强屏幕感
+    if (brightAlpha > 0.008) {
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = `rgba(180,220,255,${brightAlpha.toFixed(3)})`;
+      for (let y = 1; y < h; y += 2) {
+        ctx.fillRect(0, y, w, 1);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // 层 3：整体蒙上极淡蓝绿色调触发 LCD 屏幕的冷色偏移（属于微微突出操作，可选）
+    if (strength > 0.3) {
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = (strength - 0.3) * 0.06;
+      ctx.fillStyle = '#001820';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+}
 
 
 /* ── app.js ────────────────────────────────────────────────── */
@@ -2646,6 +2925,9 @@ const State = (() => {
       artifacts: 30,
       lightleak:      50,
       imperfections:  30,
+      scanlines:       0,
+      crtlines:        0,
+      warmth:         50,   // 50 = 跟随预设，<50 加冷，>50 加暖
     },
 
     // 时间戳
@@ -3291,14 +3573,43 @@ function bindViewToggle() {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  胶片边框 & 闪光点效果
+// ══════════════════════════════════════════════════════════════
+function bindFilmEffects() {
+  // 胶片边框选择
+  document.querySelectorAll('#border-pills .ts-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const border = pill.dataset.border;
+      State.patch('filmBorder', border);
+      document.querySelectorAll('#border-pills .ts-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.border === border);
+        p.setAttribute('aria-pressed', p.dataset.border === border ? 'true' : 'false');
+      });
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  });
+
+  // 闪光点（Huji 风）开关
+  const flareChk = $('toggle-flare-chk');
+  if (flareChk) {
+    flareChk.addEventListener('change', () => {
+      State.patch('flashFlare', flareChk.checked);
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 //  时间戳样式选择
 // ══════════════════════════════════════════════════════════════
 function bindTimestampMode() {
-  document.querySelectorAll('.ts-pill').forEach(pill => {
+  // 仅处理带有 data-tsmode 的 pill，避免胶片边框 pills 混入
+  document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const mode = pill.dataset.tsmode;
+      if (!mode) return;
       State.patch('tsMode', mode);
-      document.querySelectorAll('.ts-pill').forEach(p => {
+      document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(p => {
         p.classList.toggle('active', p.dataset.tsmode === mode);
         p.setAttribute('aria-pressed', p.dataset.tsmode === mode ? 'true' : 'false');
       });
@@ -3320,6 +3631,9 @@ function bindSliders() {
     ['artifacts',      'slider-artifacts',      'val-artifacts'],
     ['lightleak',      'slider-lightleak',      'val-lightleak'],
     ['imperfections',  'slider-imperfections',  'val-imperfections'],
+    ['scanlines',      'slider-scanlines',      'val-scanlines'],
+    ['crtlines',       'slider-crtlines',       'val-crtlines'],
+    ['warmth',         'slider-warmth',         'val-warmth'],
   ];
   // 桌面版
   pairs.forEach(([key, sliderId, valId]) => {
@@ -3354,6 +3668,27 @@ function bindSliders() {
       // 同步桌面滑块
       const ds = $('slider-' + key);
       if (ds) { ds.value = v; $('val-' + key).textContent = v + '%'; updateSliderTrack(ds); }
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  });
+
+  // \u8272\u6e29\u6ed1\u5757\u7279\u6b8a\u663e\u793a\uff1a50\u2192\u00b10\uff0c<50\u2192\u51b7\uff0c>50\u2192\u6696
+  const warmthFmt = v => {
+    const off = v - 50;
+    if (off === 0) return '\u00b10 (\u81ea\u52a8)';
+    return (off > 0 ? '\u6696 +' : '\u51b7 ') + (off > 0 ? off : Math.abs(off));
+  };
+  ['slider-warmth', 'm-slider-warmth'].forEach(sid => {
+    const sl = $(sid); if (!sl) return;
+    const vl = $(sid.replace('slider-', 'val-')); if (!vl) return;
+    vl.textContent = warmthFmt(parseInt(sl.value));
+    sl.addEventListener('input', () => {
+      const v = parseInt(sl.value);
+      vl.textContent = warmthFmt(v);
+      State.get().params.warmth = v;
+      updateSliderTrack(sl);
+      const other = $(sid === 'slider-warmth' ? 'm-slider-warmth' : 'slider-warmth');
+      if (other) { other.value = v; const ov=$(other.id.replace('slider-','val-')); if(ov) ov.textContent=warmthFmt(v); updateSliderTrack(other); }
       if (State.get().srcImageData) scheduleProcess();
     });
   });
@@ -3406,10 +3741,10 @@ function resetParams() {
   const defaults = {
     intensity: 80, grain: 50, chroma: 50,
     vignette: 50, bloom: 50, artifacts: 30,
-    lightleak: 50, imperfections: 30,
+    lightleak: 50, imperfections: 30, scanlines: 0, crtlines: 0, warmth: 50,
   };
   State.get().params = { ...defaults };
-  ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections'].forEach(k => {
+  ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections','scanlines','crtlines','warmth'].forEach(k => {
     const sl = $('slider-' + k), vl = $('val-' + k);
     if (sl) { sl.value = defaults[k]; vl.textContent = defaults[k] + '%'; updateSliderTrack(sl); }
     const ms = $('m-slider-' + k), mv = $('m-val-' + k);
@@ -3441,128 +3776,18 @@ async function exportAll() {
   setStatus('批量完成');
 }
 
-async function triggerMobileSave(blobOrUrl, defaultFileName) {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  let blob = blobOrUrl;
-  if (typeof blobOrUrl === 'string') {
-    if (blobOrUrl.startsWith('data:')) {
-      const res = await fetch(blobOrUrl);
-      blob = await res.blob();
-    } else {
-      try {
-        const res = await fetch(blobOrUrl);
-        blob = await res.blob();
-      } catch (e) {}
-    }
-  }
-  const objectUrl = blob instanceof Blob ? URL.createObjectURL(blob) : blobOrUrl;
-  const finalUrl = typeof blobOrUrl === 'string' && !blobOrUrl.startsWith('data:') ? blobOrUrl : objectUrl;
-
-  if (isMobile && navigator.canShare && navigator.share && blob instanceof Blob) {
-    try {
-      const file = new File([blob], defaultFileName, { type: blob.type || 'image/png' });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: '保存图片',
-          text: '选择“存储图像”保存到相册'
-        });
-        return;
-      }
-    } catch (e) {
-      console.warn('Share API failed, showing manual save dialog...', e);
-      if (e.name === 'AbortError') return;
-    }
-  }
-
-  if (isMobile) {
-    const existing = document.getElementById('mobile-save-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'mobile-save-overlay';
-    overlay.className = 'mobile-save-overlay';
-    
-    const style = document.createElement('style');
-    style.textContent = `
-      .mobile-save-overlay {
-        position: fixed; inset: 0; z-index: 99999;
-        background: rgba(13, 15, 20, 0.9); backdrop-filter: blur(15px);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        padding: 20px; animation: fadeInSave 0.3s ease;
-      }
-      .mobile-save-card {
-        background: rgba(30, 35, 51, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px; padding: 20px; max-width: 90%; max-height: 85vh;
-        display: flex; flex-direction: column; align-items: center; gap: 15px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: slideUpSave 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      }
-      .mobile-save-img {
-        max-width: 100%; max-height: 50vh; border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1); object-fit: contain;
-        -webkit-touch-callout: default; pointer-events: auto;
-      }
-      .mobile-save-title {
-        font-size: 1.1rem; font-weight: 600; color: #fff; text-align: center;
-        background: linear-gradient(135deg, #5b8dee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      }
-      .mobile-save-tip {
-        font-size: 0.85rem; color: #94a3b8; text-align: center; line-height: 1.4; padding: 0 10px;
-      }
-      .mobile-save-btn {
-        background: linear-gradient(135deg, #5b8dee, #818cf8); border: none; color: white;
-        padding: 10px 24px; border-radius: 100px; font-size: 0.9rem; font-weight: 600;
-        cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(91, 141, 238, 0.3);
-      }
-      .mobile-save-btn:active { transform: scale(0.95); }
-      @keyframes fadeInSave { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes slideUpSave { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    `;
-    document.head.appendChild(style);
-
-    overlay.innerHTML = `
-      <div class="mobile-save-card">
-        <div class="mobile-save-title">图片保存指南</div>
-        <img class="mobile-save-img" src="${finalUrl}" alt="Generated Image" />
-        <div class="mobile-save-tip">💡 提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
-        <button class="mobile-save-btn">我知道了</button>
-      </div>
-    `;
-
-    overlay.querySelector('.mobile-save-btn').onclick = () => {
-      overlay.remove();
-      if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
-    };
-    
-    overlay.onclick = (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-        if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
-      }
-    };
-
-    document.body.appendChild(overlay);
-    return;
-  }
-
-  const a = document.createElement('a');
-  a.href = finalUrl;
-  a.download = defaultFileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  if (blob instanceof Blob && objectUrl.startsWith('blob:')) {
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-  }
-}
-
 function downloadCanvas(canvas, name, fmt) {
+  const a = document.createElement('a');
+  a.download = name;
   if (fmt === 'png') {
     canvas.toBlob(blob => {
-      triggerMobileSave(blob, name);
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     }, 'image/png');
   } else {
-    triggerMobileSave(canvas.toDataURL('image/jpeg', 0.92), name);
+    a.href = canvas.toDataURL('image/jpeg', 0.92);
+    a.click();
   }
 }
 
@@ -3757,5 +3982,8 @@ document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 <!-- Unified Premium UX End -->
+
+
 </body>
 </html>
+
