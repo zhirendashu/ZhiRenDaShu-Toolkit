@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -19,7 +19,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700;900&family=Noto+Serif+SC:wght@300;400;600;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <style>
       /* 背景光斑 */
       .bg-blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;filter:blur(90px);opacity:0.28;pointer-events:none}
@@ -405,6 +405,62 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         <!-- 文字管理 -->
         <div class="panel-section" id="section-text">
            <div class="section-title">添加文字</div>
+<style id="wkw-preset-styles">
+.wkw-presets-label { font-size: 0.78rem; color: var(--accent); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.wkw-preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+.wkw-btn {
+  padding: 10px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+.wkw-btn:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+.wkw-btn-title { font-size: 0.78rem; font-weight: 700; }
+.wkw-btn-sub { font-size: 0.62rem; color: rgba(255,255,255,0.45); }
+.blend-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.blend-row label { font-size: 0.75rem; color: var(--sub); white-space: nowrap; }
+.blend-select { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: var(--text); padding: 5px 8px; font-size: 0.78rem; outline: none; }
+.grad-row { margin: 6px 0; }
+.grad-toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.grad-toggle-label { font-size: 0.75rem; color: var(--sub); }
+.grad-pickers { display: flex; gap: 8px; align-items: center; }
+.grad-pickers input[type=color] { width: 32px; height: 28px; padding: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: transparent; cursor: pointer; }
+.grad-dir-btns { display: flex; gap: 4px; }
+.grad-dir-btn { padding: 3px 7px; font-size: 0.7rem; border: 1px solid var(--border); border-radius: 5px; background: rgba(255,255,255,0.05); color: var(--text); cursor: pointer; transition: 0.15s; }
+.grad-dir-btn.active, .grad-dir-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+</style>
+           <!-- 🎬 王家卫电影感文字预设 -->
+           <div class="wkw-presets-label">🎬 电影感文字预设 <span style="font-size:0.65rem;color:rgba(255,255,255,0.35);font-weight:400">一键套用风格</span></div>
+           <div class="wkw-preset-grid" id="wkw-preset-grid">
+             <button class="wkw-btn" data-preset="fallen_angels" style="border-color:rgba(180,15,15,0.5);">
+               <span class="wkw-btn-title" style="color:#e01010;">堕落天使</span>
+               <span class="wkw-btn-sub">1995 · 粗红衬线 · Multiply</span>
+             </button>
+             <button class="wkw-btn" data-preset="chungking" style="border-color:rgba(180,120,15,0.5);">
+               <span class="wkw-btn-title" style="color:#d4941a;">重庆森林</span>
+               <span class="wkw-btn-sub">1994 · 钠灯橙金 · Screen</span>
+             </button>
+             <button class="wkw-btn" data-preset="mood_love" style="border-color:rgba(160,80,30,0.5);">
+               <span class="wkw-btn-title" style="color:#c87941;">花样年华</span>
+               <span class="wkw-btn-sub">2000 · 典雅琥珀 · 衬线斜体</span>
+             </button>
+             <button class="wkw-btn" data-preset="impact_poster" style="border-color:rgba(200,10,10,0.5);">
+               <span class="wkw-btn-title" style="color:#ff2020;">冲击标题</span>
+               <span class="wkw-btn-sub">满版 · Impact · 纯红</span>
+             </button>
+             <button class="wkw-btn" data-preset="cold_white" style="border-color:rgba(200,200,200,0.25);">
+               <span class="wkw-btn-title" style="color:#e8ddd0;">港式冷白</span>
+               <span class="wkw-btn-sub">极细 · 宽字距 · Screen</span>
+             </button>
+             <button class="wkw-btn" data-preset="spring_green" style="border-color:rgba(50,180,100,0.5);">
+               <span class="wkw-btn-title" style="color:#5ecc6e;">春光乍泄</span>
+               <span class="wkw-btn-sub">1997 · 翠绿霓虹 · 发光</span>
+             </button>
+           </div>
            <button class="btn btn-primary" id="add-text-btn">+ 插入文本框</button>
            <button class="btn btn-ghost" id="upload-font-btn" style="margin-top: 8px; font-size: 0.8rem; border: 1px dashed var(--border);">📂 上传自定义字体 (.ttf/.otf/.woff)</button>
            <input type="file" id="font-file-input" style="display: none;" accept=".ttf,.otf,.woff,.woff2">
@@ -470,6 +526,18 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                     <option value="STXingkai">华文行楷</option>
                     <option value="Impact">Impact (粗犷)</option>
                     <option value="Arial">Arial</option>
+                     <optgroup label="── 王家卫电影感 ──">
+                       <option value="Noto Serif SC">思源宋体 Noto Serif SC</option>
+                       <option value="Playfair Display">Playfair Display 典雅衬线</option>
+                       <option value="Dancing Script">Dancing Script 手写体</option>
+                     </optgroup>
+                     <optgroup label="── 优质中文 ──">
+                       <option value="Noto Sans SC">思源黑体 Noto Sans SC</option>
+                     </optgroup>
+                     <optgroup label="── 粗犷英文 ──">
+                       <option value="Georgia">Georgia 经典衬线</option>
+                       <option value="Courier New">Courier New 打字机</option>
+                     </optgroup>
                   </select>
                   <input type="text" id="custom-font-name" placeholder="或手动输入系统字体名" style="font-size: 0.7rem; padding: 4px 8px; margin-top: 6px; width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
                 </div>
@@ -503,6 +571,42 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 <button class="btn btn-ghost" id="text-italic-btn" style="flex:1; padding: 6px;">I</button>
              </div>
              <label>描边粗细</label>
+             <!-- 🔀 混合模式 -->
+             <div class="blend-row" style="margin-top:10px;">
+               <label style="font-size:0.75rem;color:var(--sub);white-space:nowrap;">🔀 混合模式</label>
+               <select id="text-blend-mode" class="blend-select">
+                 <option value="source-over">正常 (Normal)</option>
+                 <option value="multiply">叠加融合 Multiply ★WKW</option>
+                 <option value="screen">发光提亮 Screen ★WKW</option>
+                 <option value="overlay">柔光叠加 Overlay</option>
+                 <option value="color-dodge">颜色减淡 Dodge</option>
+                 <option value="hard-light">强光 Hard Light</option>
+                 <option value="soft-light">柔光 Soft Light</option>
+                 <option value="difference">差值 Difference</option>
+               </select>
+             </div>
+             <!-- 🌈 渐变色文字 -->
+             <div class="grad-row" style="margin-top:10px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08);">
+               <div class="grad-toggle-row">
+                 <label class="grad-toggle-label" style="color:var(--accent); font-size:0.78rem;">🌈 渐变色文字</label>
+                 <div style="display:flex; gap:6px; align-items:center;">
+                   <button id="grad-apply-btn" style="background:linear-gradient(90deg,#ff2442,#ff7e5f); color:#fff; border:none; font-size:0.68rem; padding:3px 10px; border-radius:5px; cursor:pointer;">套用</button>
+                   <button id="grad-clear-btn" style="background:rgba(255,255,255,0.08); color:var(--sub); border:none; font-size:0.68rem; padding:3px 8px; border-radius:5px; cursor:pointer;">清除</button>
+                 </div>
+               </div>
+               <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                 <span style="font-size:0.72rem;color:var(--sub);">起色</span>
+                 <input type="color" id="grad-color1" value="#cc0000" style="width:32px;height:26px;padding:2px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer;">
+                 <span style="font-size:0.72rem;color:var(--sub);">止色</span>
+                 <input type="color" id="grad-color2" value="#ff8800" style="width:32px;height:26px;padding:2px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer;">
+                 <span style="font-size:0.72rem;color:var(--sub);">方向</span>
+                 <div style="display:flex;gap:3px;">
+                   <button class="grad-dir-btn active" data-dir="lr" id="grad-dir-lr">→</button>
+                   <button class="grad-dir-btn" data-dir="tb" id="grad-dir-tb">↓</button>
+                   <button class="grad-dir-btn" data-dir="diag" id="grad-dir-diag">↘</button>
+                 </div>
+               </div>
+             </div>
              <input type="range" id="text-stroke-width" min="0" max="10" value="0">
              <label>描边颜色</label>
              <input type="color" id="text-stroke-color" value="#000000">
@@ -1088,6 +1192,236 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
       });
 
       // === 文字操作 ===
+      // ════════════════════════════════════════════════════════════
+      // 🎬 WKW 电影感文字预设系统
+      // ════════════════════════════════════════════════════════════
+      const WKW_PRESETS = {
+        fallen_angels: {
+          label: "堕落天使红",
+          text: "堕落天使",
+          fontFamily: "Noto Serif SC",
+          fontWeight: "900",
+          fontStyle: "normal",
+          fontSize: 90,
+          fill: "#cc0a0a",
+          charSpacing: 80,
+          lineHeight: 1.1,
+          strokeWidth: 0,
+          stroke: "",
+          shadow: new fabric.Shadow({ color: "rgba(200,0,0,0.55)", blur: 18, offsetX: 0, offsetY: 0 }),
+          globalCompositeOperation: "multiply",
+          backgroundColor: "",
+        },
+        chungking: {
+          label: "重庆森林金",
+          text: "重庆森林",
+          fontFamily: "Noto Serif SC",
+          fontWeight: "900",
+          fontStyle: "normal",
+          fontSize: 80,
+          fill: "#d4941a",
+          charSpacing: 100,
+          lineHeight: 1.15,
+          strokeWidth: 0,
+          stroke: "",
+          shadow: new fabric.Shadow({ color: "rgba(255,140,0,0.7)", blur: 24, offsetX: 0, offsetY: 0 }),
+          globalCompositeOperation: "screen",
+          backgroundColor: "",
+        },
+        mood_love: {
+          label: "花样年华体",
+          text: "花样年华",
+          fontFamily: "Playfair Display",
+          fontWeight: "700",
+          fontStyle: "italic",
+          fontSize: 72,
+          fill: "#c87941",
+          charSpacing: 40,
+          lineHeight: 1.2,
+          strokeWidth: 0,
+          stroke: "",
+          shadow: new fabric.Shadow({ color: "rgba(150,80,20,0.5)", blur: 12, offsetX: 3, offsetY: 4 }),
+          globalCompositeOperation: "screen",
+          backgroundColor: "",
+        },
+        impact_poster: {
+          label: "冲击标题",
+          text: "FALLEN\nANGELS",
+          fontFamily: "Impact",
+          fontWeight: "bold",
+          fontStyle: "normal",
+          fontSize: 96,
+          fill: "#ff2020",
+          charSpacing: -10,
+          lineHeight: 0.92,
+          strokeWidth: 0,
+          stroke: "",
+          shadow: new fabric.Shadow({ color: "rgba(255,0,0,0.4)", blur: 8, offsetX: 2, offsetY: 3 }),
+          globalCompositeOperation: "source-over",
+          backgroundColor: "",
+        },
+        cold_white: {
+          label: "港式冷白",
+          text: "A FILM BY\nWONG KAR WAI",
+          fontFamily: "Noto Sans SC",
+          fontWeight: "300",
+          fontStyle: "normal",
+          fontSize: 28,
+          fill: "#e8ddd0",
+          charSpacing: 280,
+          lineHeight: 1.5,
+          strokeWidth: 0,
+          stroke: "",
+          shadow: new fabric.Shadow({ color: "rgba(0,0,0,0.4)", blur: 6, offsetX: 1, offsetY: 2 }),
+          globalCompositeOperation: "screen",
+          backgroundColor: "",
+        },
+        spring_green: {
+          label: "春光翠绿",
+          text: "春光乍泄",
+          fontFamily: "Noto Serif SC",
+          fontWeight: "700",
+          fontStyle: "normal",
+          fontSize: 80,
+          fill: "#5ecc6e",
+          charSpacing: 60,
+          lineHeight: 1.15,
+          strokeWidth: 0,
+          stroke: "",
+          shadow: new fabric.Shadow({ color: "rgba(50,220,80,0.8)", blur: 28, offsetX: 0, offsetY: 0 }),
+          globalCompositeOperation: "screen",
+          backgroundColor: "",
+        },
+      };
+
+      // WKW 预设按钮点击
+      document.querySelectorAll(".wkw-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const presetKey = btn.dataset.preset;
+          const p = WKW_PRESETS[presetKey];
+          if (!p) return;
+          const activeObj = canvas.getActiveObject();
+          if (activeObj && (activeObj.type === "i-text" || activeObj.type === "text")) {
+            // 套用到已选中的文字对象
+            activeObj.set({
+              fontFamily: p.fontFamily,
+              fontWeight: p.fontWeight,
+              fontStyle: p.fontStyle,
+              fontSize: p.fontSize,
+              fill: p.fill,
+              charSpacing: p.charSpacing,
+              lineHeight: p.lineHeight,
+              strokeWidth: p.strokeWidth,
+              stroke: p.stroke,
+              shadow: p.shadow,
+              globalCompositeOperation: p.globalCompositeOperation,
+              backgroundColor: p.backgroundColor,
+            });
+            canvas.renderAll();
+            saveCanvasState();
+            // 同步面板 UI
+            document.getElementById("text-color").value = typeof p.fill === "string" ? p.fill : "#ffffff";
+            document.getElementById("text-font-family").value = p.fontFamily;
+            document.getElementById("custom-font-name").value = p.fontFamily;
+            document.getElementById("text-font-size").value = p.fontSize;
+            document.getElementById("text-char-spacing").value = p.charSpacing;
+            document.getElementById("text-line-height").value = p.lineHeight;
+            if (document.getElementById("text-blend-mode")) {
+              document.getElementById("text-blend-mode").value = p.globalCompositeOperation || "source-over";
+            }
+            document.getElementById("text-bold-btn").style.background = p.fontWeight === "bold" || p.fontWeight === "900" ? "var(--accent)" : "var(--border)";
+            document.getElementById("text-italic-btn").style.background = p.fontStyle === "italic" ? "var(--accent)" : "var(--border)";
+          } else {
+            // 新建文字
+            const text = new fabric.IText(p.text, {
+              left: canvas.width / 2,
+              top: canvas.height / 2,
+              originX: "center",
+              originY: "center",
+              fontFamily: p.fontFamily,
+              fontWeight: p.fontWeight,
+              fontStyle: p.fontStyle,
+              fontSize: p.fontSize,
+              fill: p.fill,
+              charSpacing: p.charSpacing,
+              lineHeight: p.lineHeight,
+              strokeWidth: p.strokeWidth,
+              stroke: p.stroke,
+              shadow: p.shadow,
+              globalCompositeOperation: p.globalCompositeOperation,
+              backgroundColor: p.backgroundColor,
+              padding: 6,
+            });
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+          }
+        });
+      });
+
+      // ── 混合模式绑定 ──
+      const blendSelect = document.getElementById("text-blend-mode");
+      if (blendSelect) {
+        blendSelect.onchange = (e) => {
+          const obj = canvas.getActiveObject();
+          if (obj) {
+            obj.set("globalCompositeOperation", e.target.value);
+            canvas.renderAll();
+            saveCanvasState();
+          }
+        };
+      }
+
+      // ── 渐变色文字 ──
+      let gradDir = "lr";
+      document.querySelectorAll(".grad-dir-btn").forEach(b => {
+        b.addEventListener("click", () => {
+          document.querySelectorAll(".grad-dir-btn").forEach(x => x.classList.remove("active"));
+          b.classList.add("active");
+          gradDir = b.dataset.dir;
+        });
+      });
+
+      function applyGradientToText() {
+        const obj = canvas.getActiveObject();
+        if (!obj || (obj.type !== "i-text" && obj.type !== "text")) return;
+        const c1 = document.getElementById("grad-color1").value;
+        const c2 = document.getElementById("grad-color2").value;
+        let coords;
+        if (gradDir === "lr")   coords = { x1: 0, y1: 0, x2: obj.width, y2: 0 };
+        else if (gradDir === "tb")   coords = { x1: 0, y1: 0, x2: 0, y2: obj.height };
+        else coords = { x1: 0, y1: 0, x2: obj.width, y2: obj.height };
+        const gradient = new fabric.Gradient({
+          type: "linear",
+          gradientUnits: "pixels",
+          coords: coords,
+          colorStops: [{ offset: 0, color: c1 }, { offset: 1, color: c2 }]
+        });
+        obj.set("fill", gradient);
+        canvas.renderAll();
+        saveCanvasState();
+      }
+
+      const gradApplyBtn = document.getElementById("grad-apply-btn");
+      const gradClearBtn = document.getElementById("grad-clear-btn");
+      if (gradApplyBtn) gradApplyBtn.onclick = applyGradientToText;
+      if (gradClearBtn) gradClearBtn.onclick = () => {
+        const obj = canvas.getActiveObject();
+        if (obj) {
+          obj.set("fill", document.getElementById("text-color").value || "#ffffff");
+          canvas.renderAll();
+          saveCanvasState();
+        }
+      };
+
+      // 实时预览渐变（颜色选择时）
+      ["grad-color1", "grad-color2"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", () => {
+          if (canvas.getActiveObject()) applyGradientToText();
+        });
+      });
+
       document.getElementById('add-text-btn').addEventListener('click', () => {
         const text = new fabric.IText('点击修改文字', {
           left: canvas.width / 2,
@@ -1172,6 +1506,10 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
             // 同步背景边距与圆角
             document.getElementById('text-bg-padding').value = obj._bgPadding !== undefined ? obj._bgPadding : 6;
             document.getElementById('text-bg-radius').value = obj._bgRadius !== undefined ? obj._bgRadius : 0;
+            
+            // 同步混合模式
+            const blendSel = document.getElementById('text-blend-mode');
+            if (blendSel) blendSel.value = obj.globalCompositeOperation || 'source-over';
            
            const boldBtn = document.getElementById('text-bold-btn');
            const italicBtn = document.getElementById('text-italic-btn');

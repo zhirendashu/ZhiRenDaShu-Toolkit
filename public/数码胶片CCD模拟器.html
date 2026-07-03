@@ -15,7 +15,7 @@
 ═══════════════════════════════════════════════════════════════════ */
 
 /* ── 字体 ─────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@300;400;600;900&family=JetBrains+Mono:wght@400;700&family=Dancing+Script:wght@400;700&display=swap');
 
 /* ── 设计令牌 ─────────────────────────────────────────────────── */
 :root {
@@ -246,6 +246,26 @@ input, select { font: inherit; }
 }
 .camera-item-year {
   font-family: var(--mono); font-size: 0.58rem; color: var(--text-3);
+}
+
+/* RAW 纯净模式特殊样式 */
+.camera-item[data-id="raw_pure"] .camera-item-name {
+  color: var(--text-1);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.camera-item[data-id="raw_pure"].active {
+  background: rgba(226,232,240,0.08);
+  border-color: rgba(226,232,240,0.3);
+}
+.camera-item[data-id="raw_pure"].active::before {
+  background: #e2e8f0;
+}
+.camera-item[data-id="raw_pure"] .camera-item-year {
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
 }
 
 /* 侧边栏底部提示 */
@@ -1402,6 +1422,26 @@ input, select { font: inherit; }
           <input type="range" class="ctrl-slider" id="slider-scanlines"
                  min="0" max="100" value="0" aria-label="打印机断墨横条纹" />
         </div>
+
+        <!-- CRT 旧电视扫描线 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>📺 CRT 扫描线</span>
+            <span class="ctrl-label-val" id="val-crtlines">0%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-crtlines"
+                 min="0" max="100" value="0" aria-label="旧电视 CRT 扫描线强度" />
+        </div>
+
+        <!-- Halftone 半调网点 -->
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span>🔵 半调网点</span>
+            <span class="ctrl-label-val" id="val-halftone">0%</span>
+          </div>
+          <input type="range" class="ctrl-slider" id="slider-halftone"
+                 min="0" max="100" value="0" aria-label="Halftone 丝网印刷网点强度" />
+        </div>
       </div>
 
       <!-- 胶片边框 & 闪光 -->
@@ -1545,6 +1585,14 @@ input, select { font: inherit; }
   <div class="ctrl-row">
     <div class="ctrl-label"><span>JPEG 压缩块</span><span class="ctrl-label-val" id="m-val-artifacts">30%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-artifacts" min="0" max="100" value="30" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>📺 CRT 扫描线</span><span class="ctrl-label-val" id="m-val-crtlines">0%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-crtlines" min="0" max="100" value="0" />
+  </div>
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>🔵 半调网点</span><span class="ctrl-label-val" id="m-val-halftone">0%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-halftone" min="0" max="100" value="0" />
   </div>
   <div style="height:1px;background:var(--border);margin:12px 0"></div>
   <div class="ctrl-toggle-row">
@@ -1723,6 +1771,31 @@ input, select { font: inherit; }
 
 const FILTERS = [
 
+  // ── ⓪ 原色纯净 RAW ——————————————————————————————————————————
+  // 零调色：brightness=0 / contrast=1 / saturation=1 / warmth=0
+  // 所有效果 base 值设为合理基准，完全靠用户滑块控制风格
+  {
+    id: 'raw_pure',
+    name: '原色纯净 RAW',
+    year: 'RAW',
+    tag: 'RAW_001',
+    description: '零调色·不动原图色彩·纯靠效果滑块塑造风格',
+    accentColor: '#e2e8f0',
+    params: {
+      brightness: 0,   contrast: 1.0, saturation: 1.0, warmth: 0, tint: 0,
+      shadowTint:    { r: 0, g: 0, b: 0 },   // 无阴影调色
+      highlightTint: { r: 0, g: 0, b: 0 },   // 无高光调色
+      // ── 效果 base 值（用户滑块的参考基准，0-2x 乘数）
+      baseNoise: 45,                    // grain 滑块 50%=正常, 100%=加倍
+      baseChromaticAberration: 4.0,    // chroma 滑块控制
+      baseVignette: 0.55,              // vignette 滑块控制
+      baseBloom: 0.45, bloomThreshold: 200,
+      baseJpegArtifacts: 0.5,
+      baseLightLeak: 0.5,
+      baseImperfections: 0.35,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
   // ── ① Canon IXUS ─────────────────────────────────────────────
   {
     id: 'canon_ixus',
@@ -1990,6 +2063,124 @@ const FILTERS = [
     }
   },
 
+
+  // ════════════════════════════════════════════════════════════════
+  // 王家卫电影系列 — Wong Kar-wai Film Series (DP: Christopher Doyle)
+  // ════════════════════════════════════════════════════════════════
+
+  // ── 堕落天使 Fallen Angels (1995) ──────────────────────────────
+  {
+    id: 'wkw_fallen_angels',
+    name: '堕落天使',
+    year: '1995',
+    tag: 'WKW_001',
+    description: '翠绿阴影 · 红橙高光 · 重色差 · 霓虹夜香港',
+    accentColor: '#22c55e',
+    params: {
+      brightness: -6,  contrast: 1.38, saturation: 1.12, warmth: -4, tint: 14,
+      shadowTint:    { r: -22, g: 28, b: -10 },
+      highlightTint: { r: 24,  g: -12, b: -18 },
+      baseNoise: 48, baseChromaticAberration: 5.0, baseVignette: 0.80,
+      baseBloom: 0.32, bloomThreshold: 165, baseJpegArtifacts: 0.40,
+      baseLightLeak: 0.30, baseImperfections: 0.40,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── 重庆森林 Chungking Express (1994) ──────────────────────────
+  {
+    id: 'wkw_chungking',
+    name: '重庆森林',
+    year: '1994',
+    tag: 'WKW_002',
+    description: '钠灯暖橙 · 步印残影 · 高饱和 · 街头霓虹',
+    accentColor: '#f97316',
+    params: {
+      brightness: 8,   contrast: 1.22, saturation: 1.52, warmth: 26, tint: -5,
+      shadowTint:    { r: 16, g: 8,  b: -22 },
+      highlightTint: { r: 36, g: 20, b: -28 },
+      baseNoise: 36, baseChromaticAberration: 1.8, baseVignette: 0.45,
+      baseBloom: 0.62, bloomThreshold: 162, baseJpegArtifacts: 0.35,
+      baseLightLeak: 0.52, baseImperfections: 0.22,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── 花样年华 In the Mood for Love (2000) ──────────────────────
+  {
+    id: 'wkw_mood_love',
+    name: '花样年华',
+    year: '2000',
+    tag: 'WKW_003',
+    description: '酒红暖金 · 重暗角 · 慢速胶片 · 浓郁钨丝灯',
+    accentColor: '#dc2626',
+    params: {
+      brightness: -4,  contrast: 1.20, saturation: 1.18, warmth: 20, tint: -5,
+      shadowTint:    { r: 22, g: 6,  b: -16 },
+      highlightTint: { r: 42, g: 22, b: -20 },
+      baseNoise: 22, baseChromaticAberration: 0.8, baseVignette: 0.72,
+      baseBloom: 0.42, bloomThreshold: 190, baseJpegArtifacts: 0.18,
+      baseLightLeak: 0.38, baseImperfections: 0.18,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── 春光乍泄 Happy Together (1997) ────────────────────────────
+  {
+    id: 'wkw_happy_together',
+    name: '春光乍泄',
+    year: '1997',
+    tag: 'WKW_004',
+    description: '冷蓝高反差 · 重颗粒褪色 · 布宜诺斯艾利斯孤独感',
+    accentColor: '#0ea5e9',
+    params: {
+      brightness: -8,  contrast: 1.42, saturation: 0.72, warmth: -15, tint: 6,
+      shadowTint:    { r: -16, g: 10, b: 24 },
+      highlightTint: { r: -10, g: 16, b: 20 },
+      baseNoise: 52, baseChromaticAberration: 2.0, baseVignette: 0.65,
+      baseBloom: 0.20, bloomThreshold: 215, baseJpegArtifacts: 0.32,
+      baseLightLeak: 0.12, baseImperfections: 0.48,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── 2046 (2004) ─────────────────────────────────────────────
+  {
+    id: 'wkw_2046',
+    name: '2046',
+    year: '2004',
+    tag: 'WKW_005',
+    description: '青绿霓虹 · 冷调未来 · 高反差 · 科幻忧郁',
+    accentColor: '#0891b2',
+    params: {
+      brightness: -12, contrast: 1.30, saturation: 1.08, warmth: -18, tint: 10,
+      shadowTint:    { r: -24, g: 16, b: 32 },
+      highlightTint: { r: -14, g: 24, b: 36 },
+      baseNoise: 30, baseChromaticAberration: 3.5, baseVignette: 0.78,
+      baseBloom: 0.48, bloomThreshold: 178, baseJpegArtifacts: 0.25,
+      baseLightLeak: 0.22, baseImperfections: 0.28,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── 阿飞正传 Days of Being Wild (1990) ────────────────────────
+  {
+    id: 'wkw_days_wild',
+    name: '阿飞正传',
+    year: '1990',
+    tag: 'WKW_006',
+    description: '60年代暖黄 · 热带绿意 · 低反差梦幻胶片',
+    accentColor: '#ca8a04',
+    params: {
+      brightness: 6,   contrast: 0.96, saturation: 1.08, warmth: 22, tint: 4,
+      shadowTint:    { r: 12, g: 10, b: -16 },
+      highlightTint: { r: 28, g: 20, b: -10 },
+      baseNoise: 26, baseChromaticAberration: 1.2, baseVignette: 0.55,
+      baseBloom: 0.30, bloomThreshold: 205, baseJpegArtifacts: 0.20,
+      baseLightLeak: 0.48, baseImperfections: 0.25,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
 ];
 
 
@@ -2180,6 +2371,15 @@ class DigiCamProcessor {
     const crtStr = (userParams.crtlines ?? 0) / 100;
     if (crtStr > 0.005) {
       DigiCamProcessor._crtScanlines(ctx, w, h, crtStr);
+    }
+
+    // ── PASS 5.9: Halftone 半调网点 ────────────────────────────
+    const halftoneStr = (userParams.halftone ?? 0) / 100;
+    if (halftoneStr > 0.01) {
+      // 网点间距：根据图像宽度自适应（6–18px 之间）
+      const htDivisor = 380 - halftoneStr * 220;
+      const htDot = Math.max(3, Math.round(w / htDivisor));
+      DigiCamProcessor._halftone(ctx, w, h, halftoneStr, htDot);
     }
 
     // ── PASS 6: Film Border (last — frames everything) ────────────
@@ -2409,22 +2609,44 @@ class DigiCamProcessor {
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    // Outer glow in orange
+
+    // 1. 将白色文字像素提取到透明背景 canvas
     const offscr = document.createElement('canvas');
     offscr.width = dstW; offscr.height = dstH;
     const oc = offscr.getContext('2d');
     oc.imageSmoothingEnabled = false;
+    // 缩放上采样（无平滑，保留像素感）
     oc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
-    ctx.shadowColor = '#ff6600'; ctx.shadowBlur = upScale * 3;
-    ctx.globalAlpha = 0.6;
-    ctx.drawImage(offscr, dstX, dstY);
+    // 将黑色背景变透明（multiply=0 的区域）：destination-in 利用源亮度作为 alpha mask
+    // 另建一个 mask canvas 用白色像素做 alpha
+    const maskC = document.createElement('canvas');
+    maskC.width = dstW; maskC.height = dstH;
+    const mc = maskC.getContext('2d');
+    mc.imageSmoothingEnabled = false;
+    mc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
+    // 使文字像素变橙色：覆盖橙色，再用原亮度 mask 裁剪
+    const colorC = document.createElement('canvas');
+    colorC.width = dstW; colorC.height = dstH;
+    const cc = colorC.getContext('2d');
+    cc.imageSmoothingEnabled = false;
+    // 橙色底
+    cc.fillStyle = '#ff8c00';
+    cc.fillRect(0, 0, dstW, dstH);
+    // 用原图（白字黑底）做亮度 mask：destination-in 保留 source alpha
+    cc.globalCompositeOperation = 'destination-in';
+    cc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
+
+    // 2. 先画橙色辉光（blur shadow）
+    ctx.shadowColor = '#ff6600';
+    ctx.shadowBlur  = upScale * 4;
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(colorC, dstX, dstY);
     ctx.shadowBlur = 0;
-    // Main pixel color (white-orange)
+
+    // 3. 再画清晰像素文字
     ctx.globalAlpha = 1;
-    // Tint to orange
-    oc.globalCompositeOperation = 'source-atop';
-    oc.fillStyle = '#ff8c00'; oc.fillRect(0, 0, dstW, dstH);
-    ctx.drawImage(offscr, dstX, dstY);
+    ctx.drawImage(colorC, dstX, dstY);
+
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
   }
@@ -2874,6 +3096,61 @@ class DigiCamProcessor {
       ctx.globalCompositeOperation = 'source-over';
     }
   }
+
+  // ── Halftone 半调网点（丝网印刷 / 波普风格）──────────────────
+  // strength: 0-1  dotSpacing: 像素间距（越大=粗网）
+  static _halftone(ctx, w, h, strength, dotSpacing) {
+    if (strength < 0.01) return;
+
+    const step = Math.max(3, Math.round(dotSpacing));
+    const angle = 22.5 * Math.PI / 180; // 经典半调角度
+    const cosA  = Math.cos(angle);
+    const sinA  = Math.sin(angle);
+    const cx = w / 2, cy = h / 2;
+
+    // 采样原图像素
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const src = imgData.data;
+
+    // 构建半调 canvas（透明背景，仅画点）
+    const ht  = document.createElement('canvas');
+    ht.width  = w; ht.height = h;
+    const hc  = ht.getContext('2d');
+
+    // 深色背景（随 strength 加深）
+    hc.fillStyle = `rgba(0,0,0,${Math.min(0.96, strength * 1.1)})`;
+    hc.fillRect(0, 0, w, h);
+
+    const diag = Math.ceil(Math.sqrt(w * w + h * h)) + step * 2;
+
+    for (let gy = -diag; gy <= diag; gy += step) {
+      for (let gx = -diag; gx <= diag; gx += step) {
+        // 旋转网格坐标 → 图像坐标
+        const ix = Math.round(cx + gx * cosA - gy * sinA);
+        const iy = Math.round(cy + gx * sinA + gy * cosA);
+        if (ix < 0 || ix >= w || iy < 0 || iy >= h) continue;
+
+        const pidx = (iy * w + ix) * 4;
+        const r = src[pidx], g = src[pidx + 1], b = src[pidx + 2];
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+        // 点半径：暗处大圆点，亮处小点
+        const maxR = step * 0.55;
+        const dotR = maxR * (1 - lum);
+        if (dotR < 0.5) continue;
+
+        hc.fillStyle = `rgb(${r},${g},${b})`;
+        hc.beginPath();
+        hc.arc(ix, iy, dotR, 0, Math.PI * 2);
+        hc.fill();
+      }
+    }
+
+    // 叠加到主画布：低 strength = 半透明叠加，高 = 完全替换
+    ctx.globalAlpha = Math.min(1, strength);
+    ctx.drawImage(ht, 0, 0);
+    ctx.globalAlpha = 1;
+  }
 }
 
 
@@ -2927,6 +3204,7 @@ const State = (() => {
       imperfections:  30,
       scanlines:       0,
       crtlines:        0,
+      halftone:        0,
       warmth:         50,   // 50 = 跟随预设，<50 加冷，>50 加暖
     },
 
@@ -3068,6 +3346,17 @@ function selectFilter(id) {
   // Update chip
   const f = FILTERS.find(f => f.id === id);
   $('chip-filter').textContent = f.name;
+  // RAW 纯净模式：自动将所有效果滑块归零（颜色回中间），让滑块从零开始搭配
+  if (id === 'raw_pure') {
+    const rawZero = { grain:0, chroma:0, vignette:0, bloom:0, artifacts:0, lightleak:0, imperfections:0, scanlines:0, crtlines:0, halftone:0, warmth:50 };
+    Object.assign(State.get().params, rawZero);
+    Object.entries(rawZero).forEach(([k, v]) => {
+      const sl = $('slider-'+k), vl = $('val-'+k);
+      if (sl && vl) { sl.value=v; vl.textContent = k==='warmth'?'±0 (自动)':v+'%'; updateSliderTrack(sl); }
+      const ms = $('m-slider-'+k), mv = $('m-val-'+k);
+      if (ms && mv) { ms.value=v; mv.textContent = k==='warmth'?'±0 (自动)':v+'%'; updateSliderTrack(ms); }
+    });
+  }
   if (State.get().srcImageData) scheduleProcess();
 }
 
@@ -3633,11 +3922,13 @@ function bindSliders() {
     ['imperfections',  'slider-imperfections',  'val-imperfections'],
     ['scanlines',      'slider-scanlines',      'val-scanlines'],
     ['crtlines',       'slider-crtlines',       'val-crtlines'],
+    ['halftone',       'slider-halftone',       'val-halftone'],
     ['warmth',         'slider-warmth',         'val-warmth'],
   ];
   // 桌面版
   pairs.forEach(([key, sliderId, valId]) => {
     const slider = $(sliderId), valEl = $(valId);
+    if (!slider || !valEl) return;  // 元素不存在时跳过
     slider.value = State.get().params[key];
     valEl.textContent = slider.value + '%';
     updateSliderTrack(slider);
@@ -3648,7 +3939,7 @@ function bindSliders() {
       updateSliderTrack(slider);
       // 同步移动端滑块
       const ms = $('m-slider-' + key);
-      if (ms) { ms.value = v; $('m-val-' + key).textContent = v + '%'; updateSliderTrack(ms); }
+      const mv = $('m-val-' + key); if (ms && mv) { ms.value = v; mv.textContent = v + '%'; updateSliderTrack(ms); }
       if (State.get().srcImageData) scheduleProcess();
     });
   });
@@ -3741,7 +4032,7 @@ function resetParams() {
   const defaults = {
     intensity: 80, grain: 50, chroma: 50,
     vignette: 50, bloom: 50, artifacts: 30,
-    lightleak: 50, imperfections: 30, scanlines: 0, crtlines: 0, warmth: 50,
+    lightleak: 50, imperfections: 30, scanlines: 0, crtlines: 0, halftone: 0, warmth: 50,
   };
   State.get().params = { ...defaults };
   ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections','scanlines','crtlines','warmth'].forEach(k => {
