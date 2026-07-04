@@ -1547,6 +1547,18 @@ input, select { font: inherit; }
         </svg>
         批量下载
       </button>
+      <button class="btn" id="btn-send-refine" style="background:#8b5cf6; color:#fff;" aria-label="传送至封面精修">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        传至精修
+      </button>
+      <button class="btn" id="btn-send-convert" style="background:#3b82f6; color:#fff;" aria-label="传送至比例转换">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
+        </svg>
+        传至转换
+      </button>
     </div>
     <div class="export-bar-right">
       <span id="export-size-info" style="font-family:var(--mono);font-size:0.6rem;color:var(--text-3)"></span>
@@ -4020,12 +4032,136 @@ function formatDate(str) {
 // ═══════════════════════════════════════════════════════════════
 //  按钮
 // ═══════════════════════════════════════════════════════════════
+// === IndexedDB + window.name Dual-Channel image bridge ===
+const BridgeDB = {
+  name: 'ZhiRenDaShu_Bridge',
+  store: 'image_transfer',
+  async save(images) {
+    // 1. Write to window.name (Base64)
+    try {
+      const dataToSave = [];
+      for (const img of images) {
+        const dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(img.blob);
+        });
+        dataToSave.push({ name: img.name, dataUrl: dataUrl });
+      }
+      window.name = JSON.stringify({
+        type: 'zhirendashu_transfer',
+        images: dataToSave
+      });
+    } catch(e) {
+      console.warn("window.name save failed", e);
+    }
+
+    // 2. Write to IndexedDB
+    try {
+      const db = await this.open();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(this.store, 'readwrite');
+        const s = tx.objectStore(this.store);
+        s.clear();
+        let count = 0;
+        if (images.length === 0) return resolve();
+        images.forEach(img => {
+          const req = s.add(img);
+          req.onsuccess = () => {
+            count++;
+            if (count === images.length) resolve();
+          };
+          req.onerror = e => reject(e);
+        });
+      });
+    } catch(e) {
+      console.warn("IndexedDB save failed", e);
+    }
+  },
+  async load() {
+    // 1. Try window.name first
+    try {
+      if (window.name) {
+        const data = JSON.parse(window.name);
+        if (data && data.type === 'zhirendashu_transfer') {
+          window.name = ''; // Clear once loaded
+          const items = [];
+          for (const img of data.images) {
+            const res = await fetch(img.dataUrl);
+            const blob = await res.blob();
+            items.push({ name: img.name, blob });
+          }
+          return items;
+        }
+      }
+    } catch(e) {
+      console.warn("window.name load failed", e);
+    }
+
+    // 2. Try IndexedDB
+    try {
+      const db = await this.open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(this.store, 'readwrite');
+        const s = tx.objectStore(this.store);
+        const req = s.getAll();
+        req.onsuccess = () => {
+          const results = req.result;
+          s.clear(); // Clear once loaded
+          resolve(results);
+        };
+        req.onerror = e => reject(e);
+      });
+    } catch(e) {
+      console.warn("IndexedDB load failed", e);
+      return [];
+    }
+  },
+  open() {
+    return new Promise((res) => {
+      const req = indexedDB.open(this.name, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(this.store, { autoIncrement: true });
+      req.onsuccess = () => res(req.result);
+    });
+  }
+};
+
 function bindButtons() {
   $('btn-new-image').addEventListener('click', () => $('file-input').click());
   $('btn-reset-params').addEventListener('click', resetParams);
   $('btn-export-png').addEventListener('click', () => exportCurrent('png'));
   $('btn-export-jpg').addEventListener('click', () => exportCurrent('jpg'));
   $('btn-export-all').addEventListener('click', exportAll);
+  
+  const btnSendRefine = $('btn-send-refine');
+  if (btnSendRefine) {
+    btnSendRefine.addEventListener('click', async () => {
+      const canvas = State.get().processedCanvas;
+      if (!canvas) {
+        window.showToast("请先上传并处理一张图片", "error");
+        return;
+      }
+      window.showToast("正在打包传送至精修...", "info");
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      await BridgeDB.save([{ name: `CCD_${Date.now()}.png`, blob }]);
+      window.location.href = "封面精修大师.html?from=bridge";
+    });
+  }
+
+  const btnSendConvert = $('btn-send-convert');
+  if (btnSendConvert) {
+    btnSendConvert.addEventListener('click', async () => {
+      const canvas = State.get().processedCanvas;
+      if (!canvas) {
+        window.showToast("请先上传并处理一张图片", "error");
+        return;
+      }
+      window.showToast("正在打包传送至转换...", "info");
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      await BridgeDB.save([{ name: `CCD_${Date.now()}.png`, blob }]);
+      window.location.href = "封面比例转换工具.html?from=bridge";
+    });
+  }
 }
 
 function resetParams() {

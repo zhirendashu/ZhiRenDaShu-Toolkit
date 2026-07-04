@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
@@ -561,38 +561,97 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
     <!-- IndexedDB 通信 -->
     <script>
         const BridgeDB = {
-            name: 'ZhiRenDaShu_Bridge',
-            store: 'image_transfer',
-            async save(images) {
-                const db = await this.open();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(this.store, 'readwrite');
-                    const s = tx.objectStore(this.store);
-                    s.clear();
-                    
-                    let count = 0;
-                    if(images.length === 0) return resolve();
-                    images.forEach(img => {
-                        const req = s.add(img);
-                        req.onsuccess = () => {
-                            count++;
-                            if (count === images.length) resolve();
-                        };
-                        req.onerror = e => reject(e);
-                    });
-                });
-            },
-            open() {
-                return new Promise((res) => {
-                    const req = indexedDB.open(this.name, 1);
-                    req.onupgradeneeded = () => {
-                        req.result.createObjectStore(this.store, { autoIncrement: true });
-                    };
-                    req.onsuccess = () => res(req.result);
-                });
+        name: 'ZhiRenDaShu_Bridge',
+        store: 'image_transfer',
+        async save(images) {
+          // 1. Write to window.name (Base64)
+          try {
+            const dataToSave = [];
+            for (const img of images) {
+              const dataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(img.blob);
+              });
+              dataToSave.push({ name: img.name, dataUrl: dataUrl });
             }
-        };
-    </script>
+            window.name = JSON.stringify({
+              type: 'zhirendashu_transfer',
+              images: dataToSave
+            });
+          } catch(e) {
+            console.warn("window.name save failed", e);
+          }
+
+          // 2. Write to IndexedDB
+          try {
+            const db = await this.open();
+            await new Promise((resolve, reject) => {
+              const tx = db.transaction(this.store, 'readwrite');
+              const s = tx.objectStore(this.store);
+              s.clear();
+              let count = 0;
+              if (images.length === 0) return resolve();
+              images.forEach(img => {
+                const req = s.add(img);
+                req.onsuccess = () => {
+                  count++;
+                  if (count === images.length) resolve();
+                };
+                req.onerror = e => reject(e);
+              });
+            });
+          } catch(e) {
+            console.warn("IndexedDB save failed", e);
+          }
+        },
+        async load() {
+          // 1. Try window.name first
+          try {
+            if (window.name) {
+              const data = JSON.parse(window.name);
+              if (data && data.type === 'zhirendashu_transfer') {
+                window.name = ''; // Clear once loaded
+                const items = [];
+                for (const img of data.images) {
+                  const res = await fetch(img.dataUrl);
+                  const blob = await res.blob();
+                  items.push({ name: img.name, blob });
+                }
+                return items;
+              }
+            }
+          } catch(e) {
+            console.warn("window.name load failed", e);
+          }
+
+          // 2. Try IndexedDB
+          try {
+            const db = await this.open();
+            return new Promise((resolve, reject) => {
+              const tx = db.transaction(this.store, 'readwrite');
+              const s = tx.objectStore(this.store);
+              const req = s.getAll();
+              req.onsuccess = () => {
+                const results = req.result;
+                s.clear(); // Clear once loaded
+                resolve(results);
+              };
+              req.onerror = e => reject(e);
+            });
+          } catch(e) {
+            console.warn("IndexedDB load failed", e);
+            return [];
+          }
+        },
+        open() {
+          return new Promise((res) => {
+            const req = indexedDB.open(this.name, 1);
+            req.onupgradeneeded = () => req.result.createObjectStore(this.store, { autoIncrement: true });
+            req.onsuccess = () => res(req.result);
+          });
+        }
+      };</script>
 
     <script>
         // ==================== Premium iOS Mobile Save Handler ====================
@@ -1966,9 +2025,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Initialize all components
-    function initAll() {
+    async function initAll() {
         initRangeResets();
         initEyedropper();
+        try {
+            const data = await BridgeDB.load();
+            if (data && data.length > 0) {
+                const filesList = data.map(x => new File([x.blob], x.name || 'image.png', { type: x.blob.type || 'image/png' }));
+                handleFiles(filesList);
+            }
+        } catch(e) {
+            console.error('Bridge load error:', e);
+        }
     }
     
     document.addEventListener("DOMContentLoaded", initAll);
