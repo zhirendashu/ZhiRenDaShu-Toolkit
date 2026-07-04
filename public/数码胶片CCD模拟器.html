@@ -2347,7 +2347,7 @@ class DigiCamProcessor {
 
     // ── PASS 5: Timestamp ─────────────────────────────────────────
     if (stampParams && stampParams.enabled && stampParams.date) {
-      DigiCamProcessor._timestamp(ctx, w, h, stampParams.date, stampParams.mode || 'classic');
+      DigiCamProcessor._timestamp(ctx, w, h, stampParams.date, stampParams.mode || 'classic', stampParams.color || '#f97316');
     }
 
     // ── PASS 5.5: Flash Flare (Huji-style) ───────────────────────
@@ -2478,32 +2478,36 @@ class DigiCamProcessor {
   }
 
   // ── Timestamp dispatcher ──────────────────────────────────────
-  static _timestamp(ctx, w, h, dateStr, mode) {
+  static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316') {
     switch (mode) {
-      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr);
-      case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr);
-      case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr);
-      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr);
-      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr);
+      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color);
+      case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color);
+      case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color);
+      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color);
+      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color);
     }
   }
 
-  // ── ① 经典橙色（原版相机样式）────────────────────────────────
-  static _timestampClassic(ctx, w, h, dateStr) {
+  static _timestampClassic(ctx, w, h, dateStr, color) {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(14, Math.round(30 * scale));
     const pad   = Math.max(12, Math.round(22 * scale));
     ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.shadowColor = '#f97316'; ctx.shadowBlur = fSize * 1.0;
-    ctx.fillStyle = '#f97316';
+    
+    // Draw neon fluorescent background glow using the custom color
+    ctx.shadowColor = color; ctx.shadowBlur = fSize * 0.9;
+    ctx.fillStyle = color;
     ctx.fillText(dateStr, w - pad, h - pad);
-    ctx.shadowBlur = fSize * 0.3; ctx.fillStyle = '#fed7aa';
+    
+    // Draw bright inner core highlight (semi-transparent white) to create the fluorescent bulb look
+    ctx.shadowBlur = fSize * 0.25; 
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.fillText(dateStr, w - pad, h - pad);
     ctx.shadowBlur = 0;
   }
 
-  static _timestampLCD(ctx, w, h, dateStr) {
+  static _timestampLCD(ctx, w, h, dateStr, color) {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
@@ -2511,15 +2515,18 @@ class DigiCamProcessor {
     ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
     
-    ctx.shadowColor = '#00ff44'; ctx.shadowBlur = fSize * 0.7;
-    ctx.fillStyle = '#00ff44';
+    // Glowing neon look in selected color
+    ctx.shadowColor = color; ctx.shadowBlur = fSize * 0.8;
+    ctx.fillStyle = color;
     ctx.fillText(dateStr, w - pad, h - pad);
-    ctx.shadowBlur = fSize * 0.2; ctx.fillStyle = '#aaffc0';
+    
+    ctx.shadowBlur = fSize * 0.22;
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
     ctx.fillText(dateStr, w - pad, h - pad);
     ctx.shadowBlur = 0;
   }
 
-  static _timestampDotMatrix(ctx, w, h, dateStr) {
+  static _timestampDotMatrix(ctx, w, h, dateStr, color) {
     const DOT_FONT = {
       '0': [0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110],
       '1': [0b00100,0b01100,0b00100,0b00100,0b00100,0b00100,0b01110],
@@ -2548,8 +2555,10 @@ class DigiCamProcessor {
     const startX = w - pad - totalW;
     const startY = h - pad - charH;
 
-    // Inactive dots (very dim)
-    ctx.fillStyle = 'rgba(180,90,10,0.12)';
+    // Inactive dots (very dim version of color, semi-transparent)
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.08;
     for (let ci = 0; ci < dateStr.length; ci++) {
       for (let row = 0; row < 7; row++) {
         for (let col = 0; col < 5; col++) {
@@ -2559,10 +2568,12 @@ class DigiCamProcessor {
         }
       }
     }
+    ctx.restore();
 
-    // Active dots (bright amber)
-    ctx.shadowColor = '#ff9900'; ctx.shadowBlur = dot * 2.5;
-    ctx.fillStyle = '#ffcc44';
+    // Active dots (bright neon look: glowing custom color with bright white center)
+    ctx.save();
+    ctx.shadowColor = color; ctx.shadowBlur = dot * 2.5;
+    ctx.fillStyle = color;
     for (let ci = 0; ci < dateStr.length; ci++) {
       const glyph = DOT_FONT[dateStr[ci]] || DOT_FONT[' '];
       for (let row = 0; row < 7; row++) {
@@ -2570,21 +2581,40 @@ class DigiCamProcessor {
           if ((glyph[row] >> (4 - col)) & 1) {
             const dx = startX + ci * charW + col * step + dot / 2;
             const dy = startY + row * step + dot / 2;
+            
+            // Outer glow layer
             ctx.beginPath(); ctx.arc(dx, dy, dot / 2, 0, Math.PI * 2); ctx.fill();
           }
         }
       }
     }
-    ctx.shadowBlur = 0;
+    
+    // Draw white center core layer
+    ctx.shadowBlur = dot * 0.8;
+    ctx.fillStyle = '#ffffff';
+    for (let ci = 0; ci < dateStr.length; ci++) {
+      const glyph = DOT_FONT[dateStr[ci]] || DOT_FONT[' '];
+      for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 5; col++) {
+          if ((glyph[row] >> (4 - col)) & 1) {
+            const dx = startX + ci * charW + col * step + dot / 2;
+            const dy = startY + row * step + dot / 2;
+            
+            ctx.beginPath(); ctx.arc(dx, dy, dot / 3, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+      }
+    }
+    ctx.restore();
   }
 
-  static _timestampEightBit(ctx, w, h, dateStr) {
+  static _timestampEightBit(ctx, w, h, dateStr, color) {
     const scale   = Math.min(1, w / 800);
     const fSizeSmall = 8;  // render tiny, then scale up
     const upScale    = Math.max(2, Math.round(4 * scale));
     const pad        = Math.max(10, Math.round(18 * scale));
 
-    // Render at tiny resolution on transparent canvas directly in orange
+    // Render at tiny resolution on transparent canvas directly in the selected custom color
     const tmp = document.createElement('canvas');
     const tw  = dateStr.length * (fSizeSmall * 0.65 + 1) + 4;
     const th  = fSizeSmall + 4;
@@ -2592,8 +2622,8 @@ class DigiCamProcessor {
     tmp.height = Math.ceil(th);
     const tc = tmp.getContext('2d');
     
-    // Transparent background, only draw orange text
-    tc.fillStyle = '#ff8c00';
+    // Transparent background, only draw custom color text
+    tc.fillStyle = color;
     tc.font = `bold ${fSizeSmall}px "Courier New", monospace`;
     tc.textBaseline = 'top'; tc.textAlign = 'left';
     tc.fillText(dateStr, 2, 2);
@@ -2611,14 +2641,14 @@ class DigiCamProcessor {
     const cc = colorC.getContext('2d');
     cc.imageSmoothingEnabled = false;
     
-    // Draw scaled-up orange text
+    // Draw scaled-up custom color text
     cc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
 
-    // Draw orange glow
-    ctx.shadowColor = '#ff6600';
+    // Draw custom color neon glow
+    ctx.shadowColor = color;
     ctx.shadowBlur  = upScale * 3;
     ctx.globalAlpha = 0.55;
     ctx.drawImage(colorC, dstX, dstY);
@@ -2631,20 +2661,19 @@ class DigiCamProcessor {
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
   }
-    // ── ⑤ 纯白简约（现代感）──────────────────────────────────────
-  static _timestampWhite(ctx, w, h, dateStr) {
+
+  static _timestampWhite(ctx, w, h, dateStr, color) {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(13, Math.round(26 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     ctx.font = `300 ${fSize}px "Helvetica Neue", Arial, sans-serif`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6;
-    ctx.fillStyle = 'rgba(255,255,255,0.90)';
+    ctx.shadowColor = color; ctx.shadowBlur = 6;
+    ctx.fillStyle = color;
     ctx.fillText(dateStr, w - pad, h - pad);
     ctx.shadowBlur = 0;
   }
-
-  // ── Rounded rect helper ───────────────────────────────────────
+    // ── Rounded rect helper ───────────────────────────────────────
   static _roundRect(ctx, x, y, rw, rh, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -3192,6 +3221,7 @@ const State = (() => {
     timestampOn:   true,
     timestampDate: '2005-10-24',
     tsMode:        'classic',
+tsColor:       '#f97316',
 
     // 胶片效果
     filmBorder: 'none',   // 'none' | 'thin' | 'sprocket'
@@ -3247,6 +3277,7 @@ function init() {
   bindTimestamp();
   bindViewToggle();
   bindTimestampMode();
+  bindTimestampColor();
   bindFilmEffects();
   bindUploadZone();
   bindCompareHandle();
@@ -3591,6 +3622,7 @@ async function processAndRender() {
     enabled: s.timestampOn,
     date:    formatDate(s.timestampDate),
     mode:    s.tsMode,
+    color:   s.tsColor || '#f97316',
   };
   const effectParams = {
     filmBorder: s.filmBorder,
@@ -3871,6 +3903,33 @@ function bindFilmEffects() {
 // ══════════════════════════════════════════════════════════════
 //  时间戳样式选择
 // ══════════════════════════════════════════════════════════════
+function bindTimestampColor() {
+  const picker = document.getElementById('ts-color-picker');
+  if (picker) {
+    picker.addEventListener('input', (e) => {
+      const color = e.target.value;
+      State.patch('tsColor', color);
+      document.querySelectorAll('#ts-color-presets .ts-color-dot').forEach(dot => {
+        dot.classList.toggle('active', dot.dataset.color.toLowerCase() === color.toLowerCase());
+      });
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  }
+
+  document.querySelectorAll('#ts-color-presets .ts-color-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const color = dot.dataset.color;
+      if (!color) return;
+      State.patch('tsColor', color);
+      if (picker) picker.value = color;
+      document.querySelectorAll('#ts-color-presets .ts-color-dot').forEach(d => {
+        d.classList.toggle('active', d === dot);
+      });
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  });
+}
+
 function bindTimestampMode() {
   // 仅处理带有 data-tsmode 的 pill，避免胶片边框 pills 混入
   document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(pill => {
