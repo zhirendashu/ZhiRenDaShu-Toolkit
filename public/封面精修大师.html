@@ -700,6 +700,31 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 <button class="btn btn-ghost" id="load-tpl-btn" style="border: 1px dashed var(--sub);">📂 导入本地模板 (.json)</button>
                 <input type="file" id="tpl-file-input" style="display:none;" accept=".json">
             </div>
+            
+            <div class="section-title" style="margin-top:20px; margin-bottom:10px;">👑 爆款自媒体排版预设</div>
+            <div class="style-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+                <button class="btn btn-ghost tpl-btn" data-tpl="neon-stagger" style="padding: 10px 6px; font-size: 0.72rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); height: auto; cursor: pointer;">
+                   <span style="font-size: 1.1rem; margin-bottom: 4px;">🎬</span>
+                   <strong>荧光错落大标题</strong>
+                   <span style="color:var(--sub); font-size:0.6rem;">小红书/世界杯爆款</span>
+                </button>
+                <button class="btn btn-ghost tpl-btn" data-tpl="wkw-scope" style="padding: 10px 6px; font-size: 0.72rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); height: auto; cursor: pointer;">
+                   <span style="font-size: 1.1rem; margin-bottom: 4px;">🎞️</span>
+                   <strong>窄银幕独白经典</strong>
+                   <span style="color:var(--sub); font-size:0.6rem;">电影遮幅+手写体</span>
+                </button>
+                <button class="btn btn-ghost tpl-btn" data-tpl="hk-neon" style="padding: 10px 6px; font-size: 0.72rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); height: auto; cursor: pointer;">
+                   <span style="font-size: 1.1rem; margin-bottom: 4px;">🌃</span>
+                   <strong>港风双色霓虹</strong>
+                   <span style="color:var(--sub); font-size:0.6rem;">重叠大霓虹招牌</span>
+                </button>
+                <button class="btn btn-ghost tpl-btn" data-tpl="polaroid" style="padding: 10px 6px; font-size: 0.72rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); height: auto; cursor: pointer;">
+                   <span style="font-size: 1.1rem; margin-bottom: 4px;">📸</span>
+                   <strong>拍立得手写微风</strong>
+                   <span style="color:var(--sub); font-size:0.6rem;">文艺纯白相纸框</span>
+                </button>
+            </div>
+            
             <div style="font-size: 0.7rem; color: var(--sub); line-height: 1.6; margin-top: 12px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
                 ✅ 保存模板时，会完整记录画布背景色、画幅比例。<br>
                 ✅ 以及画布上的所有文字、贴图的位置及样式设定。<br>
@@ -2185,6 +2210,169 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
          reader.readAsText(file);
          e.target.value = '';
       };
+
+      // === 预设自媒体排版模板加载 ===
+      const BUILTIN_TEMPLATES = {
+        'neon-stagger': (w, h) => {
+          return [
+            new fabric.IText("如何评价佛得角", {
+              left: w * 0.1,
+              top: h * 0.15,
+              fontSize: Math.round(w * 0.088),
+              fontFamily: 'Noto Serif SC',
+              fontWeight: '900',
+              fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#f59e0b', blur: 30, offsetX: 0, offsetY: 0 })
+            }),
+            new fabric.IText("世界杯之旅", {
+              left: w * 0.35,
+              top: h * 0.25,
+              fontSize: Math.round(w * 0.078),
+              fontFamily: 'Noto Serif SC',
+              fontWeight: '900',
+              fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#f59e0b', blur: 30, offsetX: 0, offsetY: 0 })
+            }),
+            new fabric.IText("？", {
+              left: w * 0.8,
+              top: h * 0.21,
+              fontSize: Math.round(w * 0.13),
+              fontFamily: 'Noto Serif SC',
+              fontWeight: '900',
+              fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#f59e0b', blur: 35, offsetX: 0, offsetY: 0 })
+            }),
+            new fabric.IText("西班牙 0-0 佛得角\n乌拉圭 2-2 佛得角\n佛得角 0-0 沙特阿拉伯\n阿根廷 3-2 佛得角", {
+              left: w * 0.12,
+              top: h * 0.36,
+              fontSize: Math.round(w * 0.038),
+              fontFamily: 'Noto Serif SC',
+              lineHeight: 1.4,
+              fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 6, offsetX: 1, offsetY: 1 })
+            })
+          ];
+        },
+        'wkw-scope': (w, h) => {
+          const barH = h * 0.12;
+          const topBar = new fabric.Rect({
+            left: 0, top: 0, width: w, height: barH,
+            fill: '#000000', selectable: false, evented: false
+          });
+          const bottomBar = new fabric.Rect({
+            left: 0, top: h - barH, width: w, height: barH,
+            fill: '#000000', selectable: false, evented: false
+          });
+          const monologue = new fabric.IText("那人走的时候，我以为我会哭。", {
+            left: w / 2,
+            top: h * 0.48,
+            originX: 'center',
+            originY: 'center',
+            fontSize: Math.round(w * 0.05),
+            fontFamily: 'Noto Serif SC',
+            fontStyle: 'italic',
+            charSpacing: 200,
+            fill: '#ffffff',
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 8, offsetX: 2, offsetY: 2 })
+          });
+          const subText = new fabric.IText("I thought I would cry when he left.", {
+            left: w / 2,
+            top: h * 0.57,
+            originX: 'center',
+            originY: 'center',
+            fontSize: Math.round(w * 0.03),
+            fontFamily: 'Playfair Display',
+            charSpacing: 100,
+            fill: '#e2e8f0'
+          });
+          const stamp = new fabric.IText("'95  06  18", {
+            left: w * 0.85,
+            top: h * 0.83,
+            originX: 'right',
+            originY: 'bottom',
+            fontSize: Math.round(w * 0.04),
+            fontFamily: 'Courier New',
+            fill: '#ff8c00',
+            shadow: new fabric.Shadow({ color: '#ff6600', blur: 15, offsetX: 0, offsetY: 0 })
+          });
+          return [topBar, bottomBar, monologue, subText, stamp];
+        },
+        'hk-neon': (w, h) => {
+          const size = Math.round(w * 0.12);
+          return [
+            new fabric.IText("重", {
+              left: w * 0.15, top: h * 0.15, fontSize: size, fontFamily: 'Noto Serif SC', fontWeight: '900', fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#ff2200', blur: 35, offsetX: 0, offsetY: 0 })
+            }),
+            new fabric.IText("庆", {
+              left: w * 0.15, top: h * 0.30, fontSize: size, fontFamily: 'Noto Serif SC', fontWeight: '900', fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#00ff44', blur: 35, offsetX: 0, offsetY: 0 })
+            }),
+            new fabric.IText("森", {
+              left: w * 0.15, top: h * 0.45, fontSize: size, fontFamily: 'Noto Serif SC', fontWeight: '900', fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#ff2200', blur: 35, offsetX: 0, offsetY: 0 })
+            }),
+            new fabric.IText("林", {
+              left: w * 0.15, top: h * 0.60, fontSize: size, fontFamily: 'Noto Serif SC', fontWeight: '900', fill: '#ffffff',
+              shadow: new fabric.Shadow({ color: '#00ff44', blur: 35, offsetX: 0, offsetY: 0 })
+            })
+          ];
+        },
+        'polaroid': (w, h) => {
+          const pad = Math.min(w, h) * 0.08;
+          const frame = new fabric.Rect({
+            left: pad, top: pad, width: w - pad * 2, height: h - pad * 3,
+            fill: '#ffffff', stroke: 'rgba(0,0,0,0.08)', strokeWidth: 1,
+            selectable: false, evented: false
+          });
+          const text = new fabric.IText("二〇二六 · 初夏", {
+            left: w / 2,
+            top: h - pad * 1.8,
+            originX: 'center',
+            originY: 'center',
+            fontSize: Math.round(w * 0.045),
+            fontFamily: 'Noto Serif SC',
+            fill: '#334155',
+            charSpacing: 120
+          });
+          return [frame, text];
+        }
+      };
+
+      document.querySelectorAll('.tpl-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tplKey = btn.dataset.tpl;
+          const creator = BUILTIN_TEMPLATES[tplKey];
+          if (!creator) return;
+
+          if (confirm("加载模板将清除当前已添加的文字和贴图（保留底图），确定加载吗？")) {
+             const oldBg = canvas.backgroundImage;
+             canvas.clear();
+             if (oldBg) {
+                canvas.setBackgroundImage(oldBg, canvas.renderAll.bind(canvas));
+             } else {
+                canvas.setBackgroundColor('#1e2028', canvas.renderAll.bind(canvas));
+             }
+             
+             const elements = creator(canvas.width, canvas.height);
+             elements.forEach(el => canvas.add(el));
+             
+             const dropZone = document.getElementById('inner-drop-zone');
+             const canvasBox = document.querySelector('.canvas-box');
+             if (dropZone) dropZone.style.display = 'none';
+             if (canvasBox) canvasBox.style.display = 'block';
+
+             canvas.renderAll();
+             saveCanvasState();
+             
+             const textEl = elements.find(el => el.type === 'i-text' || el.type === 'text');
+             if (textEl) {
+                canvas.setActiveObject(textEl);
+                canvas.renderAll();
+             }
+          }
+        });
+      });
 
       // === 背景高级滤镜组 ===
       function applyBgFilters() {
