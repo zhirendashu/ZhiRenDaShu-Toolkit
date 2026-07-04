@@ -359,6 +359,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
            <div class="prop-row">
              <label>画布比例</label>
              <select id="canvas-ratio">
+               <option value="auto" selected>原图自适应 (Auto)</option>
                <option value="0.75">3:4 (小红书)</option>
                <option value="1">1:1 (正方形)</option>
                <option value="0.5625">9:16 (纵向)</option>
@@ -1067,26 +1068,93 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         }
       });
 
+      // 等比适配背景图片，防止拉伸变形（等比居中 Cover 填充）
+      function fitBackgroundImage() {
+        const bg = canvas.backgroundImage;
+        if (!bg) return;
+        
+        const canvasRatio = canvas.width / canvas.height;
+        const imgRatio = bg.width / bg.height;
+        
+        let scale;
+        if (imgRatio > canvasRatio) {
+          // 图片更宽，以高度为主缩放
+          scale = canvas.height / bg.height;
+        } else {
+          // 图片更高，以宽度为主缩放
+          scale = canvas.width / bg.width;
+        }
+        
+        const left = (canvas.width - bg.width * scale) / 2;
+        const top = (canvas.height - bg.height * scale) / 2;
+        
+        bg.set({
+          scaleX: scale,
+          scaleY: scale,
+          left: left,
+          top: top,
+          selectable: false,
+          evented: false,
+          originX: 'left',
+          originY: 'top'
+        });
+        
+        // 记录基础缩放与坐标，供缩放/偏移滑块相对微调
+        bg._baseScaleX = scale;
+        bg._baseScaleY = scale;
+        bg._baseLeft = left;
+        bg._baseTop = top;
+        
+        // 重置滑动条状态（不触发 change，只设数值）
+        const scaleSlider = document.getElementById('bg-scale');
+        const offsetXSlider = document.getElementById('bg-offset-x');
+        const offsetYSlider = document.getElementById('bg-offset-y');
+        if (scaleSlider) scaleSlider.value = 1;
+        if (offsetXSlider) offsetXSlider.value = 0;
+        if (offsetYSlider) offsetYSlider.value = 0;
+        
+        // 景深剪裁贴合图层与其同步
+        if (window._depthLayerObj) {
+          window._depthLayerObj.set({
+            scaleX: scale,
+            scaleY: scale,
+            left: left,
+            top: top
+          });
+        }
+      }
+
       // 调整画布尺寸
       function resizeCanvas(ratio) {
+        let r;
+        if (ratio === 'auto') {
+          r = window._bgImgRatio || 0.75;
+        } else {
+          r = parseFloat(ratio);
+        }
+        
         const wrap = document.querySelector('.canvas-container-wrap');
         const maxW = wrap.clientWidth * 0.9;
         const maxH = wrap.clientHeight * 0.9;
         
         let targetW = maxW;
-        let targetH = maxW / ratio;
+        let targetH = maxW / r;
         
         if (targetH > maxH) {
           targetH = maxH;
-          targetW = maxH * ratio;
+          targetW = maxH * r;
         }
         
         canvas.setDimensions({ width: targetW, height: targetH });
+        
+        // 尺寸变化后，重新调整背景图适配
+        fitBackgroundImage();
+        
         canvas.renderAll();
       }
 
-      window.addEventListener('resize', () => resizeCanvas(parseFloat(document.getElementById('canvas-ratio').value)));
-      resizeCanvas(0.75);
+      window.addEventListener('resize', () => resizeCanvas(document.getElementById('canvas-ratio').value));
+      resizeCanvas('auto');
 
       // === 侧边栏切换 ===
       document.querySelectorAll('.tool-btn').forEach(btn => {
@@ -1108,28 +1176,18 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
         fabric.Image.fromURL(url, (img) => {
           const ratio = img.width / img.height;
-          // 根据图片建议比例
-          document.getElementById('canvas-ratio').value = ratio > 1.2 ? "1.777" : (ratio < 0.8 ? "0.75" : "1");
-          resizeCanvas(parseFloat(document.getElementById('canvas-ratio').value));
+          window._bgImgRatio = ratio; // 存储图片原始比例
           
-          img.set({
-            scaleX: canvas.width / img.width,
-            scaleY: canvas.height / img.height,
-            selectable: false,
-            evented: false,
-            originX: 'left',
-            originY: 'top'
-          });
-          // 记录背景图底基缩放和位移，以便相对偏移
-          img._baseScaleX = img.scaleX;
-          img._baseScaleY = img.scaleY;
-          img._baseLeft = 0;
-          img._baseTop = 0;
+          const ratioSelect = document.getElementById('canvas-ratio');
+          // 导入新图时，如果当前选择的是原图自适应(auto)，则自适应缩放画布
+          if (ratioSelect.value === 'auto') {
+            resizeCanvas('auto');
+          } else {
+            // 如果是固定比例，则使用固定比例调整画布
+            resizeCanvas(ratioSelect.value);
+          }
           
-          // 重置侧边栏滑动条
-          document.getElementById('bg-scale').value = 1;
-          document.getElementById('bg-offset-x').value = 0;
-          document.getElementById('bg-offset-y').value = 0;
+          // 重置背景暗角及景深图层
           document.getElementById('bg-vignette').value = 0;
           if (vignetteRect) {
             canvas.remove(vignetteRect);
@@ -1141,13 +1199,12 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
           }
           
           canvas.setBackgroundImage(img, () => {
+            fitBackgroundImage(); // 保证完全不拉伸，等比填充并居中
             canvas.renderAll();
             saveCanvasState();
           });
         });
-      }
-
-      // === 拖拽与点击上传事件 ===
+      }      // === 拖拽与点击上传事件 ===
       const dropZone = document.getElementById('inner-drop-zone');
       const fileInput = document.getElementById('file-input');
 
@@ -2109,7 +2166,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // === 画布比例 ===
       document.getElementById('canvas-ratio').onchange = (e) => {
-        resizeCanvas(parseFloat(e.target.value));
+        resizeCanvas(e.target.value);
         saveCanvasState();
       };
 
