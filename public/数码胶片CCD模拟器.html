@@ -2503,20 +2503,14 @@ class DigiCamProcessor {
     ctx.shadowBlur = 0;
   }
 
-  // ── ② LCD 绿色（诺基亚 / 卡西欧 LCD 屏）─────────────────────
   static _timestampLCD(ctx, w, h, dateStr) {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
-    // Background pill
+    
     ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    const tw = ctx.measureText(dateStr).width;
-    const bx = w - pad - tw - 6;
-    const by = h - pad - fSize - 6;
-    ctx.fillStyle = 'rgba(0,18,0,0.72)';
-    DigiCamProcessor._roundRect(ctx, bx, by, tw + 12, fSize + 10, 3);
-    ctx.fill();
+    
     ctx.shadowColor = '#00ff44'; ctx.shadowBlur = fSize * 0.7;
     ctx.fillStyle = '#00ff44';
     ctx.fillText(dateStr, w - pad, h - pad);
@@ -2525,7 +2519,6 @@ class DigiCamProcessor {
     ctx.shadowBlur = 0;
   }
 
-  // ── ③ 点阵时间戳（LED 发光点阵字体）─────────────────────────
   static _timestampDotMatrix(ctx, w, h, dateStr) {
     const DOT_FONT = {
       '0': [0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110],
@@ -2554,12 +2547,6 @@ class DigiCamProcessor {
     const totalW = dateStr.length * charW;
     const startX = w - pad - totalW;
     const startY = h - pad - charH;
-
-    // Background
-    ctx.fillStyle = 'rgba(8,4,0,0.78)';
-    DigiCamProcessor._roundRect(ctx, startX - gap*2, startY - gap*2,
-      totalW + gap*4, charH + gap*4, 3);
-    ctx.fill();
 
     // Inactive dots (very dim)
     ctx.fillStyle = 'rgba(180,90,10,0.12)';
@@ -2591,25 +2578,23 @@ class DigiCamProcessor {
     ctx.shadowBlur = 0;
   }
 
-  // ── ④ 8-bit 像素字体（低分辨率缩放上采样）────────────────────
   static _timestampEightBit(ctx, w, h, dateStr) {
     const scale   = Math.min(1, w / 800);
-    const pixelSz = Math.max(2, Math.round(3 * scale)); // pixel block size
     const fSizeSmall = 8;  // render tiny, then scale up
     const upScale    = Math.max(2, Math.round(4 * scale));
     const pad        = Math.max(10, Math.round(18 * scale));
 
-    // Render at tiny resolution
+    // Render at tiny resolution on transparent canvas
     const tmp = document.createElement('canvas');
     const tw  = dateStr.length * (fSizeSmall * 0.65 + 1) + 4;
     const th  = fSizeSmall + 4;
     tmp.width  = Math.ceil(tw);
     tmp.height = Math.ceil(th);
     const tc = tmp.getContext('2d');
-    tc.font = `bold ${fSizeSmall}px "Courier New", monospace`;
-    tc.fillStyle = '#000';
-    tc.fillRect(0, 0, tmp.width, tmp.height);
+    
+    // Transparent background, only draw white text
     tc.fillStyle = '#ffffff';
+    tc.font = `bold ${fSizeSmall}px "Courier New", monospace`;
     tc.textBaseline = 'top'; tc.textAlign = 'left';
     tc.fillText(dateStr, 2, 2);
 
@@ -2619,51 +2604,39 @@ class DigiCamProcessor {
     const dstX = w - pad - dstW;
     const dstY = h - pad - dstH;
 
+    // Create colorized canvas
+    const colorC = document.createElement('canvas');
+    colorC.width = dstW;
+    colorC.height = dstH;
+    const cc = colorC.getContext('2d');
+    cc.imageSmoothingEnabled = false;
+    
+    // 1. Draw scaled-up white text
+    cc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
+    
+    // 2. Colorize to orange
+    cc.globalCompositeOperation = 'source-in';
+    cc.fillStyle = '#ff8c00';
+    cc.fillRect(0, 0, dstW, dstH);
+
     ctx.save();
     ctx.imageSmoothingEnabled = false;
 
-    // 1. 将白色文字像素提取到透明背景 canvas
-    const offscr = document.createElement('canvas');
-    offscr.width = dstW; offscr.height = dstH;
-    const oc = offscr.getContext('2d');
-    oc.imageSmoothingEnabled = false;
-    // 缩放上采样（无平滑，保留像素感）
-    oc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
-    // 将黑色背景变透明（multiply=0 的区域）：destination-in 利用源亮度作为 alpha mask
-    // 另建一个 mask canvas 用白色像素做 alpha
-    const maskC = document.createElement('canvas');
-    maskC.width = dstW; maskC.height = dstH;
-    const mc = maskC.getContext('2d');
-    mc.imageSmoothingEnabled = false;
-    mc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
-    // 使文字像素变橙色：覆盖橙色，再用原亮度 mask 裁剪
-    const colorC = document.createElement('canvas');
-    colorC.width = dstW; colorC.height = dstH;
-    const cc = colorC.getContext('2d');
-    cc.imageSmoothingEnabled = false;
-    // 橙色底
-    cc.fillStyle = '#ff8c00';
-    cc.fillRect(0, 0, dstW, dstH);
-    // 用原图（白字黑底）做亮度 mask：destination-in 保留 source alpha
-    cc.globalCompositeOperation = 'destination-in';
-    cc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
-
-    // 2. 先画橙色辉光（blur shadow）
+    // 3. Draw orange glow
     ctx.shadowColor = '#ff6600';
-    ctx.shadowBlur  = upScale * 4;
+    ctx.shadowBlur  = upScale * 3;
     ctx.globalAlpha = 0.55;
     ctx.drawImage(colorC, dstX, dstY);
     ctx.shadowBlur = 0;
 
-    // 3. 再画清晰像素文字
+    // 4. Draw crisp pixel text
     ctx.globalAlpha = 1;
     ctx.drawImage(colorC, dstX, dstY);
 
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
   }
-
-  // ── ⑤ 纯白简约（现代感）──────────────────────────────────────
+    // ── ⑤ 纯白简约（现代感）──────────────────────────────────────
   static _timestampWhite(ctx, w, h, dateStr) {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(13, Math.round(26 * scale));
