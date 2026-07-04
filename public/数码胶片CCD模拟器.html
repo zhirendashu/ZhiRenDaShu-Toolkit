@@ -2584,7 +2584,7 @@ class DigiCamProcessor {
     const upScale    = Math.max(2, Math.round(4 * scale));
     const pad        = Math.max(10, Math.round(18 * scale));
 
-    // Render at tiny resolution on transparent canvas
+    // Render at tiny resolution on transparent canvas directly in orange
     const tmp = document.createElement('canvas');
     const tw  = dateStr.length * (fSizeSmall * 0.65 + 1) + 4;
     const th  = fSizeSmall + 4;
@@ -2592,8 +2592,8 @@ class DigiCamProcessor {
     tmp.height = Math.ceil(th);
     const tc = tmp.getContext('2d');
     
-    // Transparent background, only draw white text
-    tc.fillStyle = '#ffffff';
+    // Transparent background, only draw orange text
+    tc.fillStyle = '#ff8c00';
     tc.font = `bold ${fSizeSmall}px "Courier New", monospace`;
     tc.textBaseline = 'top'; tc.textAlign = 'left';
     tc.fillText(dateStr, 2, 2);
@@ -2604,32 +2604,27 @@ class DigiCamProcessor {
     const dstX = w - pad - dstW;
     const dstY = h - pad - dstH;
 
-    // Create colorized canvas
+    // Create scaled canvas
     const colorC = document.createElement('canvas');
     colorC.width = dstW;
     colorC.height = dstH;
     const cc = colorC.getContext('2d');
     cc.imageSmoothingEnabled = false;
     
-    // 1. Draw scaled-up white text
+    // Draw scaled-up orange text
     cc.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, dstW, dstH);
-    
-    // 2. Colorize to orange
-    cc.globalCompositeOperation = 'source-in';
-    cc.fillStyle = '#ff8c00';
-    cc.fillRect(0, 0, dstW, dstH);
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
 
-    // 3. Draw orange glow
+    // Draw orange glow
     ctx.shadowColor = '#ff6600';
     ctx.shadowBlur  = upScale * 3;
     ctx.globalAlpha = 0.55;
     ctx.drawImage(colorC, dstX, dstY);
     ctx.shadowBlur = 0;
 
-    // 4. Draw crisp pixel text
+    // Draw crisp pixel text
     ctx.globalAlpha = 1;
     ctx.drawImage(colorC, dstX, dstY);
 
