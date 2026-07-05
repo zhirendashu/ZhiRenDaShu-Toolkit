@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
@@ -470,6 +470,25 @@
                         </select>
                     </div>
                     <div class="prop-row">
+                        <div class="prop-header"><label class="prop-label">特效风格</label></div>
+                        <select id="wm-effect">
+                            <option value="none">常规纯色</option>
+                            <option value="neon">荧光霓虹管 (Neon Tube)</option>
+                            <option value="led">复古点阵 LED (Dot Matrix)</option>
+                        </select>
+                    </div>
+                    <div class="prop-row" id="neon-color-row" style="display: none;">
+                        <div class="prop-header"><label class="prop-label">荧光色预设</label></div>
+                        <select id="wm-neon-preset">
+                            <option value="#10b981">荧光绿 (LCD Green)</option>
+                            <option value="#ef4444">赤红 (LED Red)</option>
+                            <option value="#f97316">琥珀橙 (Amber LED)</option>
+                            <option value="#06b6d4">冰晶蓝 (Cyan)</option>
+                            <option value="#d946ef">紫罗兰 (Fuchsia)</option>
+                            <option value="custom">自定义色彩...</option>
+                        </select>
+                    </div>
+                    <div class="prop-row">
                         <div class="prop-header">
                             <label class="prop-label">水印颜色与阴影</label>
                         </div>
@@ -847,6 +866,105 @@
         }
 
         // === 渲染与 Canvas 混合系统 ===
+        // ── 荧光霓虹管渲染器 ──
+        function drawNeonGlowText(ctx, text, font, x, y, size, color) {
+            ctx.save();
+            ctx.font = `bold ${size}px ${font}`;
+            ctx.textBaseline = 'top';
+            
+            // 1. 大范围背景光雾
+            ctx.shadowColor = color;
+            ctx.shadowBlur = size * 0.5;
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y);
+            
+            // 2. 中等浓度发光轮廓
+            ctx.shadowBlur = size * 0.2;
+            ctx.fillText(text, x, y);
+            
+            // 3. 耀眼的白色核心管
+            ctx.shadowBlur = size * 0.05;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, x, y);
+            
+            ctx.restore();
+        }
+
+        // ── 复古点阵 LED 渲染器 ──
+        function drawDotMatrixText(ctx, text, font, x, y, size, color) {
+            const letterHeight = 16; 
+            const charScale = size / letterHeight; 
+            
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.font = `bold ${letterHeight}px ${font}`;
+            const textWidth = Math.ceil(tempCtx.measureText(text).width);
+            
+            tempCanvas.width = textWidth + 4;
+            tempCanvas.height = letterHeight + 4;
+            
+            tempCtx.font = `bold ${letterHeight}px ${font}`;
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.textBaseline = 'top';
+            tempCtx.fillText(text, 2, 2);
+            
+            const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imgData.data;
+            
+            const dot = Math.max(1.8, 2.5 * charScale);
+            const step = 4.2 * charScale;
+            
+            ctx.save();
+            
+            // 绘制底噪网格 LED（未激活状态）
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.05;
+            for (let gy = 0; gy < tempCanvas.height; gy++) {
+                for (let gx = 0; gx < tempCanvas.width; gx++) {
+                    const dx = x + gx * step;
+                    const dy = y + gy * step;
+                    ctx.beginPath();
+                    ctx.arc(dx, dy, dot / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // 绘制点亮状态 LED
+            ctx.globalAlpha = 1.0;
+            for (let gy = 0; gy < tempCanvas.height; gy++) {
+                for (let gx = 0; gx < tempCanvas.width; gx++) {
+                    const idx = (gy * tempCanvas.width + gx) * 4;
+                    const alpha = data[idx + 3];
+                    if (alpha > 120) {
+                        const dx = x + gx * step;
+                        const dy = y + gy * step;
+                        
+                        // 外层发光晕环
+                        ctx.save();
+                        ctx.shadowColor = color;
+                        ctx.shadowBlur = dot * 2.8;
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.arc(dx, dy, dot / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        
+                        // 内层高亮核心发光点
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(dx, dy, dot / 2.8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            ctx.restore();
+            return {
+                w: tempCanvas.width * step,
+                h: tempCanvas.height * step
+            };
+        }
+
         function drawWatermark(ctx, imgW, imgH) {
             const isText = State.watermarkType === 'text';
             const opacity = parseFloat($('wm-opacity').value) / 100;
@@ -863,23 +981,34 @@
                 const color = $('wm-color').value;
                 const shadowBlur = parseFloat($('wm-shadow-blur').value);
                 const font = $('wm-font').value;
+                const effect = $('wm-effect').value;
 
                 ctx.font = `bold ${fontSize}px ${font}`;
                 ctx.fillStyle = color;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
 
-                if (shadowBlur > 0) {
-                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-                    ctx.shadowBlur = shadowBlur;
-                    ctx.shadowOffsetX = 2;
-                    ctx.shadowOffsetY = 2;
-                }
+                let wmW = 0, wmH = fontSize;
 
-                // 测量尺寸以定位
-                const metrics = ctx.measureText(text);
-                const wmW = metrics.width;
-                const wmH = fontSize; // Approximate
+                if (effect === 'none') {
+                    const metrics = ctx.measureText(text);
+                    wmW = metrics.width;
+                } else if (effect === 'neon') {
+                    const metrics = ctx.measureText(text);
+                    wmW = metrics.width;
+                } else if (effect === 'led') {
+                    // 点阵测量由离屏渲染返回，先试测算
+                    const letterHeight = 16;
+                    const charScale = fontSize / letterHeight;
+                    const step = 4.2 * charScale;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.font = `bold ${letterHeight}px ${font}`;
+                    const textWidth = Math.ceil(tempCtx.measureText(text).width);
+                    wmW = (textWidth + 4) * step;
+                    wmH = (letterHeight + 4) * step;
+                }
 
                 if (isTiled) {
                     // 全屏平铺
@@ -892,7 +1021,19 @@
                     const maxDim = Math.max(imgW, imgH) * 2;
                     for (let x = -maxDim; x < maxDim; x += gapX) {
                         for (let y = -maxDim; y < maxDim; y += gapY) {
-                            ctx.fillText(text, x - wmW/2, y - wmH/2);
+                            if (effect === 'none') {
+                                if (shadowBlur > 0) {
+                                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                                    ctx.shadowBlur = shadowBlur;
+                                    ctx.shadowOffsetX = 2;
+                                    ctx.shadowOffsetY = 2;
+                                }
+                                ctx.fillText(text, x - wmW/2, y - wmH/2);
+                            } else if (effect === 'neon') {
+                                drawNeonGlowText(ctx, text, font, x - wmW/2, y - wmH/2, fontSize, color);
+                            } else if (effect === 'led') {
+                                drawDotMatrixText(ctx, text, font, x - wmW/2, y - wmH/2, fontSize, color);
+                            }
                         }
                     }
                 } else {
@@ -900,9 +1041,22 @@
                     const pos = calculateSinglePosition(imgW, imgH, wmW, wmH);
                     ctx.translate(pos.x + wmW / 2, pos.y + wmH / 2);
                     ctx.rotate(angle);
-                    ctx.fillText(text, -wmW / 2, -wmH / 2);
                     
-                    // 存储以便鼠标碰撞检测
+                    if (effect === 'none') {
+                        if (shadowBlur > 0) {
+                            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                            ctx.shadowBlur = shadowBlur;
+                            ctx.shadowOffsetX = 2;
+                            ctx.shadowOffsetY = 2;
+                        }
+                        ctx.fillText(text, -wmW / 2, -wmH / 2);
+                    } else if (effect === 'neon') {
+                        drawNeonGlowText(ctx, text, font, -wmW / 2, -wmH / 2, fontSize, color);
+                    } else if (effect === 'led') {
+                        drawDotMatrixText(ctx, text, font, -wmW / 2, -wmH / 2, fontSize, color);
+                    }
+                    
+                    // 存储以便鼠标碰撞检测与拉伸
                     State.wmBounds = {
                         x: pos.x, y: pos.y, w: wmW, h: wmH
                     };
@@ -983,30 +1137,73 @@
 
             // 绘制水印
             drawWatermark(ctx, canvas.width, canvas.height);
+
+            // 绘制拉伸与定位边框（只有非平铺模式下可用且需要鼠标在其区域内或正在拉伸/拖动时才显示）
+            if (!$('wm-tile').checked && State.wmBounds && (State.isHovered || State.drag.isDragging || State.drag.isResizing)) {
+                const b = State.wmBounds;
+                ctx.save();
+                
+                // 1. 虚线边界框
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = Math.max(1, Math.round(canvas.width / 500));
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+                
+                // 2. 右下角拉伸手柄
+                const handleRadius = Math.max(6, Math.round(canvas.width / 100));
+                const handleX = b.x + b.w;
+                const handleY = b.y + b.h;
+                
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = Math.max(1.5, Math.round(canvas.width / 400));
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // 记录手柄位置和半径以便点击事件拾取
+                State.handlePos = { x: handleX, y: handleY, r: handleRadius };
+            } else {
+                State.handlePos = null;
+            }
+
             saveConfigToCache(); // 自动保存配置
         }
-
-        // === 交互：通过 Canvas 手势直接拖拽水印 ===
-        const canvas = $('preview-canvas');
-        canvas.addEventListener('mousedown', e => handleDragStart(e));
-        canvas.addEventListener('mousemove', e => handleDragMove(e));
-        window.addEventListener('mouseup', () => State.drag.isDragging = false);
-
-        canvas.addEventListener('touchstart', e => handleDragStart(e.touches[0]), { passive: true });
-        canvas.addEventListener('touchmove', e => handleDragMove(e.touches[0]), { passive: true });
-        window.addEventListener('touchend', () => State.drag.isDragging = false);
 
         function handleDragStart(e) {
             if (!State.wmBounds || $('wm-tile').checked) return;
             
             const rect = canvas.getBoundingClientRect();
-            // 计算在原始 Canvas 分辨率中的点击坐标
             const clickX = (e.clientX - rect.left) / rect.width * canvas.width;
             const clickY = (e.clientY - rect.top) / rect.height * canvas.height;
             
+            // 1. 优先拾取右下角拉伸手柄
+            if (State.handlePos) {
+                const dist = Math.hypot(clickX - State.handlePos.x, clickY - State.handlePos.y);
+                if (dist <= State.handlePos.r + 15) {
+                    State.drag.isResizing = true;
+                    State.drag.startX = clickX;
+                    State.drag.startY = clickY;
+                    State.drag.startFontSize = parseFloat($('wm-font-size').value);
+                    State.drag.startLogoScale = parseFloat($('wm-logo-scale').value);
+                    State.drag.startWidth = State.wmBounds.w;
+                    State.drag.startHeight = State.wmBounds.h;
+                    State.drag.boundsOriginX = State.wmBounds.x;
+                    State.drag.boundsOriginY = State.wmBounds.y;
+                    return;
+                }
+            }
+
+            // 2. 拾取水印主体进行拖动
             const b = State.wmBounds;
-            // 稍许放大点选热区以提供更好的手指触摸容错
-            const padding = 20;
+            const padding = 15;
             if (clickX >= b.x - padding && clickX <= b.x + b.w + padding &&
                 clickY >= b.y - padding && clickY <= b.y + b.h + padding) {
                 State.drag.isDragging = true;
@@ -1018,39 +1215,116 @@
         }
 
         function handleDragMove(e) {
-            if (!State.drag.isDragging) return;
             const rect = canvas.getBoundingClientRect();
             const currX = (e.clientX - rect.left) / rect.width * canvas.width;
             const currY = (e.clientY - rect.top) / rect.height * canvas.height;
 
-            const dx = currX - State.drag.startX;
-            const dy = currY - State.drag.startY;
+            if (State.drag.isResizing) {
+                // ── 缩放手势 ──
+                const origX = State.drag.boundsOriginX;
+                const origY = State.drag.boundsOriginY;
+                const initialDist = Math.hypot(State.drag.startWidth, State.drag.startHeight);
+                const currentDist = Math.hypot(currX - origX, currY - origY);
+                const ratio = currentDist / initialDist;
 
-            // 根据不同的锚点计算偏移方向的增减
-            let finalX = State.drag.startOffsetX;
-            let finalY = State.drag.startOffsetY;
-
-            if (State.anchor.includes('L')) {
-                finalX = Math.max(0, State.drag.startOffsetX + dx);
-            } else if (State.anchor.includes('R')) {
-                finalX = Math.max(0, State.drag.startOffsetX - dx);
-            } else {
-                finalX = State.drag.startOffsetX + dx; // center
+                if (State.watermarkType === 'text') {
+                    const newSize = Math.max(10, Math.min(150, Math.round(State.drag.startFontSize * ratio)));
+                    $('wm-font-size').value = newSize;
+                } else {
+                    const newScale = Math.max(5, Math.min(100, Math.round(State.drag.startLogoScale * ratio)));
+                    $('wm-logo-scale').value = newScale;
+                }
+                updateValChips();
+                renderPreview();
+                return;
             }
 
-            if (State.anchor.includes('T')) {
-                finalY = Math.max(0, State.drag.startOffsetY + dy);
-            } else if (State.anchor.includes('B')) {
-                finalY = Math.max(0, State.drag.startOffsetY - dy);
-            } else {
-                finalY = State.drag.startOffsetY + dy; // center
+            if (State.drag.isDragging) {
+                // ── 位移拖拽 ──
+                const dx = currX - State.drag.startX;
+                const dy = currY - State.drag.startY;
+
+                let finalX = State.drag.startOffsetX;
+                let finalY = State.drag.startOffsetY;
+
+                if (State.anchor.includes('L')) {
+                    finalX = Math.max(0, State.drag.startOffsetX + dx);
+                } else if (State.anchor.includes('R')) {
+                    finalX = Math.max(0, State.drag.startOffsetX - dx);
+                } else {
+                    finalX = State.drag.startOffsetX + dx;
+                }
+
+                if (State.anchor.includes('T')) {
+                    finalY = Math.max(0, State.drag.startOffsetY + dy);
+                } else if (State.anchor.includes('B')) {
+                    finalY = Math.max(0, State.drag.startOffsetY - dy);
+                } else {
+                    finalY = State.drag.startOffsetY + dy;
+                }
+
+                $('wm-offset-x').value = Math.round(finalX);
+                $('wm-offset-y').value = Math.round(finalY);
+                updateValChips();
+                renderPreview();
+                return;
             }
 
-            $('wm-offset-x').value = Math.round(finalX);
-            $('wm-offset-y').value = Math.round(finalY);
-            updateValChips();
-            renderPreview();
+            // ── 未拖拽时的 Hover 碰撞检测与光标设置 ──
+            if (!$('wm-tile').checked && State.wmBounds) {
+                let isNearHandle = false;
+                let isInsideBounds = false;
+
+                if (State.handlePos) {
+                    const dist = Math.hypot(currX - State.handlePos.x, currY - State.handlePos.y);
+                    if (dist <= State.handlePos.r + 15) {
+                        isNearHandle = true;
+                    }
+                }
+
+                const b = State.wmBounds;
+                const padding = 10;
+                if (currX >= b.x - padding && currX <= b.x + b.w + padding &&
+                    currY >= b.y - padding && currY <= b.y + b.h + padding) {
+                    isInsideBounds = true;
+                }
+
+                const oldHovered = State.isHovered;
+                State.isHovered = isNearHandle || isInsideBounds;
+
+                if (isNearHandle) {
+                    canvas.style.cursor = 'se-resize';
+                } else if (isInsideBounds) {
+                    canvas.style.cursor = 'move';
+                } else {
+                    canvas.style.cursor = 'grab';
+                }
+
+                if (oldHovered !== State.isHovered) {
+                    renderPreview();
+                }
+            }
         }
+
+        // === 交互：通过 Canvas 手势直接拖拽与缩放水印 ===
+        const canvas = $('preview-canvas');
+        canvas.addEventListener('mousedown', e => handleDragStart(e));
+        canvas.addEventListener('mousemove', e => handleDragMove(e));
+        
+        const endDrag = () => {
+            State.drag.isDragging = false;
+            State.drag.isResizing = false;
+        };
+        window.addEventListener('mouseup', endDrag);
+        canvas.addEventListener('mouseleave', () => {
+            State.isHovered = false;
+            canvas.style.cursor = 'grab';
+            renderPreview();
+        });
+
+        canvas.addEventListener('touchstart', e => handleDragStart(e.touches[0]), { passive: true });
+        canvas.addEventListener('touchmove', e => handleDragMove(e.touches[0]), { passive: true });
+        window.addEventListener('touchend', endDrag);
 
         // === 选项卡切换 ===
         $('tab-btn-text').onclick = () => {
@@ -1152,6 +1426,26 @@
         $('wm-color').addEventListener('input', () => renderPreview());
         $('wm-shadow-blur').addEventListener('input', () => renderPreview());
 
+        // 新增：特效风格及荧光预设事件处理
+        $('wm-effect').addEventListener('change', (e) => {
+            const hasPreset = e.target.value === 'neon' || e.target.value === 'led';
+            $('neon-color-row').style.display = hasPreset ? '' : 'none';
+            if (hasPreset) {
+                const preset = $('wm-neon-preset').value;
+                if (preset !== 'custom') {
+                    $('wm-color').value = preset;
+                }
+            }
+            renderPreview();
+        });
+
+        $('wm-neon-preset').addEventListener('change', (e) => {
+            if (e.target.value !== 'custom') {
+                $('wm-color').value = e.target.value;
+            }
+            renderPreview();
+        });
+
         // === 浏览器缓存控制 (LocalStorage & IndexedDB) ===
         const CACHE_KEY = 'ZH_BATCH_WM_CONFIG';
 
@@ -1172,7 +1466,10 @@
                 offsetX: $('wm-offset-x').value,
                 offsetY: $('wm-offset-y').value,
                 tileGapX: $('wm-tile-gap-x').value,
-                tileGapY: $('wm-tile-gap-y').value
+                tileGapY: $('wm-tile-gap-y').value,
+                // 新增：特效缓存
+                effect: $('wm-effect').value,
+                neonPreset: $('wm-neon-preset').value
             };
             localStorage.setItem(CACHE_KEY, JSON.stringify(config));
         }
@@ -1203,6 +1500,12 @@
                 $('wm-offset-y').value = config.offsetY ?? 30;
                 $('wm-tile-gap-x').value = config.tileGapX ?? 240;
                 $('wm-tile-gap-y').value = config.tileGapY ?? 180;
+
+                // 新增：恢复特效配置
+                $('wm-effect').value = config.effect || 'none';
+                $('wm-neon-preset').value = config.neonPreset || '#10b981';
+                const hasPreset = $('wm-effect').value === 'neon' || $('wm-effect').value === 'led';
+                $('neon-color-row').style.display = hasPreset ? '' : 'none';
 
                 // 同步 tabs UI 状态
                 if (State.watermarkType === 'image') {
