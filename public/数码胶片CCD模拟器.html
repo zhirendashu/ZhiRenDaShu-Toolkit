@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -2241,15 +2241,15 @@ if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
       tag: p.type === 'cube' ? 'LUT_3D' : 'XMP_PRESET',
       description: p.type === 'cube' ? `3D LUT 胶片预设: ${p.name}` : `Lightroom 预设: ${p.name}`,
       accentColor: p.type === 'cube' ? '#ec4899' : '#06b6d4',
-      params: p.type === 'xmp' ? p.params : {
+      params: p.type === 'xmp' ? { ...p.params, lut: null } : {
         brightness: 0, contrast: 1.0, saturation: 1.0, warmth: 0, tint: 0,
         shadowTint: { r:0, g:0, b:0 }, highlightTint: { r:0, g:0, b:0 },
         baseNoise: 30, baseChromaticAberration: 2.5, baseVignette: 0.50,
         baseBloom: 0.35, bloomThreshold: 195, baseJpegArtifacts: 0.5,
         baseLightLeak: 0.3, baseImperfections: 0.2,
         baseFlashFlare: 0, flashFlarePos: 'topright',
-      },
-      lut: p.type === 'cube' ? { size: p.size, data: decodeBase64ToFloatArray(p.data) } : null
+        lut: { size: p.size, data: decodeBase64ToFloatArray(p.data) }
+      }
     };
     FILTERS.push(filterObj);
   });
