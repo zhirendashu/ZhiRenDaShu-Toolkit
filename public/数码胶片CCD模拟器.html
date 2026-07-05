@@ -616,8 +616,8 @@ input, select { font: inherit; }
   box-shadow: 0 0 8px var(--gold-glow);
 }
 
-/* 日期输入 */
-.ctrl-date-input {
+/* 日期输入与文本输入 */
+.ctrl-date-input, .ctrl-text-input {
   width: 100%; padding: 7px 10px;
   background: var(--bg-3); border: 1px solid var(--border-2);
   border-radius: var(--r-sm); color: var(--text-1);
@@ -625,7 +625,7 @@ input, select { font: inherit; }
   outline: none; color-scheme: dark;
   transition: border-color var(--dur) var(--ease);
 }
-.ctrl-date-input:focus { border-color: var(--gold-border); }
+.ctrl-date-input:focus, .ctrl-text-input:focus { border-color: var(--gold-border); }
 
 /* 状态信息 */
 .ctrl-info-grid { display: flex; flex-direction: column; gap: 7px; }
@@ -986,6 +986,38 @@ input, select { font: inherit; }
 #mobile-controls-drawer.open {
   transform: translateY(0);
 }
+
+/* 移动端悬浮调节参数按钮 */
+#mobile-floating-btn {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  #mobile-floating-btn {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 150;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 12px var(--gold-glow);
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  #mobile-floating-btn:active {
+    transform: scale(0.95);
+  }
+}
+
 @media (max-width: 900px) {
   #mobile-controls-drawer { display: block; }
   #mobile-controls-btn { display: flex; }
@@ -1519,6 +1551,7 @@ input, select { font: inherit; }
 
         <input type="date" id="date-input" class="ctrl-date-input"
                value="2005-10-24" aria-label="水印日期" style="margin-top:10px" />
+        <input type="text" id="ts-brand-input" class="ctrl-text-input" placeholder="水印文字 (如: COOLPIX, CYBER-SHOT)" value="" style="margin-top: 6px; width: 100%;" />
       </div>
 
 
@@ -1589,6 +1622,14 @@ input, select { font: inherit; }
   </div>
 
 </div><!-- /#app-shell -->
+
+<!-- 移动端悬浮调节参数按钮 -->
+<button id="mobile-floating-btn" title="调节参数" aria-label="调节参数">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="stroke: #000;">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.77 3.77z"/>
+  </svg>
+  <span>调节参数</span>
+</button>
 
 <!-- 移动端控制面板抽屉 -->
 <div id="mobile-controls-drawer" role="dialog" aria-label="参数控制面板" aria-modal="true">
@@ -1728,6 +1769,7 @@ input, select { font: inherit; }
   </div>
 
   <input type="date" id="m-date-input" class="ctrl-date-input" value="2005-10-24" style="margin-top:10px;margin-bottom:12px" />
+  <input type="text" id="m-ts-brand-input" class="ctrl-text-input" placeholder="水印文字 (如: COOLPIX, CYBER-SHOT)" value="" style="margin-top:-6px;margin-bottom:12px;width:100%" />
 </div><!-- ══════════════════════════════════════════════════════════════
      内容区（营销页）
 ══════════════════════════════════════════════════════════════ -->
@@ -2613,7 +2655,10 @@ class DigiCamProcessor {
 
     // ── PASS 5: Timestamp ─────────────────────────────────────────
     if (stampParams && stampParams.enabled && stampParams.date) {
-      DigiCamProcessor._timestamp(ctx, w, h, stampParams.date, stampParams.mode || 'classic', stampParams.color || '#f97316');
+      const fullText = stampParams.brand 
+        ? `${stampParams.date}  ${stampParams.brand}`
+        : stampParams.date;
+      DigiCamProcessor._timestamp(ctx, w, h, fullText, stampParams.mode || 'classic', stampParams.color || '#f97316');
     }
 
     // ── PASS 5.5: Flash Flare (Huji-style) ───────────────────────
@@ -2782,7 +2827,7 @@ class DigiCamProcessor {
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     
-    ctx.font = isGold ? `bold ${fSize}px "Georgia", serif` : `bold ${fSize}px "Courier New", Courier, monospace`;
+    ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
     
     // Glowing neon look in selected color
@@ -2796,7 +2841,7 @@ class DigiCamProcessor {
     ctx.shadowBlur = 0;
   }
 
-  static _timestampDotMatrix(ctx, w, h, dateStr, color) {
+    static _timestampDotMatrix(ctx, w, h, dateStr, color) {
     const DOT_FONT = {
       '0': [0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110],
       '1': [0b00100,0b01100,0b00100,0b00100,0b00100,0b00100,0b01110],
@@ -2812,16 +2857,43 @@ class DigiCamProcessor {
       "'":[0b00100,0b00100,0b01000,0,0,0,0],
       '.': [0,0,0,0,0,0b01100,0b01100],
       '-': [0,0,0,0b11111,0,0,0],
+      'A': [0b01110,0b10001,0b10001,0b11111,0b10001,0b10001,0b10001],
+      'B': [0b11110,0b10001,0b10001,0b11110,0b10001,0b10001,0b11110],
+      'C': [0b01110,0b10001,0b10000,0b10000,0b10000,0b10001,0b01110],
+      'D': [0b11100,0b10010,0b10001,0b10001,0b10001,0b10010,0b11100],
+      'E': [0b11111,0b10000,0b10000,0b11110,0b10000,0b10000,0b11111],
+      'F': [0b11111,0b10000,0b10000,0b11110,0b10000,0b10000,0b10000],
+      'G': [0b01110,0b10001,0b10000,0b10111,0b10001,0b10001,0b01110],
+      'H': [0b10001,0b10001,0b10001,0b11111,0b10001,0b10001,0b10001],
+      'I': [0b01110,0b00100,0b00100,0b00100,0b00100,0b00100,0b01110],
+      'J': [0b00111,0b00010,0b00010,0b00010,0b00010,0b10010,0b01100],
+      'K': [0b10001,0b10010,0b10100,0b11000,0b10100,0b10010,0b10001],
+      'L': [0b10000,0b10000,0b10000,0b10000,0b10000,0b10000,0b11111],
+      'M': [0b10001,0b11011,0b10101,0b10101,0b10001,0b10001,0b10001],
+      'N': [0b10001,0b11001,0b10101,0b10101,0b10011,0b10001,0b10001],
+      'O': [0b01110,0b10001,0b10001,0b10001,0b10001,0b10001,0b01110],
+      'P': [0b11110,0b10001,0b10001,0b11110,0b10000,0b10000,0b10000],
+      'Q': [0b01110,0b10001,0b10001,0b10001,0b10101,0b10010,0b01101],
+      'R': [0b11110,0b10001,0b10001,0b11110,0b10100,0b10010,0b10001],
+      'S': [0b01110,0b10001,0b10000,0b01110,0b00001,0b10001,0b01110],
+      'T': [0b11111,0b00100,0b00100,0b00100,0b00100,0b00100,0b00100],
+      'U': [0b10001,0b10001,0b10001,0b10001,0b10001,0b10001,0b01110],
+      'V': [0b10001,0b10001,0b10001,0b10001,0b01010,0b01010,0b00100],
+      'W': [0b10001,0b10001,0b10001,0b10101,0b10101,0b11011,0b10001],
+      'X': [0b10001,0b10001,0b01010,0b00100,0b01010,0b10001,0b10001],
+      'Y': [0b10001,0b10001,0b01010,0b00100,0b00100,0b00100,0b00100],
+      'Z': [0b11111,0b00001,0b00010,0b00100,0b01000,0b10000,0b11111],
     };
+    const upperStr = dateStr.toUpperCase();
     const scale = Math.min(1, w / 800);
     const dot   = Math.max(2, Math.round(4 * scale));   // dot radius
     const gap   = Math.max(1, Math.round(1.5 * scale)); // gap between dots
     const step  = dot + gap;
     const charW = 5 * step + gap * 2;
     const charH = 7 * step;
+    const totalW = upperStr.length * charW;
     const pad   = Math.max(10, Math.round(18 * scale));
 
-    const totalW = dateStr.length * charW;
     const startX = w - pad - totalW;
     const startY = h - pad - charH;
 
@@ -2829,7 +2901,7 @@ class DigiCamProcessor {
     ctx.save();
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.08;
-    for (let ci = 0; ci < dateStr.length; ci++) {
+    for (let ci = 0; ci < upperStr.length; ci++) {
       for (let row = 0; row < 7; row++) {
         for (let col = 0; col < 5; col++) {
           const dx = startX + ci * charW + col * step + dot / 2;
@@ -2844,8 +2916,8 @@ class DigiCamProcessor {
     ctx.save();
     ctx.shadowColor = color; ctx.shadowBlur = dot * 2.5;
     ctx.fillStyle = color;
-    for (let ci = 0; ci < dateStr.length; ci++) {
-      const glyph = DOT_FONT[dateStr[ci]] || DOT_FONT[' '];
+    for (let ci = 0; ci < upperStr.length; ci++) {
+      const glyph = DOT_FONT[upperStr[ci]] || DOT_FONT[' '];
       for (let row = 0; row < 7; row++) {
         for (let col = 0; col < 5; col++) {
           if ((glyph[row] >> (4 - col)) & 1) {
@@ -2862,8 +2934,8 @@ class DigiCamProcessor {
     // Draw white center core layer
     ctx.shadowBlur = dot * 0.8;
     ctx.fillStyle = '#ffffff';
-    for (let ci = 0; ci < dateStr.length; ci++) {
-      const glyph = DOT_FONT[dateStr[ci]] || DOT_FONT[' '];
+    for (let ci = 0; ci < upperStr.length; ci++) {
+      const glyph = DOT_FONT[upperStr[ci]] || DOT_FONT[' '];
       for (let row = 0; row < 7; row++) {
         for (let col = 0; col < 5; col++) {
           if ((glyph[row] >> (4 - col)) & 1) {
@@ -3554,8 +3626,9 @@ const State = (() => {
     // 时间戳
     timestampOn:   true,
     timestampDate: '2005-10-24',
+    tsBrand:       '',
     tsMode:        'classic',
-tsColor:       '#f97316',
+    tsColor:       '#f97316',
     halftoneMode:  'cmyk',
 
     // 胶片效果
@@ -3866,11 +3939,31 @@ async function loadSingle(file) {
   setStatus('加载中…');
   const img  = await loadImg(file);
   const data = imgToData(img);
+  
+  // 读取照片时间，若没有则用系统当前时间
+  let photoDate = getSystemDate();
+  try {
+    const exifDateRaw = await getJpegExifDate(file);
+    const parsedDate = parseExifDate(exifDateRaw);
+    if (parsedDate) {
+      photoDate = parsedDate;
+    }
+  } catch (e) {
+    console.error("Exif parsing error:", e);
+  }
+  
+  // 同步日期选择器
+  const di = $('date-input');
+  const mdi = $('m-date-input');
+  if (di) di.value = photoDate;
+  if (mdi) mdi.value = photoDate;
+
   State.set({
     srcImageData:   data,
     originalCanvas: dataToCanvas(data),
     imageName: file.name,
     imageW: data.width, imageH: data.height,
+    timestampDate: photoDate, // 动态更新水印日期！
   });
   showWorkspace();
   await processAndRender();
@@ -3878,18 +3971,39 @@ async function loadSingle(file) {
 
 async function loadBatchAt(idx) {
   const items = State.get().batchItems;
+  const file  = items[idx].file;
   if (!items[idx].srcImageData) {
     setStatus(`加载 ${idx+1}/${items.length}…`);
-    const img  = await loadImg(items[idx].file);
+    const img  = await loadImg(file);
     items[idx].srcImageData = imgToData(img);
   }
   const data = items[idx].srcImageData;
+  
+  // 读取照片时间，若没有则用系统当前时间
+  let photoDate = getSystemDate();
+  try {
+    const exifDateRaw = await getJpegExifDate(file);
+    const parsedDate = parseExifDate(exifDateRaw);
+    if (parsedDate) {
+      photoDate = parsedDate;
+    }
+  } catch (e) {
+    console.error("Exif parsing error:", e);
+  }
+  
+  // 同步日期选择器
+  const di = $('date-input');
+  const mdi = $('m-date-input');
+  if (di) di.value = photoDate;
+  if (mdi) mdi.value = photoDate;
+
   State.set({
     srcImageData:   data,
     originalCanvas: dataToCanvas(data),
     activeIndex: idx,
     imageName: items[idx].file.name,
     imageW: data.width, imageH: data.height,
+    timestampDate: photoDate, // 动态更新水印日期！
   });
   showWorkspace();
   await processAndRender();
@@ -3905,6 +4019,11 @@ function showWorkspace() {
   $('workspace').style.display   = '';
   $('view-toggle-bar').style.display = '';  // 显示视图切换条
   updateSizeChip();
+  
+  const floatBtn = $('mobile-floating-btn');
+  if (floatBtn) {
+    floatBtn.style.display = 'flex'; // 显示悬浮按钮
+  }
 }
 
 function updateSizeChip() {
@@ -3960,47 +4079,54 @@ async function processAndRender() {
   State.patch('processing', true);
   setStatus('处理中…');
 
-  await new Promise(r => setTimeout(r, 8)); // 让 UI 更新
+  try {
+    await new Promise(r => setTimeout(r, 8)); // 让 UI 更新
 
-  const filter = FILTERS.find(f => f.id === s.filterId);
-  const stamp = {
-    enabled: s.timestampOn,
-    date:    formatDate(s.timestampDate),
-    mode:    s.tsMode,
-    color:   s.tsColor || '#f97316',
-  };
-  const effectParams = {
-    filmBorder: s.filmBorder,
-    flashFlare: s.flashFlare,
-    seed:       s.filmSeed,
-    halftoneMode: s.halftoneMode || 'cmyk',
-  };
+    const filter = FILTERS.find(f => f.id === s.filterId);
+    const stamp = {
+      enabled: s.timestampOn,
+      date:    formatDate(s.timestampDate),
+      brand:   s.tsBrand || '',
+      mode:    s.tsMode,
+      color:   s.tsColor || '#f97316',
+    };
+    const effectParams = {
+      filmBorder: s.filmBorder,
+      flashFlare: s.flashFlare,
+      seed:       s.filmSeed,
+      halftoneMode: s.halftoneMode || 'cmyk',
+    };
 
-  const processed = DigiCamProcessor.process(
-    s.srcImageData, filter.params, s.params, stamp, effectParams
-  );
+    const processed = DigiCamProcessor.process(
+      s.srcImageData, filter.params, s.params, stamp, effectParams
+    );
 
-  // ── JPEG 压缩块（最后一步，因为是相机保存时才压缩）──
-  const artifactsMult = (s.params.artifacts / 50);   // 50 = 1x
-  const effectiveArtifacts = filter.params.baseJpegArtifacts * artifactsMult * (s.params.intensity / 100);
-  const finalCanvas = await DigiCamProcessor.applyJpegArtifacts(processed, effectiveArtifacts);
+    // ── JPEG 压缩块（最后一步，因为是相机保存时才压缩）──
+    const artifactsMult = (s.params.artifacts / 50);   // 50 = 1x
+    const effectiveArtifacts = filter.params.baseJpegArtifacts * artifactsMult * (s.params.intensity / 100);
+    const finalCanvas = await DigiCamProcessor.applyJpegArtifacts(processed, effectiveArtifacts);
 
-  // 更新批量项目
-  if (s.batchItems.length > 0) {
-    s.batchItems[s.activeIndex].processed = finalCanvas;
+    // 更新批量项目
+    if (s.batchItems.length > 0) {
+      s.batchItems[s.activeIndex].processed = finalCanvas;
+    }
+
+    State.set({ processedCanvas: finalCanvas, processing: false });
+
+    // 设置 display canvas 的原始尺寸
+    const canvas = $('display-canvas');
+    canvas.width  = s.srcImageData.width;
+    canvas.height = s.srcImageData.height;
+
+    fitCanvas();
+    renderCompare();
+
+    setStatus('完成');
+  } catch (err) {
+    console.error("Rendering error:", err);
+    State.patch('processing', false);
+    setStatus('完成'); // 重置状态，避免死锁
   }
-
-  State.set({ processedCanvas: finalCanvas, processing: false });
-
-  // 设置 display canvas 的原始尺寸
-  const canvas = $('display-canvas');
-  canvas.width  = s.srcImageData.width;
-  canvas.height = s.srcImageData.height;
-
-  fitCanvas();
-  renderCompare();
-
-  setStatus('完成');
 }
 
 function scheduleProcess() {
@@ -4436,25 +4562,142 @@ function updateSliderTrack(slider) {
 function bindTimestamp() {
   const ck   = $('toggle-ts-chk');
   const di   = $('date-input');
+  const tb   = $('ts-brand-input');
   const mck  = $('m-toggle-ts');
   const mdi  = $('m-date-input');
+  const mtb  = $('m-ts-brand-input');
 
-  function syncTs(on, date) {
-    State.set({ timestampOn: on, timestampDate: date });
+  // 初始化为当前系统时间
+  const sysDate = getSystemDate();
+  State.patch('timestampDate', sysDate);
+  if (di) di.value = sysDate;
+  if (mdi) mdi.value = sysDate;
+
+  // 初始化水印附加品牌文字
+  State.patch('tsBrand', '');
+  if (tb) tb.value = '';
+  if (mtb) mtb.value = '';
+
+  function syncTs(on, date, brand) {
+    State.set({ timestampOn: on, timestampDate: date, tsBrand: brand });
     [di, mdi].forEach(el => el.style.opacity = on ? '1' : '0.4');
+    [tb, mtb].forEach(el => {
+      if (el) el.style.opacity = on ? '1' : '0.4';
+    });
     if (State.get().srcImageData) scheduleProcess();
   }
 
-  ck.addEventListener('change', () => { mck.checked = ck.checked; syncTs(ck.checked, di.value); });
-  di.addEventListener('change', () => { mdi.value   = di.value;   syncTs(ck.checked, di.value); });
-  mck.addEventListener('change', () => { ck.checked  = mck.checked; syncTs(mck.checked, mdi.value); });
-  mdi.addEventListener('change', () => { di.value    = mdi.value;   syncTs(ck.checked, mdi.value); });
+  ck.addEventListener('change', () => { mck.checked = ck.checked; syncTs(ck.checked, di.value, tb.value); });
+  di.addEventListener('change', () => { mdi.value   = di.value;   syncTs(ck.checked, di.value, tb.value); });
+  if (tb) {
+    tb.addEventListener('input',  () => { if (mtb) mtb.value = tb.value; syncTs(ck.checked, di.value, tb.value); });
+  }
+  
+  mck.addEventListener('change', () => { ck.checked  = mck.checked; syncTs(mck.checked, mdi.value, mtb.value); });
+  mdi.addEventListener('change', () => { di.value    = mdi.value;   syncTs(ck.checked, mdi.value, mtb.value); });
+  if (mtb) {
+    mtb.addEventListener('input',  () => { if (tb) tb.value = mtb.value; syncTs(ck.checked, di.value, mtb.value); });
+  }
 }
 
 function formatDate(str) {
+  if (!str || typeof str !== 'string') return '';
   const p = str.split('-');
   if (p.length !== 3) return str;
   return `'${p[0].slice(-2)} ${p[1]} ${p[2]}`;
+}
+
+// ── EXIF 提取器 & 日期处理 ──
+function getSystemDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseExifDate(exifDateStr) {
+  if (!exifDateStr) return null;
+  const parts = exifDateStr.split(' ')[0].split(':');
+  if (parts.length === 3) {
+    return `${parts[0]}-${parts[1]}-${parts[2]}`;
+  }
+  return null;
+}
+
+function getJpegExifDate(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const arr = new Uint8Array(e.target.result);
+      if (arr[0] !== 0xFF || arr[1] !== 0xD8) {
+        resolve(null);
+        return;
+      }
+      let offset = 2;
+      let length = arr.length;
+      while (offset < length - 2) {
+        if (arr[offset] === 0xFF && arr[offset + 1] === 0xE1) {
+          const app1Length = (arr[offset + 2] << 8) + arr[offset + 3];
+          if (offset + 10 >= length) { resolve(null); return; }
+          const exifHeader = String.fromCharCode(arr[offset + 4], arr[offset + 5], arr[offset + 6], arr[offset + 7]);
+          if (exifHeader === "Exif") {
+            const tiffOffset = offset + 10;
+            const isLittle = arr[tiffOffset] === 0x49 && arr[tiffOffset + 1] === 0x49;
+            
+            const readUInt16 = (off) => {
+              return isLittle ? (arr[off] | (arr[off + 1] << 8)) : ((arr[off] << 8) | arr[off + 1]);
+            };
+            const readUInt32 = (off) => {
+              return isLittle 
+                ? (arr[off] | (arr[off + 1] << 8) | (arr[off + 2] << 16) | (arr[off + 3] << 24)) 
+                : ((arr[off] << 24) | (arr[off + 1] << 16) | (arr[off + 2] << 8) | arr[off + 3]);
+            };
+
+            const firstIFDOffset = readUInt32(tiffOffset + 4);
+            let ifdOffset = tiffOffset + firstIFDOffset;
+            if (ifdOffset + 2 >= length) { resolve(null); return; }
+            const numEntries = readUInt16(ifdOffset);
+            
+            for (let i = 0; i < numEntries; i++) {
+              const entryOffset = ifdOffset + 2 + i * 12;
+              if (entryOffset + 12 >= length) break;
+              const tag = readUInt16(entryOffset);
+              if (tag === 0x8769) {
+                const exifIFDOffset = readUInt32(entryOffset + 8);
+                let subIFDOffset = tiffOffset + exifIFDOffset;
+                if (subIFDOffset + 2 >= length) break;
+                const subNumEntries = readUInt16(subIFDOffset);
+                for (let j = 0; j < subNumEntries; j++) {
+                  const subEntryOffset = subIFDOffset + 2 + j * 12;
+                  if (subEntryOffset + 12 >= length) break;
+                  const subTag = readUInt16(subEntryOffset);
+                  if (subTag === 0x9003 || subTag === 0x9004) {
+                    const valueOffset = readUInt32(subEntryOffset + 8);
+                    const dateOffset = tiffOffset + valueOffset;
+                    let dateStr = "";
+                    for (let k = 0; k < 20; k++) {
+                      if (dateOffset + k >= length) break;
+                      const char = arr[dateOffset + k];
+                      if (char === 0) break;
+                      dateStr += String.fromCharCode(char);
+                    }
+                    resolve(dateStr);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+          offset += app1Length + 2;
+        } else {
+          offset++;
+        }
+      }
+      resolve(null);
+    };
+    reader.readAsArrayBuffer(file.slice(0, 128 * 1024));
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4650,22 +4893,34 @@ function downloadCanvas(canvas, name, fmt) {
 //  移动端控制面板
 // ═══════════════════════════════════════════════════════════════
 function bindMobileControls() {
-  const btn    = $('mobile-controls-btn');
-  const drawer = $('mobile-controls-drawer');
-  const close  = $('mobile-controls-close');
+  const btn      = $('mobile-controls-btn');
+  const floatBtn = $('mobile-floating-btn');
+  const drawer   = $('mobile-controls-drawer');
+  const close    = $('mobile-controls-close');
 
-  btn.addEventListener('click', () => {
+  const toggleDrawer = (e) => {
+    if (e) e.stopPropagation();
     const open = drawer.classList.toggle('open');
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-  });
+  };
+
+  btn.addEventListener('click', toggleDrawer);
+  if (floatBtn) {
+    floatBtn.addEventListener('click', toggleDrawer);
+  }
+
   close.addEventListener('click', () => {
     drawer.classList.remove('open');
     btn.setAttribute('aria-expanded', 'false');
   });
+  
   // 点击遮罩关闭
   document.addEventListener('click', e => {
-    if (drawer.classList.contains('open') &&
-        !drawer.contains(e.target) && e.target !== btn) {
+    if (drawer.classList.contains('open') && 
+        !drawer.contains(e.target) && 
+        e.target !== btn && 
+        e.target !== floatBtn && 
+        (!floatBtn || !floatBtn.contains(e.target))) {
       drawer.classList.remove('open');
       btn.setAttribute('aria-expanded', 'false');
     }
