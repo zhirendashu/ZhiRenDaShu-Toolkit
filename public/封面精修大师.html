@@ -400,6 +400,10 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
              <label>电影暗角 (黑边氛围)</label>
              <input type="range" id="bg-vignette" min="0" max="100" value="0">
            </div>
+           <div class="prop-row" style="display: flex; align-items: center; gap: 6px; margin-top: 10px;">
+             <input type="checkbox" id="lock-bg-cb" style="width: auto; margin: 0;">
+             <label for="lock-bg-cb" style="font-size: 0.78rem; cursor: pointer; user-select: none; color: var(--accent);">锁定背景底图 (禁止直接拖拽)</label>
+           </div>
            <button class="btn btn-ghost" id="clear-canvas" style="margin-top: 8px;">清空全部元素</button>
         </div>
 
@@ -1069,6 +1073,93 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         preserveObjectStacking: true
       });
 
+      function getBgImage() {
+        return canvas.getObjects().find(o => o.isBgImage) || canvas.backgroundImage;
+      }
+
+      // 监听背景图在画布中的直接拖拽与缩放，实时同步回右侧面板滑块
+      canvas.on('object:moving', (e) => {
+        const obj = e.target;
+        if (obj && obj.isBgImage) {
+          const offsetX = obj.left - obj._baseLeft;
+          const offsetY = obj.top - obj._baseTop;
+          const offsetXSlider = document.getElementById('bg-offset-x');
+          const offsetYSlider = document.getElementById('bg-offset-y');
+          if (offsetXSlider) offsetXSlider.value = Math.round(offsetX);
+          if (offsetYSlider) offsetYSlider.value = Math.round(offsetY);
+          
+          if (window._depthLayerObj) {
+            window._depthLayerObj.set({
+              left: obj.left,
+              top: obj.top
+            });
+          }
+        }
+      });
+
+      canvas.on('object:scaling', (e) => {
+        const obj = e.target;
+        if (obj && obj.isBgImage) {
+          const scaleMultiplier = obj.scaleX / obj._baseScaleX;
+          const scaleSlider = document.getElementById('bg-scale');
+          if (scaleSlider) scaleSlider.value = scaleMultiplier.toFixed(2);
+          
+          if (window._depthLayerObj) {
+            window._depthLayerObj.set({
+              scaleX: obj.scaleX,
+              scaleY: obj.scaleY,
+              left: obj.left,
+              top: obj.top
+            });
+          }
+        }
+      });
+
+      canvas.on('object:modified', (e) => {
+        const obj = e.target;
+        if (obj && obj.isBgImage) {
+          const scaleMultiplier = obj.scaleX / obj._baseScaleX;
+          const offsetX = obj.left - obj._baseLeft;
+          const offsetY = obj.top - obj._baseTop;
+          
+          const scaleSlider = document.getElementById('bg-scale');
+          const offsetXSlider = document.getElementById('bg-offset-x');
+          const offsetYSlider = document.getElementById('bg-offset-y');
+          if (scaleSlider) scaleSlider.value = scaleMultiplier.toFixed(2);
+          if (offsetXSlider) offsetXSlider.value = Math.round(offsetX);
+          if (offsetYSlider) offsetYSlider.value = Math.round(offsetY);
+          
+          if (window._depthLayerObj) {
+            window._depthLayerObj.set({
+              scaleX: obj.scaleX,
+              scaleY: obj.scaleY,
+              left: obj.left,
+              top: obj.top
+            });
+          }
+          canvas.renderAll();
+        }
+      });
+
+      // 绑定锁定背景选项
+      document.addEventListener('DOMContentLoaded', () => {
+        const lockBgCb = document.getElementById('lock-bg-cb');
+        if (lockBgCb) {
+          lockBgCb.onchange = (e) => {
+            const bg = getBgImage();
+            if (bg) {
+              const locked = e.target.checked;
+              bg.set({
+                selectable: !locked,
+                evented: !locked
+              });
+              canvas.discardActiveObject();
+              canvas.renderAll();
+            }
+          };
+        }
+      });
+
       // === Undo / Redo 历史记录管理 ===
       let undoStack = [];
       let redoStack = [];
@@ -1077,7 +1168,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
       function saveCanvasState() {
         if (isStateSavingLocked) return;
         
-        const json = canvas.toJSON();
+        const json = canvas.toJSON(['isBgImage', '_baseScaleX', '_baseScaleY', '_baseLeft', '_baseTop']);
         // 记录画布的尺寸和比例参数，确保撤销时能同步还原画布规格
         json._customBoxRatio = document.getElementById('canvas-ratio').value;
         json._customWidth = canvas.width;
@@ -1110,6 +1201,9 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         isStateSavingLocked = true;
         const data = JSON.parse(stateStr);
         
+        // 现有背景不会被覆盖替换
+        const oldBg = getBgImage();
+
         // 还原画幅比例与尺寸
         if (data._customBoxRatio) {
           document.getElementById('canvas-ratio').value = data._customBoxRatio;
@@ -1119,6 +1213,15 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         }
         
         canvas.loadFromJSON(data, () => {
+          if (oldBg) {
+            // 清除新加载的JSON里可能带的背景
+            canvas.getObjects().forEach(o => {
+              if (o.isBgImage && o !== oldBg) canvas.remove(o);
+            });
+            if (canvas.getObjects().indexOf(oldBg) === -1) {
+              canvas.insertAt(oldBg, 0);
+            }
+          }
           canvas.renderAll();
           isStateSavingLocked = false;
           updateHistoryUI();
@@ -1167,7 +1270,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // 等比适配背景图片，防止拉伸变形（等比居中 Cover 填充）
       function fitBackgroundImage() {
-        const bg = canvas.backgroundImage;
+        const bg = getBgImage();
         if (!bg) return;
         
         const canvasRatio = canvas.width / canvas.height;
@@ -1185,13 +1288,14 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         const left = (canvas.width - bg.width * scale) / 2;
         const top = (canvas.height - bg.height * scale) / 2;
         
+        const locked = document.getElementById('lock-bg-cb') ? document.getElementById('lock-bg-cb').checked : false;
         bg.set({
           scaleX: scale,
           scaleY: scale,
           left: left,
           top: top,
-          selectable: false,
-          evented: false,
+          selectable: !locked,
+          evented: !locked,
           originX: 'left',
           originY: 'top'
         });
@@ -1295,11 +1399,30 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
             window._depthLayerObj = null;
           }
           
-          canvas.setBackgroundImage(img, () => {
-            fitBackgroundImage(); // 保证完全不拉伸，等比填充并居中
-            canvas.renderAll();
-            saveCanvasState();
+          // 清除现有的背景图层对象
+          canvas.getObjects().forEach(o => {
+            if (o.isBgImage) canvas.remove(o);
           });
+          if (canvas.backgroundImage) {
+            canvas.setBackgroundImage(null);
+          }
+
+          // 设置新背景为常规 Fabric 图片对象，置于最底层
+          img.isBgImage = true;
+          const locked = document.getElementById('lock-bg-cb') ? document.getElementById('lock-bg-cb').checked : false;
+          img.set({
+            selectable: !locked,
+            evented: !locked,
+            hoverCursor: 'move',
+            hasRotatingPoint: false // 禁用旋转手柄
+          });
+          
+          canvas.insertAt(img, 0);
+          canvas.setActiveObject(img); // 自动选中，方便用户拖拽/裁切
+          
+          fitBackgroundImage();
+          canvas.renderAll();
+          saveCanvasState();
         });
       }      // === 拖拽与点击上传事件 ===
       const dropZone = document.getElementById('inner-drop-zone');
@@ -2161,10 +2284,10 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // === 模板功能 ===
       document.getElementById('save-tpl-btn').onclick = () => {
-         const json = canvas.toJSON(); // 将画布上的元素转换为 JSON
-         // 清除背景图片自身的路径（只保留排版结构）
-         if (json.backgroundImage) {
-             delete json.backgroundImage;
+         const json = canvas.toJSON(['isBgImage', '_baseScaleX', '_baseScaleY', '_baseLeft', '_baseTop']); // 将画布上的元素转换为 JSON
+         // 过滤掉背景图对象，不作为模板内容保存
+         if (json.objects) {
+             json.objects = json.objects.filter(obj => !obj.isBgImage);
          }
          // 附带当前画幅比例
          json._customBoxRatio = document.getElementById('canvas-ratio').value;
@@ -2190,20 +2313,27 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                }
                
                // 现有背景不会被覆盖替换
-               const oldBg = canvas.backgroundImage;
-               
-               // 加载 JSON（保留选定元素和排列）
-               canvas.loadFromJSON(data, () => {
-                   // 显示画布并隐藏上传占位符
-                   const dropZone = document.getElementById('inner-drop-zone');
-                   const canvasBox = document.querySelector('.canvas-box');
-                   if (dropZone) dropZone.style.display = 'none';
-                   if (canvasBox) canvasBox.style.display = 'block';
-                   // 恢复原有的背景
-                   if (oldBg) canvas.setBackgroundImage(oldBg, canvas.renderAll.bind(canvas));
-                   canvas.renderAll();
-                   alert('✅ 模板加载成功，现在可以 [导入背景] 替换底图了！');
-               });
+               const oldBg = getBgImage();
+                
+                // 加载 JSON（保留选定元素和排列）
+                canvas.loadFromJSON(data, () => {
+                    // 显示画布并隐藏上传占位符
+                    const dropZone = document.getElementById('inner-drop-zone');
+                    const canvasBox = document.querySelector('\.canvas-box');
+                    if (dropZone) dropZone.style.display = 'none';
+                    if (canvasBox) canvasBox.style.display = 'block';
+                    // 恢复原有的背景
+                    if (oldBg) {
+                        canvas.getObjects().forEach(o => {
+                          if (o.isBgImage && o !== oldBg) canvas.remove(o);
+                        });
+                        if (canvas.getObjects().indexOf(oldBg) === -1) {
+                            canvas.insertAt(oldBg, 0);
+                        }
+                    }
+                    canvas.renderAll();
+                    alert('✅ 模板加载成功，现在可以 [导入背景] 替换底图了！');
+                });
             } catch (err) {
                alert("读取失败：这不是有效的模板文件");
             }
@@ -2368,10 +2498,10 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
           if (!creator) return;
 
           if (confirm("加载模板将清除当前已添加的文字和贴图（保留底图），确定加载吗？")) {
-             const oldBg = canvas.backgroundImage;
+             const oldBg = getBgImage();
              canvas.clear();
              if (oldBg) {
-                canvas.setBackgroundImage(oldBg, canvas.renderAll.bind(canvas));
+                canvas.insertAt(oldBg, 0);
              } else {
                 canvas.setBackgroundColor('#1e2028', canvas.renderAll.bind(canvas));
              }
@@ -2398,7 +2528,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // === 背景高级滤镜组 ===
       function applyBgFilters() {
-        const bg = canvas.backgroundImage;
+        const bg = getBgImage();
         if (!bg) return;
         bg.filters = [];
         const bVal = parseFloat(document.getElementById('filter-brightness').value);
@@ -2459,7 +2589,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
       };
 
       document.getElementById('clear-canvas').onclick = () => {
-        if (confirm('确定清空所有文字和贴图吗？')) { canvas.getObjects().forEach(obj => { if(obj !== canvas.backgroundImage) canvas.remove(obj); }); canvas.renderAll(); }
+        if (confirm('确定清空所有文字和贴图吗？')) { canvas.getObjects().forEach(obj => { if(!obj.isBgImage) canvas.remove(obj); }); canvas.renderAll(); }
       };
 
       // ==================== Premium Design Features Injection ====================
@@ -2653,7 +2783,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // 5. 背景图片位移与缩放调节
       function applyBgTransforms() {
-        const bg = canvas.backgroundImage;
+        const bg = getBgImage();
         if (!bg) return;
         
         if (!bg._baseScaleX) {
@@ -2776,7 +2906,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // 7. AI 景深主体提取 (Depth Effect)
       document.getElementById('ai-depth-btn').onclick = async () => {
-        const bg = canvas.backgroundImage;
+        const bg = getBgImage();
         if (!bg) {
           alert('请先导入背景图片！');
           return;
@@ -2889,7 +3019,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         const obj = canvas.getActiveObject();
         if (obj) {
           const idx = canvas.getObjects().indexOf(obj);
-          if (idx > (canvas.backgroundImage ? 1 : 0)) {
+          if (idx > (getBgImage() ? 1 : 0)) {
             obj.sendBackwards();
             bringVignetteToCorrectLayer();
             canvas.renderAll();
@@ -2901,8 +3031,9 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         const obj = canvas.getActiveObject();
         if (obj) {
           obj.sendToBack();
-          if (canvas.backgroundImage) {
-            canvas.backgroundImage.sendToBack();
+          const bgImg = getBgImage();
+          if (bgImg) {
+            bgImg.sendToBack();
           }
           bringVignetteToCorrectLayer();
           canvas.renderAll();
@@ -2953,7 +3084,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
       // 4.6. 背景图片色彩自适应提取推荐算法
       function extractColorsFromBackground() {
-        const bg = canvas.backgroundImage;
+        const bg = getBgImage();
         const grid = document.getElementById('adaptive-palette-grid');
         const label = document.getElementById('adaptive-palette-label');
         if (!bg || !grid) {
@@ -3054,8 +3185,9 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
       // 监听背景图载入，触发色彩分析
       canvas.on('after:render', () => {
          // 首次渲染且有背景图时触发一次自适应取色，增加防抖
-         if (canvas.backgroundImage && !canvas.backgroundImage._colorsExtracted) {
-             canvas.backgroundImage._colorsExtracted = true;
+         const bgImg = getBgImage();
+         if (bgImg && !bgImg._colorsExtracted) {
+             bgImg._colorsExtracted = true;
              setTimeout(extractColorsFromBackground, 500);
          }
       });
