@@ -70,6 +70,20 @@
   --exportbar-h: 58px;
 }
 
+body.theme-lucidbloom {
+  --bg:        #060410;
+  --bg-2:      #0b071a;
+  --bg-3:      #120c2b;
+  --bg-4:      #1b123d;
+
+  /* Lucidbloom Liquid Magenta/Cyan Theme */
+  --gold:         #ff007f;
+  --gold-light:   #00f0ff;
+  --gold-dim:     rgba(255, 0, 127, 0.12);
+  --gold-border:  rgba(0, 240, 255, 0.28);
+  --gold-glow:    rgba(255, 0, 127, 0.4);
+}
+
 /* ── 重置 ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; -webkit-text-size-adjust: 100%; }
@@ -1184,6 +1198,7 @@ input, select { font: inherit; }
     </nav>
 
     <div class="topbar-actions">
+      <button class="ts-pill" id="theme-toggle-btn" title="切换 Lucidbloom 迷幻极光主题" style="font-size: 0.68rem; padding: 4px 12px; border-radius: 100px; border: 1px solid var(--gold-border); background: var(--gold-dim); color: var(--gold); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all var(--dur) var(--ease); font-weight: 500;">👾 极光主题</button>
       <div class="topbar-status" role="status" aria-live="polite">
         <span class="status-dot"></span>
         <span id="topbar-status-text">系统就绪</span>
@@ -1816,6 +1831,25 @@ const FILTERS = [
       baseLightLeak: 0.5,
       baseImperfections: 0.35,
       baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── ⓪.⑤ Lucidbloom 迷幻极光 ─────────────────────────────────
+  {
+    id: 'lucidbloom_vibe',
+    name: 'Lucidbloom 极光',
+    year: 'NEON',
+    tag: 'LUCID_999',
+    description: '极光液态色彩 · 迷幻微醺暗调 · 宇宙迷雾发光质感',
+    accentColor: '#ff007f',
+    params: {
+      brightness: -3,  contrast: 1.28, saturation: 1.45, warmth: -12, tint: -8,
+      shadowTint:    { r: 24,  g: -12, b: 38 },  // 迷幻深紫阴影
+      highlightTint: { r: -10, g: 26,  b: 30 },  // 霓虹青高光
+      baseNoise: 28, baseChromaticAberration: 4.5, baseVignette: 0.72,
+      baseBloom: 0.88, bloomThreshold: 150, baseJpegArtifacts: 0.35,
+      baseLightLeak: 0.65, baseImperfections: 0.20,
+      baseFlashFlare: 0.50, flashFlarePos: 'center',
     }
   },
   // ── ① Canon IXUS ─────────────────────────────────────────────
@@ -4688,6 +4722,18 @@ document.addEventListener('DOMContentLoaded', init);
     function initAll() {
         initRangeResets();
         initEyedropper();
+        
+        // Lucidbloom theme switcher
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                const isLucid = document.body.classList.toggle('theme-lucidbloom');
+                themeBtn.innerHTML = isLucid ? '✨ 暗室金主题' : '👾 极光主题';
+                themeBtn.style.borderColor = isLucid ? 'rgba(0, 240, 255, 0.28)' : 'var(--gold-border)';
+                themeBtn.style.color = isLucid ? '#00f0ff' : 'var(--gold)';
+                themeBtn.style.background = isLucid ? 'rgba(255, 0, 127, 0.12)' : 'var(--gold-dim)';
+            });
+        }
     }
     
     document.addEventListener("DOMContentLoaded", initAll);
