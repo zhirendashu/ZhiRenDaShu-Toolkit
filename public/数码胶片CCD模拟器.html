@@ -3369,6 +3369,8 @@ class DigiCamProcessor {
   
 
 
+}
+
 /* ── app.js ────────────────────────────────────────────────── */
 /**
  * 数码胶片 DigiCamFX — App Logic v2
@@ -3688,7 +3690,8 @@ function bindUploadZone() {
 
 // ═══════════════════════════════════════════════════════════════
 //  文件加载
-// ═══════════════════════════════════════════════════════════════function loadImg(file) {
+// ═══════════════════════════════════════════════════════════════
+function loadImg(file) {
   return new Promise((res, rej) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
