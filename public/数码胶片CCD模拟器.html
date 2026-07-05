@@ -1905,6 +1905,7 @@ input, select { font: inherit; }
 
 <!-- Scripts -->
 <script src="LUT/lut_data.js"></script>
+<script src="vsco-film-02-presets.js"></script>
 
 
 <script>
@@ -2420,11 +2421,130 @@ if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
   });
 }
 
+if (window.VSCO_FILM_02_PRESETS && Array.isArray(window.VSCO_FILM_02_PRESETS)) {
+  window.VSCO_FILM_02_PRESETS.forEach(p => {
+    // Pre-calculate curves
+    const curveMasterLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveMaster);
+    const curveRedLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveRed);
+    const curveGreenLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveGreen);
+    const curveBlueLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveBlue);
+
+    const filterObj = {
+      id: p.id,
+      name: p.name.replace(/^S\s*-\s*/i, ''),
+      year: 'VSCO',
+      tag: 'FILM_02',
+      description: `经典胶片模拟: ${p.name.replace(/^S\s*-\s*/i, '')}`,
+      accentColor: '#FF2442',
+      params: {
+        brightness: p.params.brightness,
+        contrast: p.params.contrast,
+        saturation: p.params.saturation,
+        warmth: 0,
+        tint: 0,
+        shadowTint: { r:0, g:0, b:0 },
+        highlightTint: { r:0, g:0, b:0 },
+        baseNoise: p.params.grainAmount || 30,
+        baseChromaticAberration: 1.5,
+        baseVignette: 0.50,
+        baseBloom: 0.35,
+        bloomThreshold: 195,
+        baseJpegArtifacts: 0.4,
+        baseLightLeak: 0.3,
+        baseImperfections: 0.2,
+        baseFlashFlare: 0,
+        flashFlarePos: 'topright',
+        // Curves LUTs
+        curveMasterLUT,
+        curveRedLUT,
+        curveGreenLUT,
+        curveBlueLUT
+      }
+    };
+    FILTERS.push(filterObj);
+  });
+}
+
 /* ── processor.js ──────────────────────────────────────────── */
 // DigiCamFX — Image Processing Engine
 // Canvas 2D pixel-level CCD physics simulation
 
 class DigiCamProcessor {
+  // ── 曲线三线性/样条插值 LUT 计算 ──────────────────────────────
+  static precomputeCurveLUT(points) {
+    const lut = new Uint8Array(256);
+    if (!points || points.length === 0) {
+      for (let i = 0; i < 256; i++) lut[i] = i;
+      return lut;
+    }
+    const n = points.length;
+    if (n === 2) {
+      const x0 = points[0][0], y0 = points[0][1];
+      const x1 = points[1][0], y1 = points[1][1];
+      for (let i = 0; i < 256; i++) {
+        if (i <= x0) lut[i] = y0;
+        else if (i >= x1) lut[i] = y1;
+        else {
+          const t = (i - x0) / (x1 - x0);
+          lut[i] = Math.max(0, Math.min(255, Math.round(y0 + t * (y1 - y0))));
+        }
+      }
+      return lut;
+    }
+
+    const x = new Float32Array(n);
+    const y = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      x[i] = points[i][0];
+      y[i] = points[i][1];
+    }
+
+    const h = new Float32Array(n - 1);
+    for (let i = 0; i < n - 1; i++) h[i] = x[i+1] - x[i];
+
+    const a = new Float32Array(n);
+    for (let i = 1; i < n - 1; i++) {
+      a[i] = 3 * ((y[i+1] - y[i]) / h[i] - (y[i] - y[i-1]) / h[i-1]);
+    }
+
+    const l = new Float32Array(n);
+    const mu = new Float32Array(n);
+    const z = new Float32Array(n);
+    l[0] = 1; mu[0] = 0; z[0] = 0;
+
+    for (let i = 1; i < n - 1; i++) {
+      l[i] = 2 * (x[i+1] - x[i-1]) - h[i-1] * mu[i-1];
+      mu[i] = h[i] / l[i];
+      z[i] = (a[i] - h[i-1] * z[i-1]) / l[i];
+    }
+
+    l[n-1] = 1; z[n-1] = 0;
+    const c = new Float32Array(n);
+    const b = new Float32Array(n);
+    const d = new Float32Array(n);
+    c[n-1] = 0;
+
+    for (let i = n - 2; i >= 0; i--) {
+      c[i] = z[i] - mu[i] * c[i+1];
+      b[i] = (y[i+1] - y[i]) / h[i] - h[i] * (c[i+1] + 2 * c[i]) / 3;
+      d[i] = (c[i+1] - c[i]) / (3 * h[i]);
+    }
+
+    for (let i = 0; i < 256; i++) {
+      if (i <= x[0]) {
+        lut[i] = Math.max(0, Math.min(255, Math.round(y[0])));
+      } else if (i >= x[n-1]) {
+        lut[i] = Math.max(0, Math.min(255, Math.round(y[n-1])));
+      } else {
+        let j = 0;
+        while (j < n - 1 && i > x[j+1]) j++;
+        const dx = i - x[j];
+        let val = y[j] + b[j] * dx + c[j] * dx * dx + d[j] * dx * dx * dx;
+        lut[i] = Math.max(0, Math.min(255, Math.round(val)));
+      }
+    }
+    return lut;
+  }
   // ── 3D LUT 三线性插值应用函数 ────────────────────────────────
   static apply3dLut(r, g, b, lutData, size) {
     const scale = size - 1;
@@ -2558,6 +2678,16 @@ class DigiCamProcessor {
         g = lutRGB.g;
         b = lutRGB.b;
       }
+
+      // 应用胶片曲线 LUT
+      if (filterParams.curveMasterLUT) {
+        r = filterParams.curveMasterLUT[r];
+        g = filterParams.curveMasterLUT[g];
+        b = filterParams.curveMasterLUT[b];
+      }
+      if (filterParams.curveRedLUT)   r = filterParams.curveRedLUT[r];
+      if (filterParams.curveGreenLUT) g = filterParams.curveGreenLUT[g];
+      if (filterParams.curveBlueLUT)  b = filterParams.curveBlueLUT[b];
 
       // Brightness
       r += brightness;
