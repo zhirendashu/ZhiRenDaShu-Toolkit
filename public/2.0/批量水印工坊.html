@@ -1,0 +1,1761 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>批量水印工坊 | 植人大树</title>
+    <!--
+    作者：植人大树
+    个人主页：https://link3.cc/zhirendashu
+    版本：v1.0.0
+    发布日期：2026-07-06
+    开源协议：CC BY-NC-SA 4.0
+    -->
+    <script>const __AUTH_SIGNATURE = "179689535&0814";</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* 背景光斑 */
+        .bg-blobs { position: fixed; inset: 0; z-index: -1; overflow: hidden; filter: blur(90px); opacity: 0.25; pointer-events: none }
+        .blob { position: absolute; border-radius: 50%; animation: bmv 28s infinite alternate }
+        .blob-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, #6366f1, transparent 70%); top: -15%; right: -10% }
+        .blob-2 { width: 40vw; height: 40vw; background: radial-gradient(circle, #f43f5e, transparent 70%); bottom: -10%; left: -10%; animation-delay: -11s }
+        .blob-3 { width: 30vw; height: 30vw; background: radial-gradient(circle, #10b981, transparent 70%); top: 30%; left: 25%; animation-delay: -20s; opacity: .4 }
+        @keyframes bmv { from { transform: translate(0,0) scale(1) } to { transform: translate(50px,40px) scale(1.15) } }
+
+        :root {
+            --bg-dark: #07080d;
+            --bg-card: rgba(13, 16, 27, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --accent-primary: #6366f1;
+            --accent-secondary: #f43f5e;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --font-display: 'Outfit', 'Noto Sans SC', sans-serif;
+            --dur: 0.3s;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-display);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 14px 24px;
+            background: rgba(7, 8, 13, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-back {
+            display: flex; align-items: center; gap: 6px;
+            color: var(--text-dim); text-decoration: none;
+            font-size: .82rem; font-weight: 500;
+            padding: 6px 14px; border-radius: 100px;
+            border: 1px solid var(--border-glass);
+            background: rgba(255,255,255,.03);
+            transition: all var(--dur) var(--ease);
+        }
+        .header-back:hover { color: var(--text-main); border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.06); }
+        
+        h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 30%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* ── 左侧画布区 ── */
+        .workspace-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+        
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        #preview-canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: var(--radius-sm);
+            cursor: grab;
+            display: none;
+        }
+        #preview-canvas:active { cursor: grabbing; }
+
+        /* 拖拽上传区 */
+        .upload-zone {
+            position: absolute;
+            inset: 30px;
+            border: 2px dashed rgba(255,255,255,0.12);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--dur) var(--ease);
+            background: rgba(255,255,255,0.01);
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.03);
+            box-shadow: inset 0 0 40px rgba(99, 102, 241, 0.05);
+        }
+        .upload-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-glass);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            color: var(--text-dim);
+            transition: all var(--dur) var(--ease);
+        }
+        .upload-zone:hover .upload-icon {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(99, 102, 241, 0.1);
+            color: #fff;
+        }
+
+        /* ── 底部批量缩略图 ── */
+        .batch-bar {
+            height: 100px;
+            background: rgba(7, 8, 13, 0.5);
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+        .batch-bar::-webkit-scrollbar { height: 6px; }
+        .batch-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
+        .batch-thumb {
+            width: 80px; height: 80px;
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all var(--dur) var(--ease);
+            background: #000;
+        }
+        .batch-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: opacity var(--dur); }
+        .batch-thumb.active { border-color: var(--accent-primary); }
+        .batch-thumb:hover img, .batch-thumb.active img { opacity: 1; }
+        .batch-thumb-remove {
+            position: absolute; top: 2px; right: 2px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: rgba(0,0,0,0.6); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; cursor: pointer;
+            opacity: 0; transition: opacity var(--dur);
+        }
+        .batch-thumb:hover .batch-thumb-remove { opacity: 1; }
+
+        /* ── 右侧控制面板 ── */
+        .control-panel {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            flex-shrink: 0;
+        }
+        
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            background: none; border: none;
+            color: var(--text-dim); font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all var(--dur);
+            position: relative;
+        }
+        .tab-btn.active { color: #fff; }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 25%; right: 25%;
+            height: 2px; background: var(--accent-primary);
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        .panel-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .panel-scroll::-webkit-scrollbar { width: 6px; }
+        .panel-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 100px; }
+
+        .ctrl-group { display: flex; flex-direction: column; gap: 12px; }
+        .group-title { font-size: 0.78rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+        
+        .prop-row { display: flex; flex-direction: column; gap: 6px; }
+        .prop-header { display: flex; justify-content: space-between; align-items: center; }
+        .prop-label { font-size: 0.8rem; font-weight: 500; color: var(--text-dim); }
+        .prop-val { font-size: 0.8rem; font-weight: 600; color: var(--accent-primary); font-family: monospace; }
+        
+        /* 基础控制件 */
+        input[type="text"], select {
+            width: 100%; padding: 8px 12px;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm); color: #fff;
+            font-size: 0.84rem; outline: none;
+            transition: border-color var(--dur) var(--ease);
+        }
+        input[type="text"]:focus, select:focus { border-color: var(--accent-primary); }
+
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 5px;
+            background: rgba(255,255,255,0.08); border-radius: 100px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: #fff; cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-glow);
+            transition: transform var(--dur);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* 位置九宫格 */
+        .pos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .pos-cell {
+            padding: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            color: var(--text-dim);
+            font-size: 0.72rem; font-weight: bold; text-align: center;
+            cursor: pointer; transition: all var(--dur) var(--ease);
+        }
+        .pos-cell:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .pos-cell.active {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.12);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+        }
+
+        /* 开关切换 */
+        .switch-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 0;
+        }
+        .toggle-switch {
+            position: relative; display: inline-block; width: 38px; height: 20px; cursor: pointer;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; background-color: rgba(255,255,255,0.08);
+            border-radius: 100px; transition: .3s;
+        }
+        .toggle-slider:before {
+            content: ""; position: absolute; height: 14px; width: 14px;
+            left: 3px; bottom: 3px; background-color: var(--text-dim);
+            border-radius: 50%; transition: .3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background-color: var(--accent-primary); }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(18px); background-color: #fff;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        /* 颜色选择器 */
+        .color-row {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .color-picker-wrapper {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1px solid var(--border-glass); overflow: hidden;
+            position: relative; flex-shrink: 0; cursor: pointer;
+        }
+        .color-picker-wrapper input[type="color"] {
+            position: absolute; scale: 2; top: -5px; left: -5px; cursor: pointer; border: none; background: none;
+        }
+
+        /* 按钮与底部操作 */
+        .panel-footer {
+            padding: 20px;
+            background: rgba(0,0,0,0.25);
+            border-top: 1px solid var(--border-glass);
+            display: flex; flex-direction: column; gap: 10px;
+            flex-shrink: 0;
+        }
+        .btn {
+            width: 100%; padding: 12px;
+            border-radius: var(--radius-md); border: none;
+            font-size: 0.88rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all var(--dur) var(--ease);
+        }
+        .btn-primary {
+            background: var(--accent-primary); color: #fff;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            background: #5356e0;
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+        .btn-primary:active { transform: translateY(1px); }
+        
+        .btn-ghost {
+            background: rgba(255,255,255,0.03); color: var(--text-main);
+            border: 1px solid var(--border-glass);
+        }
+        .btn-ghost:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.16);
+        }
+
+        .btn-interop {
+            background: rgba(244, 63, 94, 0.08); color: var(--accent-secondary);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+        .btn-interop:hover {
+            background: rgba(244, 63, 94, 0.15);
+            border-color: rgba(244, 63, 94, 0.35);
+            color: #fff;
+        }
+
+        /* 加载 Toast */
+        .loading-toast {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 16px 28px; background: rgba(13,16,27,0.92);
+            border: 1px solid var(--border-glass); border-radius: var(--radius-lg);
+            z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            backdrop-filter: blur(20px); font-size: 0.88rem; font-weight: 600;
+            display: none; align-items: center; gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header>
+        <div class="header-left">
+            <a href="./index.html" class="header-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                返回首页
+            </a>
+            <h1>批量水印工坊</h1>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">ZHIREN DASHU v1.0</div>
+    </header>
+
+    <div class="main-container">
+        <!-- ── 左侧工作区 ── -->
+        <div class="workspace-area">
+            <div class="canvas-container">
+                <canvas id="preview-canvas"></canvas>
+                
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 6px;">拖拽多张照片到这里</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim);">支持批量多选 PNG, JPG 格式图片</p>
+                    <input type="file" id="file-picker" multiple accept="image/*" style="display: none;" />
+                </div>
+            </div>
+            
+            <!-- 批量缩略图条 -->
+            <div class="batch-bar" id="batch-bar">
+                <!-- thumbnails appended dynamically -->
+            </div>
+        </div>
+
+        <!-- ── 右侧控制面板 ── -->
+        <div class="control-panel">
+            <div class="panel-tabs">
+                <button class="tab-btn active" id="tab-btn-text">文字水印</button>
+                <button class="tab-btn" id="tab-btn-image">LOGO 图片</button>
+            </div>
+            
+            <div class="panel-scroll">
+                
+                <!-- 1. 水印内容配置 -->
+                <div class="ctrl-group" id="group-text-settings">
+                    <div class="group-title">文字水印配置</div>
+                    <div class="prop-row">
+                        <div class="prop-header"><label class="prop-label">水印文字</label></div>
+                        <input type="text" id="wm-text" placeholder="输入水印文本，如：@植人大树" value="@植人大树" />
+                    </div>
+                    <div class="prop-row">
+                        <div class="prop-header"><label class="prop-label">字体选择</label></div>
+                        <select id="wm-font">
+                            <option value="Outfit, 'Noto Sans SC', sans-serif">时尚现代无衬线</option>
+                            <option value="'Courier New', Courier, monospace">复古打字机</option>
+                            <option value="'Noto Serif SC', serif">精致典雅宋体</option>
+                            <option value="Georgia, serif">经典古典衬线</option>
+                            <option value="Arial, sans-serif">标准黑体</option>
+                        </select>
+                    </div>
+                    <div class="prop-row">
+                        <div class="prop-header"><label class="prop-label">特效风格</label></div>
+                        <select id="wm-effect">
+                            <option value="none">常规纯色</option>
+                            <option value="neon">荧光霓虹管 (Neon Tube)</option>
+                            <option value="led">复古点阵 LED (Dot Matrix)</option>
+                        </select>
+                    </div>
+                    <div class="prop-row" id="neon-color-row" style="display: none;">
+                        <div class="prop-header"><label class="prop-label">荧光色预设</label></div>
+                        <select id="wm-neon-preset">
+                            <option value="#10b981">荧光绿 (LCD Green)</option>
+                            <option value="#ef4444">赤红 (LED Red)</option>
+                            <option value="#f97316">琥珀橙 (Amber LED)</option>
+                            <option value="#06b6d4">冰晶蓝 (Cyan)</option>
+                            <option value="#d946ef">紫罗兰 (Fuchsia)</option>
+                            <option value="custom">自定义色彩...</option>
+                        </select>
+                    </div>
+                    <div class="prop-row">
+                        <div class="prop-header">
+                            <label class="prop-label">水印颜色与阴影</label>
+                        </div>
+                        <div class="color-row">
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="wm-color" value="#ffffff" />
+                            </div>
+                            <span style="font-size:0.75rem;color:var(--text-dim)">阴影模糊</span>
+                            <input type="range" id="wm-shadow-blur" min="0" max="30" value="8" style="flex:1" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ctrl-group" id="group-image-settings" style="display: none;">
+                    <div class="group-title">图片 LOGO 水印</div>
+                    <div class="prop-row">
+                        <div class="prop-header"><label class="prop-label">LOGO 水印图片</label></div>
+                        <button class="btn btn-ghost" id="logo-picker-btn" style="padding: 8px 12px; font-size: 0.78rem;">
+                            上传 LOGO 图片 (透明 PNG)
+                        </button>
+                        <input type="file" id="logo-picker" accept="image/*" style="display: none;" />
+                        <div id="logo-status" style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:2px;">未上传 (默认使用缓存)</div>
+                    </div>
+                    <div class="prop-row">
+                        <div class="prop-header">
+                            <label class="prop-label">LOGO 缩放比例</label>
+                            <span class="prop-val" id="val-logo-scale">20%</span>
+                        </div>
+                        <input type="range" id="wm-logo-scale" min="5" max="100" value="20" />
+                    </div>
+                </div>
+
+                <!-- 2. 水印共享排版 -->
+                <div class="ctrl-group">
+                    <div class="group-title">排版与大小</div>
+                    <div class="prop-row" id="wm-size-container">
+                        <div class="prop-header">
+                            <label class="prop-label">文字字号</label>
+                            <span class="prop-val" id="val-font-size">24px</span>
+                        </div>
+                        <input type="range" id="wm-font-size" min="10" max="150" value="24" />
+                    </div>
+                    <div class="prop-row">
+                        <div class="prop-header">
+                            <label class="prop-label">不透明度</label>
+                            <span class="prop-val" id="val-opacity">80%</span>
+                        </div>
+                        <input type="range" id="wm-opacity" min="0" max="100" value="80" />
+                    </div>
+                    <div class="prop-row">
+                        <div class="prop-header">
+                            <label class="prop-label">旋转角度</label>
+                            <span class="prop-val" id="val-angle">0°</span>
+                        </div>
+                        <input type="range" id="wm-angle" min="-180" max="180" value="0" />
+                    </div>
+                </div>
+
+                <!-- 3. 定位布局 -->
+                <div class="ctrl-group" id="position-container">
+                    <div class="group-title">水印位置定位</div>
+                    
+                    <div class="switch-row">
+                        <span class="prop-label">全屏铺满网格 (防盗版权印)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="wm-tile" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="anchor-position-settings" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="prop-row">
+                            <label class="prop-label">九宫格快速贴合</label>
+                            <div class="pos-grid" id="pos-grid">
+                                <div class="pos-cell" data-pos="TL">左上</div>
+                                <div class="pos-cell" data-pos="TC">中上</div>
+                                <div class="pos-cell" data-pos="TR">右上</div>
+                                <div class="pos-cell" data-pos="CL">左中</div>
+                                <div class="pos-cell" data-pos="CC">居中</div>
+                                <div class="pos-cell" data-pos="CR">右中</div>
+                                <div class="pos-cell" data-pos="BL">左下</div>
+                                <div class="pos-cell" data-pos="BC">中下</div>
+                                <div class="pos-cell active" data-pos="BR">右下</div>
+                            </div>
+                        </div>
+                        <div class="prop-row">
+                            <div class="prop-header">
+                                <label class="prop-label">水平偏移边距 (X)</label>
+                                <span class="prop-val" id="val-offset-x">30px</span>
+                            </div>
+                            <input type="range" id="wm-offset-x" min="0" max="500" value="30" />
+                        </div>
+                        <div class="prop-row">
+                            <div class="prop-header">
+                                <label class="prop-label">垂直偏移边距 (Y)</label>
+                                <span class="prop-val" id="val-offset-y">30px</span>
+                            </div>
+                            <input type="range" id="wm-offset-y" min="0" max="500" value="30" />
+                        </div>
+                    </div>
+
+                    <div id="tile-position-settings" style="display: none; flex-direction: column; gap: 12px;">
+                        <div class="prop-row">
+                            <div class="prop-header">
+                                <label class="prop-label">网格横向间距</label>
+                                <span class="prop-val" id="val-tile-gap-x">240px</span>
+                            </div>
+                            <input type="range" id="wm-tile-gap-x" min="80" max="800" value="240" />
+                        </div>
+                        <div class="prop-row">
+                            <div class="prop-header">
+                                <label class="prop-label">网格纵向间距</label>
+                                <span class="prop-val" id="val-tile-gap-y">180px</span>
+                            </div>
+                            <input type="range" id="wm-tile-gap-y" min="80" max="800" value="180" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 配置持久化缓存 -->
+                <div class="ctrl-group">
+                    <div class="group-title">配置与持久化</div>
+                    <div class="switch-row">
+                        <span class="prop-label">自动保存水印设置 (下次打开免设)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="cache-enabled" checked />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 操作区 -->
+            <div class="panel-footer">
+                <button class="btn btn-primary" id="btn-export-zip">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    一键批量 ZIP 打包下载
+                </button>
+                <button class="btn btn-ghost" id="btn-export-seq" style="font-size: 0.8rem; padding: 10px;">
+                    并发逐张下载 (离线推荐)
+                </button>
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                    <button class="btn btn-interop" id="btn-send-cover" style="flex:1;font-size:0.75rem;padding:8px;">
+                        发送至精修大师
+                    </button>
+                    <button class="btn btn-interop" id="btn-send-collage" style="flex:1;font-size:0.75rem;padding:8px;background:rgba(99,102,241,0.08);color:var(--accent-primary);border-color:rgba(99,102,241,0.2);">
+                        发送至拼图工具
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Toast -->
+    <div class="loading-toast" id="loading-toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="animation: spin 1s linear infinite;">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+        </svg>
+        <style>@keyframes spin { 100% { transform: rotate(360deg); } }
+      /* ── 封面比例暗房 2.0 视觉覆盖样式 ── */
+      :root {
+        --bg: #050505 !important;
+        --bg-color: #050505 !important;
+        --surface: #111111 !important;
+        --surface-glass: rgba(17, 17, 17, 0.85) !important;
+        --card: #161616 !important;
+        --border: #222222 !important;
+        --border-focus: #444444 !important;
+        --accent: #FF2442 !important; /* 品牌红 */
+        --accent-primary: #FF2442 !important;
+        --accent2: #F6D365 !important; /* 胶片黄 */
+        --text: #F4F1E8 !important;
+        --text-dim: #8A8A8A !important;
+        --sub: #8A8A8A !important;
+      }
+      body {
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
+        font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .panel-card, .ctrl-group, .settings-panel, .control-panel, .step-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      .btn-primary, #export-btn, .btn-brand, .download-btn, #download-btn {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover, #export-btn:hover, .btn-brand:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(255, 36, 66, 0.5) !important;
+      }
+      .btn-secondary, .btn-dark, .btn-outline {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+      }
+      .btn-secondary:hover, .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--border-focus) !important;
+      }
+      .preview-area, #main-preview-box, .canvas-container-wrap, .canvas-container, #compare-container {
+        position: relative !important;
+        background-color: #020202 !important;
+        background-image: radial-gradient(circle at center, rgba(255, 36, 66, 0.03) 0%, transparent 75%) !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.9) !important;
+        border: 1px solid var(--border) !important;
+      }
+      .preview-area::before, #main-preview-box::before, .canvas-container-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .preview-area::after, #main-preview-box::after, .canvas-container-wrap::after {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 2;
+      }
+      input[type="range"] {
+        accent-color: var(--accent) !important;
+      }
+      header {
+        background: rgba(5, 5, 5, 0.85) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .header-back {
+        border: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
+      .header-back:hover {
+        border-color: var(--border-focus) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }</style>
+        <span id="loading-msg">处理中...</span>
+    </div>
+
+    <!-- IndexedDB & Logic Scripts -->
+    <script>
+        const $ = id => document.getElementById(id);
+
+        // === IndexedDB 独立资产缓存 (存储 LOGO 图片) ===
+        const LogoDB = {
+            name: 'ZhiRenDaShu_Watermark_Logo',
+            store: 'logo_assets',
+            open() {
+                return new Promise((res) => {
+                    const req = indexedDB.open(this.name, 1);
+                    req.onupgradeneeded = () => req.result.createObjectStore(this.store);
+                    req.onsuccess = () => res(req.result);
+                });
+            },
+            async save(blob) {
+                try {
+                    const db = await this.open();
+                    await new Promise((resolve, reject) => {
+                        const tx = db.transaction(this.store, 'readwrite');
+                        const s = tx.objectStore(this.store);
+                        const req = s.put(blob, 'current_logo');
+                        req.onsuccess = () => resolve();
+                        req.onerror = e => reject(e);
+                    });
+                } catch(e) {
+                    console.warn("Logo DB save failed", e);
+                }
+            },
+            async load() {
+                try {
+                    const db = await this.open();
+                    return await new Promise((resolve, reject) => {
+                        const tx = db.transaction(this.store, 'readonly');
+                        const s = tx.objectStore(this.store);
+                        const req = s.get('current_logo');
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = e => reject(e);
+                    });
+                } catch(e) {
+                    console.warn("Logo DB load failed", e);
+                    return null;
+                }
+            },
+            async clear() {
+                try {
+                    const db = await this.open();
+                    const tx = db.transaction(this.store, 'readwrite');
+                    tx.objectStore(this.store).clear();
+                } catch(e) {}
+            }
+        };
+
+        // === IndexedDB Bridge (与其他工具传输数据) ===
+        const BridgeDB = {
+            name: 'ZhiRenDaShu_Bridge',
+            store: 'image_transfer',
+            async save(images) {
+                // 1. window.name fallback
+                try {
+                    const dataToSave = [];
+                    for (const img of images) {
+                        const dataUrl = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.readAsDataURL(img.blob);
+                        });
+                        dataToSave.push({ name: img.name, dataUrl });
+                    }
+                    window.name = JSON.stringify({ type: 'zhirendashu_transfer', images: dataToSave });
+                } catch(e) {}
+
+                // 2. IndexedDB write
+                try {
+                    const db = await this.open();
+                    await new Promise((resolve, reject) => {
+                        const tx = db.transaction(this.store, 'readwrite');
+                        const s = tx.objectStore(this.store);
+                        s.clear();
+                        if (images.length === 0) return resolve();
+                        let count = 0;
+                        images.forEach(img => {
+                            const req = s.add(img);
+                            req.onsuccess = () => {
+                                count++;
+                                if (count === images.length) resolve();
+                            };
+                            req.onerror = e => reject(e);
+                        });
+                    });
+                } catch(e) {}
+            },
+            open() {
+                return new Promise((res) => {
+                    const req = indexedDB.open(this.name, 1);
+                    req.onupgradeneeded = () => req.result.createObjectStore(this.store, { autoIncrement: true });
+                    req.onsuccess = () => res(req.result);
+                });
+            }
+        };
+
+        // === 核心业务逻辑 ===
+        const State = {
+            batchFiles: [],   // Array of { file, name, imgElement }
+            activeIndex: -1,
+            watermarkType: 'text', // 'text' or 'image'
+            logoImage: null,       // Image element for logo
+            logoBlob: null,        // Blob for logo
+            anchor: 'BR',          // 'TL', 'TC', 'TR', 'CL', 'CC', 'CR', 'BL', 'BC', 'BR'
+            
+            // Mouse Drag state
+            drag: {
+                isDragging: false,
+                startX: 0, startY: 0,
+                startOffsetX: 0, startOffsetY: 0
+            }
+        };
+
+        // 绑定拖拽上传
+        const zone = $('upload-zone');
+        zone.addEventListener('click', () => $('file-picker').click());
+        $('file-picker').addEventListener('change', e => handleFilesSelect(e.target.files));
+        
+        window.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        window.addEventListener('dragleave', e => { e.preventDefault(); zone.classList.remove('dragover'); });
+        window.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFilesSelect(e.dataTransfer.files);
+        });
+
+        async function handleFilesSelect(files) {
+            const list = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (list.length === 0) return;
+            
+            showToast("载入图片中...");
+            zone.style.display = 'none';
+            $('preview-canvas').style.display = 'block';
+
+            const startIdx = State.batchFiles.length;
+            for (let f of list) {
+                const img = await new Promise((resolve) => {
+                    const i = new Image();
+                    i.onload = () => resolve(i);
+                    i.src = URL.createObjectURL(f);
+                });
+                State.batchFiles.push({ file: f, name: f.name, imgElement: img });
+            }
+
+            buildBatchBar();
+            hideToast();
+
+            if (State.activeIndex === -1) {
+                setActiveImage(0);
+            } else {
+                renderPreview();
+            }
+        }
+
+        function buildBatchBar() {
+            const bar = $('batch-bar');
+            bar.innerHTML = '';
+            State.batchFiles.forEach((f, i) => {
+                const thumb = document.createElement('div');
+                thumb.className = `batch-thumb ${i === State.activeIndex ? 'active' : ''}`;
+                
+                const img = document.createElement('img');
+                img.src = f.imgElement.src;
+                
+                const rm = document.createElement('div');
+                rm.className = 'batch-thumb-remove';
+                rm.innerHTML = '×';
+                rm.onclick = (e) => {
+                    e.stopPropagation();
+                    removeBatchImage(i);
+                };
+
+                thumb.onclick = () => setActiveImage(i);
+                thumb.appendChild(img);
+                thumb.appendChild(rm);
+                bar.appendChild(thumb);
+            });
+        }
+
+        function removeBatchImage(idx) {
+            State.batchFiles.splice(idx, 1);
+            if (State.batchFiles.length === 0) {
+                State.activeIndex = -1;
+                $('preview-canvas').style.display = 'none';
+                zone.style.display = 'flex';
+                buildBatchBar();
+            } else {
+                if (State.activeIndex >= State.batchFiles.length) {
+                    State.activeIndex = State.batchFiles.length - 1;
+                }
+                buildBatchBar();
+                setActiveImage(State.activeIndex);
+            }
+        }
+
+        function setActiveImage(idx) {
+            State.activeIndex = idx;
+            document.querySelectorAll('.batch-thumb').forEach((t, i) => {
+                t.classList.toggle('active', i === idx);
+            });
+            renderPreview();
+        }
+
+        // === 渲染与 Canvas 混合系统 ===
+        // ── 荧光霓虹管渲染器 ──
+        function drawNeonGlowText(ctx, text, font, x, y, size, color) {
+            ctx.save();
+            ctx.font = `bold ${size}px ${font}`;
+            ctx.textBaseline = 'top';
+            
+            // 1. 大范围背景光雾
+            ctx.shadowColor = color;
+            ctx.shadowBlur = size * 0.5;
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y);
+            
+            // 2. 中等浓度发光轮廓
+            ctx.shadowBlur = size * 0.2;
+            ctx.fillText(text, x, y);
+            
+            // 3. 耀眼的白色核心管
+            ctx.shadowBlur = size * 0.05;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, x, y);
+            
+            ctx.restore();
+        }
+
+        // ── 复古点阵 LED 渲染器 ──
+        function drawDotMatrixText(ctx, text, font, x, y, size, color) {
+            const letterHeight = 16; 
+            const charScale = size / letterHeight; 
+            
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.font = `bold ${letterHeight}px ${font}`;
+            const textWidth = Math.ceil(tempCtx.measureText(text).width);
+            
+            tempCanvas.width = textWidth + 4;
+            tempCanvas.height = letterHeight + 4;
+            
+            tempCtx.font = `bold ${letterHeight}px ${font}`;
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.textBaseline = 'top';
+            tempCtx.fillText(text, 2, 2);
+            
+            const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imgData.data;
+            
+            const dot = Math.max(1.8, 2.5 * charScale);
+            const step = 4.2 * charScale;
+            
+            ctx.save();
+            
+            // 绘制底噪网格 LED（未激活状态）
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.05;
+            for (let gy = 0; gy < tempCanvas.height; gy++) {
+                for (let gx = 0; gx < tempCanvas.width; gx++) {
+                    const dx = x + gx * step;
+                    const dy = y + gy * step;
+                    ctx.beginPath();
+                    ctx.arc(dx, dy, dot / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // 绘制点亮状态 LED
+            ctx.globalAlpha = 1.0;
+            for (let gy = 0; gy < tempCanvas.height; gy++) {
+                for (let gx = 0; gx < tempCanvas.width; gx++) {
+                    const idx = (gy * tempCanvas.width + gx) * 4;
+                    const alpha = data[idx + 3];
+                    if (alpha > 120) {
+                        const dx = x + gx * step;
+                        const dy = y + gy * step;
+                        
+                        // 外层发光晕环
+                        ctx.save();
+                        ctx.shadowColor = color;
+                        ctx.shadowBlur = dot * 2.8;
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.arc(dx, dy, dot / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        
+                        // 内层高亮核心发光点
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(dx, dy, dot / 2.8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            ctx.restore();
+            return {
+                w: tempCanvas.width * step,
+                h: tempCanvas.height * step
+            };
+        }
+
+        function drawWatermark(ctx, imgW, imgH) {
+            const isText = State.watermarkType === 'text';
+            const opacity = parseFloat($('wm-opacity').value) / 100;
+            const angle = parseFloat($('wm-angle').value) * Math.PI / 180;
+            const isTiled = $('wm-tile').checked;
+
+            ctx.save();
+            ctx.globalAlpha = opacity;
+
+            if (isText) {
+                // 文字水印绘制
+                const text = $('wm-text').value || '批量水印工坊';
+                const fontSize = parseFloat($('wm-font-size').value);
+                const color = $('wm-color').value;
+                const shadowBlur = parseFloat($('wm-shadow-blur').value);
+                const font = $('wm-font').value;
+                const effect = $('wm-effect').value;
+
+                ctx.font = `bold ${fontSize}px ${font}`;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+
+                let wmW = 0, wmH = fontSize;
+
+                if (effect === 'none') {
+                    const metrics = ctx.measureText(text);
+                    wmW = metrics.width;
+                } else if (effect === 'neon') {
+                    const metrics = ctx.measureText(text);
+                    wmW = metrics.width;
+                } else if (effect === 'led') {
+                    // 点阵测量由离屏渲染返回，先试测算
+                    const letterHeight = 16;
+                    const charScale = fontSize / letterHeight;
+                    const step = 4.2 * charScale;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.font = `bold ${letterHeight}px ${font}`;
+                    const textWidth = Math.ceil(tempCtx.measureText(text).width);
+                    wmW = (textWidth + 4) * step;
+                    wmH = (letterHeight + 4) * step;
+                }
+
+                if (isTiled) {
+                    // 全屏平铺
+                    const gapX = parseFloat($('wm-tile-gap-x').value);
+                    const gapY = parseFloat($('wm-tile-gap-y').value);
+                    
+                    ctx.translate(imgW / 2, imgH / 2);
+                    ctx.rotate(angle);
+                    
+                    const maxDim = Math.max(imgW, imgH) * 2;
+                    for (let x = -maxDim; x < maxDim; x += gapX) {
+                        for (let y = -maxDim; y < maxDim; y += gapY) {
+                            if (effect === 'none') {
+                                if (shadowBlur > 0) {
+                                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                                    ctx.shadowBlur = shadowBlur;
+                                    ctx.shadowOffsetX = 2;
+                                    ctx.shadowOffsetY = 2;
+                                }
+                                ctx.fillText(text, x - wmW/2, y - wmH/2);
+                            } else if (effect === 'neon') {
+                                drawNeonGlowText(ctx, text, font, x - wmW/2, y - wmH/2, fontSize, color);
+                            } else if (effect === 'led') {
+                                drawDotMatrixText(ctx, text, font, x - wmW/2, y - wmH/2, fontSize, color);
+                            }
+                        }
+                    }
+                } else {
+                    // 单个定位
+                    const pos = calculateSinglePosition(imgW, imgH, wmW, wmH);
+                    ctx.translate(pos.x + wmW / 2, pos.y + wmH / 2);
+                    ctx.rotate(angle);
+                    
+                    if (effect === 'none') {
+                        if (shadowBlur > 0) {
+                            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                            ctx.shadowBlur = shadowBlur;
+                            ctx.shadowOffsetX = 2;
+                            ctx.shadowOffsetY = 2;
+                        }
+                        ctx.fillText(text, -wmW / 2, -wmH / 2);
+                    } else if (effect === 'neon') {
+                        drawNeonGlowText(ctx, text, font, -wmW / 2, -wmH / 2, fontSize, color);
+                    } else if (effect === 'led') {
+                        drawDotMatrixText(ctx, text, font, -wmW / 2, -wmH / 2, fontSize, color);
+                    }
+                    
+                    // 存储以便鼠标碰撞检测与拉伸
+                    State.wmBounds = {
+                        x: pos.x, y: pos.y, w: wmW, h: wmH
+                    };
+                }
+            } else {
+                // 图片 LOGO 水印 绘制
+                const logo = State.logoImage;
+                if (!logo) {
+                    ctx.restore();
+                    return;
+                }
+                const scale = parseFloat($('wm-logo-scale').value) / 100;
+                
+                // 维持比例缩放
+                const maxLogoDim = Math.min(imgW, imgH) * 0.35; // 限制最大尺寸
+                const wScale = maxLogoDim / Math.max(logo.width, logo.height);
+                const wmW = logo.width * wScale * scale;
+                const wmH = logo.height * wScale * scale;
+
+                if (isTiled) {
+                    // 全屏平铺
+                    const gapX = parseFloat($('wm-tile-gap-x').value);
+                    const gapY = parseFloat($('wm-tile-gap-y').value);
+                    
+                    ctx.translate(imgW / 2, imgH / 2);
+                    ctx.rotate(angle);
+                    
+                    const maxDim = Math.max(imgW, imgH) * 2;
+                    for (let x = -maxDim; x < maxDim; x += gapX) {
+                        for (let y = -maxDim; y < maxDim; y += gapY) {
+                            ctx.drawImage(logo, x - wmW/2, y - wmH/2, wmW, wmH);
+                        }
+                    }
+                } else {
+                    // 单个定位
+                    const pos = calculateSinglePosition(imgW, imgH, wmW, wmH);
+                    ctx.translate(pos.x + wmW / 2, pos.y + wmH / 2);
+                    ctx.rotate(angle);
+                    ctx.drawImage(logo, -wmW / 2, -wmH / 2, wmW, wmH);
+
+                    State.wmBounds = {
+                        x: pos.x, y: pos.y, w: wmW, h: wmH
+                    };
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function calculateSinglePosition(imgW, imgH, wmW, wmH) {
+            const ox = parseFloat($('wm-offset-x').value);
+            const oy = parseFloat($('wm-offset-y').value);
+            let x = 0, y = 0;
+
+            switch (State.anchor) {
+                case 'TL': x = ox; y = oy; break;
+                case 'TC': x = (imgW - wmW) / 2 + ox; y = oy; break;
+                case 'TR': x = imgW - wmW - ox; y = oy; break;
+                case 'CL': x = ox; y = (imgH - wmH) / 2 + oy; break;
+                case 'CC': x = (imgW - wmW) / 2 + ox; y = (imgH - wmH) / 2 + oy; break;
+                case 'CR': x = imgW - wmW - ox; y = (imgH - wmH) / 2 + oy; break;
+                case 'BL': x = ox; y = imgH - wmH - oy; break;
+                case 'BC': x = (imgW - wmW) / 2 + ox; y = imgH - wmH - oy; break;
+                case 'BR': x = imgW - wmW - ox; y = imgH - wmH - oy; break;
+            }
+            return { x, y };
+        }
+
+        function renderPreview() {
+            if (State.activeIndex === -1 || State.batchFiles.length === 0) return;
+            const item = State.batchFiles[State.activeIndex];
+            const canvas = $('preview-canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = item.imgElement.width;
+            canvas.height = item.imgElement.height;
+            ctx.drawImage(item.imgElement, 0, 0);
+
+            // 绘制水印
+            drawWatermark(ctx, canvas.width, canvas.height);
+
+            // 绘制拉伸与定位边框（只有非平铺模式下可用且需要鼠标在其区域内或正在拉伸/拖动时才显示）
+            if (!$('wm-tile').checked && State.wmBounds && (State.isHovered || State.drag.isDragging || State.drag.isResizing)) {
+                const b = State.wmBounds;
+                ctx.save();
+                
+                // 1. 虚线边界框
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = Math.max(1, Math.round(canvas.width / 500));
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+                
+                // 2. 右下角拉伸手柄
+                const handleRadius = Math.max(6, Math.round(canvas.width / 100));
+                const handleX = b.x + b.w;
+                const handleY = b.y + b.h;
+                
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = Math.max(1.5, Math.round(canvas.width / 400));
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // 记录手柄位置和半径以便点击事件拾取
+                State.handlePos = { x: handleX, y: handleY, r: handleRadius };
+            } else {
+                State.handlePos = null;
+            }
+
+            saveConfigToCache(); // 自动保存配置
+        }
+
+        function handleDragStart(e) {
+            if (!State.wmBounds || $('wm-tile').checked) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = (e.clientX - rect.left) / rect.width * canvas.width;
+            const clickY = (e.clientY - rect.top) / rect.height * canvas.height;
+            
+            // 1. 优先拾取右下角拉伸手柄
+            if (State.handlePos) {
+                const dist = Math.hypot(clickX - State.handlePos.x, clickY - State.handlePos.y);
+                if (dist <= State.handlePos.r + 15) {
+                    State.drag.isResizing = true;
+                    State.drag.startX = clickX;
+                    State.drag.startY = clickY;
+                    State.drag.startFontSize = parseFloat($('wm-font-size').value);
+                    State.drag.startLogoScale = parseFloat($('wm-logo-scale').value);
+                    State.drag.startWidth = State.wmBounds.w;
+                    State.drag.startHeight = State.wmBounds.h;
+                    State.drag.boundsOriginX = State.wmBounds.x;
+                    State.drag.boundsOriginY = State.wmBounds.y;
+                    return;
+                }
+            }
+
+            // 2. 拾取水印主体进行拖动
+            const b = State.wmBounds;
+            const padding = 15;
+            if (clickX >= b.x - padding && clickX <= b.x + b.w + padding &&
+                clickY >= b.y - padding && clickY <= b.y + b.h + padding) {
+                State.drag.isDragging = true;
+                State.drag.startX = clickX;
+                State.drag.startY = clickY;
+                State.drag.startOffsetX = parseFloat($('wm-offset-x').value);
+                State.drag.startOffsetY = parseFloat($('wm-offset-y').value);
+            }
+        }
+
+        function handleDragMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const currX = (e.clientX - rect.left) / rect.width * canvas.width;
+            const currY = (e.clientY - rect.top) / rect.height * canvas.height;
+
+            if (State.drag.isResizing) {
+                // ── 缩放手势 ──
+                const origX = State.drag.boundsOriginX;
+                const origY = State.drag.boundsOriginY;
+                const initialDist = Math.hypot(State.drag.startWidth, State.drag.startHeight);
+                const currentDist = Math.hypot(currX - origX, currY - origY);
+                const ratio = currentDist / initialDist;
+
+                if (State.watermarkType === 'text') {
+                    const newSize = Math.max(10, Math.min(150, Math.round(State.drag.startFontSize * ratio)));
+                    $('wm-font-size').value = newSize;
+                } else {
+                    const newScale = Math.max(5, Math.min(100, Math.round(State.drag.startLogoScale * ratio)));
+                    $('wm-logo-scale').value = newScale;
+                }
+                updateValChips();
+                renderPreview();
+                return;
+            }
+
+            if (State.drag.isDragging) {
+                // ── 位移拖拽 ──
+                const dx = currX - State.drag.startX;
+                const dy = currY - State.drag.startY;
+
+                let finalX = State.drag.startOffsetX;
+                let finalY = State.drag.startOffsetY;
+
+                if (State.anchor.includes('L')) {
+                    finalX = Math.max(0, State.drag.startOffsetX + dx);
+                } else if (State.anchor.includes('R')) {
+                    finalX = Math.max(0, State.drag.startOffsetX - dx);
+                } else {
+                    finalX = State.drag.startOffsetX + dx;
+                }
+
+                if (State.anchor.includes('T')) {
+                    finalY = Math.max(0, State.drag.startOffsetY + dy);
+                } else if (State.anchor.includes('B')) {
+                    finalY = Math.max(0, State.drag.startOffsetY - dy);
+                } else {
+                    finalY = State.drag.startOffsetY + dy;
+                }
+
+                $('wm-offset-x').value = Math.round(finalX);
+                $('wm-offset-y').value = Math.round(finalY);
+                updateValChips();
+                renderPreview();
+                return;
+            }
+
+            // ── 未拖拽时的 Hover 碰撞检测与光标设置 ──
+            if (!$('wm-tile').checked && State.wmBounds) {
+                let isNearHandle = false;
+                let isInsideBounds = false;
+
+                if (State.handlePos) {
+                    const dist = Math.hypot(currX - State.handlePos.x, currY - State.handlePos.y);
+                    if (dist <= State.handlePos.r + 15) {
+                        isNearHandle = true;
+                    }
+                }
+
+                const b = State.wmBounds;
+                const padding = 10;
+                if (currX >= b.x - padding && currX <= b.x + b.w + padding &&
+                    currY >= b.y - padding && currY <= b.y + b.h + padding) {
+                    isInsideBounds = true;
+                }
+
+                const oldHovered = State.isHovered;
+                State.isHovered = isNearHandle || isInsideBounds;
+
+                if (isNearHandle) {
+                    canvas.style.cursor = 'se-resize';
+                } else if (isInsideBounds) {
+                    canvas.style.cursor = 'move';
+                } else {
+                    canvas.style.cursor = 'grab';
+                }
+
+                if (oldHovered !== State.isHovered) {
+                    renderPreview();
+                }
+            }
+        }
+
+        // === 交互：通过 Canvas 手势直接拖拽与缩放水印 ===
+        const canvas = $('preview-canvas');
+        canvas.addEventListener('mousedown', e => handleDragStart(e));
+        canvas.addEventListener('mousemove', e => handleDragMove(e));
+        
+        const endDrag = () => {
+            State.drag.isDragging = false;
+            State.drag.isResizing = false;
+        };
+        window.addEventListener('mouseup', endDrag);
+        canvas.addEventListener('mouseleave', () => {
+            State.isHovered = false;
+            canvas.style.cursor = 'grab';
+            renderPreview();
+        });
+
+        canvas.addEventListener('touchstart', e => handleDragStart(e.touches[0]), { passive: true });
+        canvas.addEventListener('touchmove', e => handleDragMove(e.touches[0]), { passive: true });
+        window.addEventListener('touchend', endDrag);
+
+        // === 选项卡切换 ===
+        $('tab-btn-text').onclick = () => {
+            $('tab-btn-text').classList.add('active');
+            $('tab-btn-image').classList.remove('active');
+            $('group-text-settings').style.display = '';
+            $('group-image-settings').style.display = 'none';
+            $('wm-size-container').style.display = '';
+            State.watermarkType = 'text';
+            renderPreview();
+        };
+
+        $('tab-btn-image').onclick = () => {
+            $('tab-btn-image').classList.add('active');
+            $('tab-btn-text').classList.remove('active');
+            $('group-image-settings').style.display = '';
+            $('group-text-settings').style.display = 'none';
+            $('wm-size-container').style.display = 'none';
+            State.watermarkType = 'image';
+            
+            // 若还未上传过图片水印且无默认，自动提示上传
+            if (!State.logoImage) {
+                $('logo-picker').click();
+            } else {
+                renderPreview();
+            }
+        };
+
+        // 图片 LOGO 选择
+        $('logo-picker-btn').onclick = () => $('logo-picker').click();
+        $('logo-picker').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            loadLogoFile(file, true);
+        };
+
+        function loadLogoFile(file, saveToDb = false) {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                State.logoImage = img;
+                State.logoBlob = file;
+                $('logo-status').innerText = `已载入: ${file.name.slice(0, 15)}...`;
+                if (saveToDb && $('cache-enabled').checked) {
+                    LogoDB.save(file);
+                }
+                renderPreview();
+            };
+            img.src = url;
+        }
+
+        // 锚点按钮选择
+        document.querySelectorAll('#pos-grid .pos-cell').forEach(cell => {
+            cell.onclick = () => {
+                document.querySelectorAll('#pos-grid .pos-cell').forEach(c => c.classList.remove('active'));
+                cell.classList.add('active');
+                State.anchor = cell.dataset.pos;
+                renderPreview();
+            };
+        });
+
+        // 满铺模式切换
+        $('wm-tile').onchange = (e) => {
+            const tile = e.target.checked;
+            $('anchor-position-settings').style.display = tile ? 'none' : 'flex';
+            $('tile-position-settings').style.display = tile ? 'flex' : 'none';
+            renderPreview();
+        };
+
+        // === 同步滑块参数数值显示 ===
+        const sliders = [
+            ['wm-font-size', 'val-font-size', 'px'],
+            ['wm-opacity', 'val-opacity', '%'],
+            ['wm-angle', 'val-angle', '°'],
+            ['wm-logo-scale', 'val-logo-scale', '%'],
+            ['wm-offset-x', 'val-offset-x', 'px'],
+            ['wm-offset-y', 'val-offset-y', 'px'],
+            ['wm-tile-gap-x', 'val-tile-gap-x', 'px'],
+            ['wm-tile-gap-y', 'val-tile-gap-y', 'px']
+        ];
+        
+        function updateValChips() {
+            sliders.forEach(([sliderId, valId, unit]) => {
+                const el = $(sliderId);
+                if (el) $(valId).innerText = el.value + unit;
+            });
+        }
+
+        sliders.forEach(([id]) => {
+            const el = $(id);
+            if (el) el.addEventListener('input', () => {
+                updateValChips();
+                renderPreview();
+            });
+        });
+        
+        $('wm-text').addEventListener('input', () => renderPreview());
+        $('wm-font').addEventListener('change', () => renderPreview());
+        $('wm-color').addEventListener('input', () => renderPreview());
+        $('wm-shadow-blur').addEventListener('input', () => renderPreview());
+
+        // 新增：特效风格及荧光预设事件处理
+        $('wm-effect').addEventListener('change', (e) => {
+            const hasPreset = e.target.value === 'neon' || e.target.value === 'led';
+            $('neon-color-row').style.display = hasPreset ? '' : 'none';
+            if (hasPreset) {
+                const preset = $('wm-neon-preset').value;
+                if (preset !== 'custom') {
+                    $('wm-color').value = preset;
+                }
+            }
+            renderPreview();
+        });
+
+        $('wm-neon-preset').addEventListener('change', (e) => {
+            if (e.target.value !== 'custom') {
+                $('wm-color').value = e.target.value;
+            }
+            renderPreview();
+        });
+
+        // === 浏览器缓存控制 (LocalStorage & IndexedDB) ===
+        const CACHE_KEY = 'ZH_BATCH_WM_CONFIG';
+
+        function saveConfigToCache() {
+            if (!$('cache-enabled').checked) return;
+            const config = {
+                watermarkType: State.watermarkType,
+                text: $('wm-text').value,
+                font: $('wm-font').value,
+                color: $('wm-color').value,
+                shadowBlur: $('wm-shadow-blur').value,
+                fontSize: $('wm-font-size').value,
+                opacity: $('wm-opacity').value,
+                angle: $('wm-angle').value,
+                logoScale: $('wm-logo-scale').value,
+                anchor: State.anchor,
+                tile: $('wm-tile').checked,
+                offsetX: $('wm-offset-x').value,
+                offsetY: $('wm-offset-y').value,
+                tileGapX: $('wm-tile-gap-x').value,
+                tileGapY: $('wm-tile-gap-y').value,
+                // 新增：特效缓存
+                effect: $('wm-effect').value,
+                neonPreset: $('wm-neon-preset').value
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(config));
+        }
+
+        async function restoreConfigFromCache() {
+            // Restore LOGO image from IndexedDB
+            const cachedLogo = await LogoDB.load();
+            if (cachedLogo) {
+                loadLogoFile(cachedLogo, false);
+            }
+
+            const str = localStorage.getItem(CACHE_KEY);
+            if (!str) return;
+            try {
+                const config = JSON.parse(str);
+                State.watermarkType = config.watermarkType || 'text';
+                $('wm-text').value = config.text || '';
+                $('wm-font').value = config.font || "Outfit, 'Noto Sans SC', sans-serif";
+                $('wm-color').value = config.color || '#ffffff';
+                $('wm-shadow-blur').value = config.shadowBlur ?? 8;
+                $('wm-font-size').value = config.fontSize ?? 24;
+                $('wm-opacity').value = config.opacity ?? 80;
+                $('wm-angle').value = config.angle ?? 0;
+                $('wm-logo-scale').value = config.logoScale ?? 20;
+                State.anchor = config.anchor || 'BR';
+                $('wm-tile').checked = config.tile || false;
+                $('wm-offset-x').value = config.offsetX ?? 30;
+                $('wm-offset-y').value = config.offsetY ?? 30;
+                $('wm-tile-gap-x').value = config.tileGapX ?? 240;
+                $('wm-tile-gap-y').value = config.tileGapY ?? 180;
+
+                // 新增：恢复特效配置
+                $('wm-effect').value = config.effect || 'none';
+                $('wm-neon-preset').value = config.neonPreset || '#10b981';
+                const hasPreset = $('wm-effect').value === 'neon' || $('wm-effect').value === 'led';
+                $('neon-color-row').style.display = hasPreset ? '' : 'none';
+
+                // 同步 tabs UI 状态
+                if (State.watermarkType === 'image') {
+                    $('tab-btn-image').classList.add('active');
+                    $('tab-btn-text').classList.remove('active');
+                    $('group-image-settings').style.display = '';
+                    $('group-text-settings').style.display = 'none';
+                    $('wm-size-container').style.display = 'none';
+                }
+                
+                // 同步九宫格 UI
+                document.querySelectorAll('#pos-grid .pos-cell').forEach(c => {
+                    c.classList.toggle('active', c.dataset.pos === State.anchor);
+                });
+
+                // 同步网格开关显示
+                $('anchor-position-settings').style.display = config.tile ? 'none' : 'flex';
+                $('tile-position-settings').style.display = config.tile ? 'flex' : 'none';
+
+                updateValChips();
+            } catch(e) {}
+        }
+
+        $('cache-enabled').onchange = (e) => {
+            if (!e.target.checked) {
+                localStorage.removeItem(CACHE_KEY);
+                LogoDB.clear();
+            } else {
+                saveConfigToCache();
+                if (State.logoBlob) LogoDB.save(State.logoBlob);
+            }
+        };
+
+        // === 批量处理与打包下载逻辑 ===
+        async function processSingleImageToBlob(item) {
+            const canvas = document.createElement('canvas');
+            canvas.width = item.imgElement.width;
+            canvas.height = item.imgElement.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(item.imgElement, 0, 0);
+
+            // 绘制水印
+            drawWatermark(ctx, canvas.width, canvas.height);
+
+            return new Promise(res => canvas.toBlob(res, 'image/png'));
+        }
+
+        // 方案 1: ZIP 压缩打包批量下载
+        $('btn-export-zip').onclick = async () => {
+            if (State.batchFiles.length === 0) return alert("请先上传照片！");
+            
+            // Check if JSZip is loaded successfully
+            if (typeof JSZip === 'undefined') {
+                alert("⚠️ 批量压缩组件(JSZip)加载失败。已自动切换为逐张下载！");
+                triggerSequentialDownload();
+                return;
+            }
+
+            showToast("正在批量加签并打包...");
+            
+            try {
+                const zip = new JSZip();
+                for (let i = 0; i < State.batchFiles.length; i++) {
+                    const item = State.batchFiles[i];
+                    updateToastMsg(`处理中: ${i+1}/${State.batchFiles.length}`);
+                    const blob = await processSingleImageToBlob(item);
+                    
+                    // 去除后缀加上 watermark 标记
+                    const baseName = item.name.substring(0, item.name.lastIndexOf('.')) || item.name;
+                    zip.file(`${baseName}_watermarked.png`, blob);
+                }
+
+                updateToastMsg("正在压缩为 ZIP...");
+                const zipContent = await zip.generateAsync({ type: "blob" });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(zipContent);
+                link.download = `大树水印加签_${new Date().toISOString().slice(0, 10)}.zip`;
+                link.click();
+            } catch(e) {
+                alert("压缩失败: " + e.message);
+            } finally {
+                hideToast();
+            }
+        };
+
+        // 方案 2: 逐张并行顺序下载
+        $('btn-export-seq').onclick = () => {
+            if (State.batchFiles.length === 0) return alert("请先上传照片！");
+            triggerSequentialDownload();
+        };
+
+        async function triggerSequentialDownload() {
+            showToast("正在批量处理...");
+            try {
+                for (let i = 0; i < State.batchFiles.length; i++) {
+                    const item = State.batchFiles[i];
+                    updateToastMsg(`正在下载: ${i+1}/${State.batchFiles.length}`);
+                    const blob = await processSingleImageToBlob(item);
+                    
+                    const baseName = item.name.substring(0, item.name.lastIndexOf('.')) || item.name;
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${baseName}_watermarked.png`;
+                    link.click();
+
+                    // 短暂延迟避免触发浏览器弹窗拦截
+                    await new Promise(r => setTimeout(r, 100));
+                }
+            } catch(e) {
+                alert("导出失败");
+            } finally {
+                hideToast();
+            }
+        }
+
+        // === 工具链流转互通 ===
+        $('btn-send-cover').onclick = () => sendToExternalTool('./封面精修大师.html');
+        $('btn-send-collage').onclick = () => sendToExternalTool('./小红书拼图工具.html');
+
+        async function sendToExternalTool(targetUrl) {
+            if (State.activeIndex === -1 || State.batchFiles.length === 0) {
+                return alert("请先上传并选定需要流转的图片！");
+            }
+            showToast("准备跨工具传输中...");
+            try {
+                const item = State.batchFiles[State.activeIndex];
+                const blob = await processSingleImageToBlob(item);
+                
+                // 将 Blob 数据写入 ZhiRenDaShu_Bridge IndexedDB 共享数据库
+                await BridgeDB.save([{ name: item.name, blob }]);
+                
+                // 页面流转
+                window.location.href = targetUrl;
+            } catch(e) {
+                alert("传输失败: " + e.message);
+            } finally {
+                hideToast();
+            }
+        }
+
+        // === UI 反馈提示 ===
+        function showToast(msg) {
+            $('loading-msg').innerText = msg;
+            $('loading-toast').style.display = 'flex';
+        }
+        function updateToastMsg(msg) {
+            $('loading-msg').innerText = msg;
+        }
+        function hideToast() {
+            $('loading-toast').style.display = 'none';
+        }
+
+        // DOM 初始化恢复
+        window.addEventListener('DOMContentLoaded', () => {
+            updateValChips();
+            restoreConfigFromCache();
+        });
+    </script>
+</body>
+</html>

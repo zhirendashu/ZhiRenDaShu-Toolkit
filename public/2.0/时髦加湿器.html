@@ -1,0 +1,1002 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>时髦排版生成器 | 交互媒体工具套件</title>
+    <script>const __AUTH_SIGNATURE = "179689535&0814";</script>
+    <script src="https://cdn.jsdelivr.net/npm/konva@9.3.1/konva.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;600;800&family=Long+Cang&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    <style>
+        .bg-blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;filter:blur(90px);opacity:0.3;pointer-events:none}
+        .blob{position:absolute;border-radius:50%;animation:bmv 25s infinite alternate}
+        .blob-1{width:50vw;height:50vw;background:radial-gradient(circle,#38bdf8,transparent 70%);top:-15%;right:-10%}
+        .blob-2{width:40vw;height:40vw;background:radial-gradient(circle,#818cf8,transparent 70%);bottom:-10%;left:-10%;animation-delay:-11s}
+        .blob-3{width:25vw;height:25vw;background:radial-gradient(circle,#c084fc,transparent 70%);top:38%;left:32%;animation-delay:-20s;opacity:.5}
+        @keyframes bmv{from{transform:translate(0,0)scale(1)}to{transform:translate(55px,38px)scale(1.1)}}
+        
+        :root {
+            --bg-dark: #05070a; --surface-glass: rgba(22, 26, 36, 0.72);
+            --border-glass: rgba(255, 255, 255, 0.09); --accent-primary: #818cf8;
+            --text-main: #f8fafc; --text-dim: #94a3b8; --radius: 12px;
+            --font-display: 'Outfit', 'Noto Sans SC', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-display); background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+        header { padding: 12px 24px; background: rgba(5,7,10,0.65); border-bottom: 1px solid var(--border-glass); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 10; }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: var(--text-dim); text-decoration: none; font-size: .84rem; padding: 6px 14px; border-radius: 100px; border: 1px solid var(--border-glass); background: rgba(255,255,255,.04); transition: 0.3s; }
+        h1 { font-size: 1.3rem; font-weight: 800; background: linear-gradient(90deg, #c084fc, #38bdf8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .main-container { flex: 1; display: flex; gap: 24px; padding: 16px 24px; max-width: 1800px; margin: 0 auto; width: 100%; min-height: 0; }
+
+        .preview-area { flex: 1; background-color: #080a0f !important;
+            background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important; border-radius: var(--radius); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: all 0.3s; box-shadow: inset 0 20px 140px rgba(0,0,0,0.7); }
+        .preview-area.drag-active { background: rgba(129, 140, 248, 0.05); }
+        #inner-drop-zone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; width:440px; height:280px; max-width:88vw; border-radius:24px; border: 2px dashed rgba(99, 102, 241, 0.28) !important; background: rgba(99, 102, 241, 0.03) !important; transition:0.3s; z-index:5; /* 未载入图片时可交互，JS载入后隐藏 */ }
+        .preview-area:hover #inner-drop-zone { border-color:var(--accent-primary); background:rgba(129,140,248,.1); }
+        .dz-icon { font-size:2.8rem; line-height:1; }
+        .dz-title { font-size:1.05rem; font-weight:700; color:#fff; }
+        .dz-sub { font-size:.84rem; color:var(--text-dim); }
+        .dz-chip { font-size:.72rem; color:#94a3b8; padding:5px 14px; border-radius:100px; border:1px solid var(--border-glass); background:rgba(255,255,255,.03); }
+
+        .sidebar { width: 440px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 8px; position:relative; z-index:10; }
+        .panel-card { background: var(--surface-glass); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(12px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+        .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; display:flex; justify-content: space-between; align-items:center; }
+
+        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .btn-ghost.active { background: rgba(129,140,248,0.15); border-color: var(--accent-primary); color: var(--accent-primary); }
+        .btn-primary { background: linear-gradient(135deg, #818cf8, #c084fc); color: white; padding: 16px; font-size: 1.05rem; }
+        
+        .color-palette { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .color-dot { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .color-dot.active { border-color: #fff; transform: scale(1.15); }
+        
+        .color-picker-wrapper { position: relative; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); overflow: hidden; }
+        .color-picker-bg { position: absolute; inset: 0; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); pointer-events: none; }
+        .color-picker-input { position: absolute; left: -100px; opacity: 0; width: 1px; height: 1px; }
+
+        .slider-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.78rem; color: var(--text-dim); }
+        .slider-row .val-label { font-weight: 800; color: #fff; width: 34px; text-align: right; }
+        input[type=range] { flex: 1; accent-color: var(--accent-primary); }
+        .flex-box { display: flex; gap: 8px; align-items: center; }
+
+        .shape-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 4px 0; }
+        .shape-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 0; display:flex; justify-content:center; align-items:center; cursor: pointer; transition: 0.2s; height: 36px;}
+        .shape-item svg { width: 22px; height: 22px; fill: var(--text-main); transition: 0.2s; }
+        .shape-item:hover svg { fill: var(--accent-primary); transform: scale(1.1); }
+        .shape-item.active { border-color: var(--accent-primary); background: rgba(129,140,248,0.15); }
+        .shape-item.active svg { fill: var(--accent-primary); }
+
+        .form-control { background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); color: var(--text-main); border-radius: 6px; padding: 10px; outline: none; width: 100%; transition: 0.2s; }
+        .form-control:focus { border-color: var(--accent-primary); }
+        option { background: var(--bg-dark); color: var(--text-main); }
+        optgroup { background: rgba(129, 140, 248, 0.1); color: var(--accent-primary); font-weight: bold; }
+
+        #modern-toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px); background: rgba(22, 26, 36, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; padding: 12px 24px; border-radius: 100px; font-size: 0.9rem; font-weight: 600; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        #modern-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+    
+
+
+
+/* ==================== Unified Canvas & Workspace Design System ==================== */
+/* 1. Workspace Backdrop: Slate navy (#080a0f) + Center Radial Glow + Inner Shadow */
+.preview-area, #main-preview-box, .canvas-container-wrap, .preview-pane, .canvas-area, #compare-container {
+    background-color: #080a0f !important;
+    background-image: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 75%) !important;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 2. Artboard / Canvas Card: Elegant 24px Drop Shadow + Subtle 1px White Border */
+#main-canvas, #canvas, .canvas-box, .canvas-container, #ratio-frame, #canvas-container, #display-canvas, .stage {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 3. Transparent Checkerboard Pattern (Only inside the artboards of tools that support transparency) */
+#main-canvas, .canvas-box, #ratio-frame, #canvas-container {
+    background-image: repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0% 25%, transparent 0% 50%) !important;
+    background-size: 20px 20px !important;
+    background-color: #11131a !important;
+}
+
+/* 4. Unified Drag-and-Drop Zones: Dotted Indigo Border + Translucent Indigo Background + Micro Glow on Hover */
+#inner-drop-zone, #drop-zone, #upload-zone, .upload-zone {
+    border: 2px dashed rgba(99, 102, 241, 0.28) !important;
+    background: rgba(99, 102, 241, 0.03) !important;
+    transition: all 0.3s ease !important;
+}
+#inner-drop-zone:hover, #inner-drop-zone.dragover,
+#drop-zone:hover, #drop-zone.dragover,
+#upload-zone:hover, #upload-zone.drag-over,
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* 视觉套件专属高亮对齐 */
+:root {
+    --accent: #6366f1 !important;
+    --accent-primary: #6366f1 !important;
+}
+.badge-pill, .header-badge {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    color: #a5b4fc !important;
+}
+input[type="range"] {
+    accent-color: #6366f1 !important;
+}
+.btn-primary, #export-btn {
+    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4) !important;
+    color: #fff !important;
+}
+.btn-primary:hover, #export-btn:hover {
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.6) !important;
+    color: #fff !important;
+}
+select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+</style>
+</head>
+<body>
+    <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+    <div id="modern-toast"></div>
+
+    <header>
+        <div class="header-left">
+            <a href="../index.html" class="back-btn">返回</a>
+            <h1>时髦排版生成工具</h1>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">支持等比例叠加融合阵列与自定义带核 SVG 解析</div>
+    </header>
+
+    <div class="main-container">
+        <div class="preview-area" id="drop-zone">
+            <div id="inner-drop-zone">
+                <div class="dz-icon">📷</div>
+                <div class="dz-title">拖入照片 或 点此上传</div>
+                <div class="dz-sub">装载图像，开启视觉排版</div>
+                <div class="dz-chip">PNG · JPG · WebP</div>
+            </div>
+            <div id="canvas-container" style="position: absolute; display: flex; align-items: center; justify-content: center; box-shadow: 0 30px 90px rgba(0,0,0,0.8);"></div>
+            <input type="file" id="file-input" style="display:none;" accept="image/*">
+        </div>
+
+        <div class="sidebar">
+            <div class="panel-card">
+                <div class="panel-title">1. 遮蔽蒙版设定</div>
+                <div class="slider-row">
+                    <span>覆盖高度</span>
+                    <input type="range" id="layout-coverage" min="0" max="100" value="60">
+                    <span class="val-label" id="val-layout-cov">60%</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 2px; margin-top: 6px;">蒙版底色调配</div>
+                <div class="color-palette" id="color-picker-bg">
+                    <label class="color-picker-wrapper" title="自定义任意底色" id="custom-picker-bg-label">
+                        <div class="color-picker-bg"></div>
+                        <input type="color" id="native-bg-color" class="color-picker-input" value="#431407">
+                    </label>
+                </div>
+
+                <div class="panel-title" style="margin-top:8px;">2. 印花原色配置</div>
+                <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px;">图形出脱蒙版后还原的高亮色彩。</div>
+                <div class="color-palette" id="color-picker-fg">
+                    <label class="color-picker-wrapper" title="自定义任意原色" id="custom-picker-fg-label">
+                        <div class="color-picker-bg"></div>
+                        <input type="color" id="native-fg-color" class="color-picker-input" value="#8b5cf6">
+                    </label>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title">3. 图形叠层生成器</div>
+                <div style="font-size: 0.72rem; color: var(--text-dim);">支持提取内置标位或上传自定 SVG 图档进行组网</div>
+                
+                <div class="shape-grid" id="vector-shape-picker">
+                    <div class="shape-item active" data-shape="drop"><svg viewBox="0 0 24 24"><path d="M12,2 C12,2 4,11 4,16 C4,20 7.5,23 12,23 C16.5,23 20,20 20,16 C20,11 12,2 12,2 Z"/></svg></div>
+                    <div class="shape-item" data-shape="umbrella"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12h8v5c0 1.1.9 2 2 2s2-.9 2-2v-1h2v1c0 2.21-1.79 4-4 4s-4-1.79-4-4v-5H2v-2C2 5.58 7.37 0 14 0c .79 0 1.55 .09 2.28 .25l-.94 2.82C14.34 2.37 13.2 2 12 2zM12.99 4c4.41 0 8 3.59 8 8h-2c0-3.31-2.69-6-6-6v-2zm-3.5 4L22 17.5v2.5H12v-10l-2.51-2z"/></svg></div>
+                    <div class="shape-item" data-shape="heart"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+                    <div class="shape-item" data-shape="star"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></div>
+                    <div class="shape-item" data-shape="sparkle"><svg viewBox="0 0 24 24"><path d="M12,0 L14,9 L23,11 L14,13 L12,22 L10,13 L1,11 L10,9 Z"/></svg></div>
+                    <div class="shape-item" data-shape="music"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+                    <div class="shape-item" id="btn-upload-svg" title="自行上传SVG图形元件进行裁切" style="border-style: dashed;">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </div>
+                </div>
+                <input type="file" id="svg-file-input" accept=".svg" style="display:none;">
+
+                <div class="flex-box" style="margin-top:6px;">
+                    <span style="font-size:0.75rem; color:var(--text-dim); min-width:30px;">排布</span>
+                    <button class="btn btn-ghost pos-btn active" data-pos="center" style="padding:8px 5px;">居中</button>
+                    <button class="btn btn-ghost pos-btn" data-pos="all" style="padding:8px 5px;">随机分布</button>
+                    <button class="btn btn-ghost pos-btn" data-pos="grid" style="padding:8px 5px; border-color:#c084fc; color:#d8b4fe;">方格矩阵</button>
+                </div>
+
+                <!-- 密度：强制 step为2，确保生成总是偶数个 -->
+                <div class="slider-row" style="margin-top:8px;"><span>生成数量(双数)</span><input type="range" id="gen-count" class="sys-slider" min="2" max="60" step="2" value="16"><span class="val-label" id="val-gen-count">16</span></div>
+                
+                <div class="slider-row" style="margin-top:2px;"><span>大小随机波动</span><input type="range" id="gen-variance" class="sys-slider" min="0" max="100" value="0"><span class="val-label" id="val-gen-variance" style="color:#fecdd3;">0%</span></div>
+                <div style="font-size: 0.65rem; color: #fecdd3; text-align: right; margin-top: -6px; margin-bottom: 2px; padding-right:48px;">↑ 调至 0% 则图形全部等比例绝对一样大</div>
+
+                <div class="slider-row"><span>分布散开范围</span><input type="range" id="gen-scatter" class="sys-slider" min="10" max="150" value="100"><span class="val-label" id="val-gen-scatter">100%</span></div>
+                <div class="slider-row"><span>基础图形尺寸</span><input type="range" id="gen-size" class="sys-slider" min="10" max="300" value="100"><span class="val-label" id="val-gen-size">100</span></div>
+
+                <div class="flex-box" style="margin-top:8px;">
+                    <button class="btn btn-ghost" id="btn-fire-pattern" style="flex:2; padding: 12px; font-size: 0.95rem; background: rgba(129,140,248,0.15); color: #818cf8; border-color: #818cf8; font-weight:700;">生成并替换旧版</button>
+                    <button class="btn btn-ghost" id="btn-append-pattern" style="flex:1; padding: 12px; color: #d8b4fe; border-color: rgba(216,180,254,0.3);" title="保留画布中已有的老元素，并在其上方重新叠入一层新元素">+ 追加叠层</button>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title">4. 自定义文本标签</div>
+                <div class="flex-box" style="margin-top:2px;">
+                    <select id="text-font-selector" class="form-control" style="flex:2;">
+                        <option value="'Noto Sans SC', sans-serif">现代黑体</option>
+                        <option value="'Long Cang', cursive">龙藏连笔</option>
+                        <option value="'Zhi Mang Xing', cursive">志莽行书</option>
+                        <option value="'Ma Shan Zheng', cursive">马善政楷书</option>
+                        <option value="'Outfit', sans-serif">Outfit (英)</option>
+                    </select>
+                    <button class="btn btn-ghost" id="btn-scan-fonts" style="flex:1;" title="调用系统权限读取本机安装字体">扫描字库</button>
+                </div>
+                <div class="flex-box" style="margin-top:2px;">
+                    <input type="text" id="custom-text-input" placeholder="输入追加文本..." class="form-control" style="flex:2">
+                    <button class="btn btn-ghost" id="btn-add-custom-text" style="flex:1; color:#818cf8;">加入层级</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="btn-export">导出视觉图像</button>
+        </div>
+    </div>
+
+    <script>
+        async function triggerMobileSave(blobOrUrl, defaultFileName) {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            let blob = blobOrUrl;
+            if (typeof blobOrUrl === 'string') {
+                if (blobOrUrl.startsWith('data:')) {
+                    const res = await fetch(blobOrUrl);
+                    blob = await res.blob();
+                } else {
+                    try {
+                        const res = await fetch(blobOrUrl);
+                        blob = await res.blob();
+                    } catch (e) {}
+                }
+            }
+            const objectUrl = blob instanceof Blob ? URL.createObjectURL(blob) : blobOrUrl;
+            const finalUrl = typeof blobOrUrl === 'string' && !blobOrUrl.startsWith('data:') ? blobOrUrl : objectUrl;
+
+            if (isMobile && navigator.canShare && navigator.share && blob instanceof Blob) {
+                try {
+                    const file = new File([blob], defaultFileName, { type: blob.type || 'image/png' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: '保存图片',
+                            text: '选择“存储图像”保存到相册'
+                        });
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Share API failed, showing manual save dialog...', e);
+                    if (e.name === 'AbortError') return;
+                }
+            }
+
+            if (isMobile) {
+                const existing = document.getElementById('mobile-save-overlay');
+                if (existing) existing.remove();
+
+                const overlay = document.createElement('div');
+                overlay.id = 'mobile-save-overlay';
+                overlay.className = 'mobile-save-overlay';
+                
+                const style = document.createElement('style');
+                style.textContent = `
+                    .mobile-save-overlay {
+                        position: fixed; inset: 0; z-index: 99999;
+                        background: rgba(13, 15, 20, 0.9); backdrop-filter: blur(15px);
+                        display: flex; flex-direction: column; align-items: center; justify-content: center;
+                        padding: 20px; animation: fadeInSave 0.3s ease;
+                    }
+                    .mobile-save-card {
+                        background: rgba(30, 35, 51, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 20px; padding: 20px; max-width: 90%; max-height: 85vh;
+                        display: flex; flex-direction: column; align-items: center; gap: 15px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: slideUpSave 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    }
+                    .mobile-save-img {
+                        max-width: 100%; max-height: 50vh; border-radius: 12px;
+                        border: 1px solid rgba(255, 255, 255, 0.1); object-fit: contain;
+                        -webkit-touch-callout: default; pointer-events: auto;
+                    }
+                    .mobile-save-title {
+                        font-size: 1.1rem; font-weight: 600; color: #fff; text-align: center;
+                        background: linear-gradient(135deg, #5b8dee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                    }
+                    .mobile-save-tip {
+                        font-size: 0.85rem; color: #94a3b8; text-align: center; line-height: 1.4; padding: 0 10px;
+                    }
+                    .mobile-save-btn {
+                        background: linear-gradient(135deg, #5b8dee, #818cf8); border: none; color: white;
+                        padding: 10px 24px; border-radius: 100px; font-size: 0.9rem; font-weight: 600;
+                        cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(91, 141, 238, 0.3);
+                    }
+                    .mobile-save-btn:active { transform: scale(0.95); }
+                    @keyframes fadeInSave { from { opacity: 0; } to { opacity: 1; } }
+                    @keyframes slideUpSave { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                `;
+                document.head.appendChild(style);
+
+                overlay.innerHTML = `
+                    <div class="mobile-save-card">
+                        <div class="mobile-save-title">图片保存指南</div>
+                        <img class="mobile-save-img" src="${finalUrl}" alt="Generated Image" />
+                        <div class="mobile-save-tip">💡 提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
+                        <button class="mobile-save-btn">我知道了</button>
+                    </div>
+                `;
+
+                overlay.querySelector('.mobile-save-btn').onclick = () => {
+                    overlay.remove();
+                    if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+                };
+                
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        overlay.remove();
+                        if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+                    }
+                };
+
+                document.body.appendChild(overlay);
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = finalUrl;
+            a.download = defaultFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            if (blob instanceof Blob && objectUrl.startsWith('blob:')) {
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+            }
+        }
+
+        const COLORS_BG = ["#000000", "#111827", "#1e3a8a", "#0f766e", "#be123c", "#431407", "#ffffff", "#fecdd3"];
+        const COLORS_FG = ["#ffffff", "#8b5cf6", "#f43f5e", "#10b981", "#fbbf24", "#38bdf8", "#000000"];
+        
+        const SVG_PATHS = {
+            drop: "M12,2 C12,2 4,11 4,16 C4,20 7.5,23 12,23 C16.5,23 20,20 20,16 C20,11 12,2 12,2 Z",
+            umbrella: "M12 2C6.48 2 2 6.48 2 12h8v5c0 1.1.9 2 2 2s2-.9 2-2v-1h2v1c0 2.21-1.79 4-4 4s-4-1.79-4-4v-5H2v-2C2 5.58 7.37 0 14 0c .79 0 1.55 .09 2.28 .25l-.94 2.82C14.34 2.37 13.2 2 12 2zM12.99 4c4.41 0 8 3.59 8 8h-2c0-3.31-2.69-6-6-6v-2zm-3.5 4L22 17.5v2.5H12v-10l-2.51-2z",
+            heart: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+            star: "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
+            sparkle: "M12,0 L14,9 L23,11 L14,13 L12,22 L10,13 L1,11 L10,9 Z",
+            music: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
+        };
+
+        function makeHexColorAlpha(hex, opacity) {
+            let res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return res ? `rgba(${parseInt(res[1], 16)}, ${parseInt(res[2], 16)}, ${parseInt(res[3], 16)}, ${opacity})` : hex;
+        }
+
+        let stage = null, photoLayer = null, maskLayer = null, uiLayer = null;
+        let config = {
+            coverage: 60, bgOpacity: 0.95, bgColor: '#431407', fgColor: '#8b5cf6', 
+            spShape: 'drop', spAnchor: 'center'
+        };
+        
+        let cachedShapesData = []; // 阵列数据持久区
+        let customUploadedSvgElement = null; 
+
+        function showToast(msg) {
+            const toast = document.getElementById("modern-toast");
+            toast.innerText = msg; toast.classList.add("show");
+            if(window.tt) clearTimeout(window.tt);
+            window.tt = setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+
+        function syncSliders() {
+            document.getElementById('val-gen-count').innerText = document.getElementById('gen-count').value;
+            const variance = document.getElementById('gen-variance').value;
+            const varianceSpan = document.getElementById('val-gen-variance');
+            varianceSpan.innerText = variance + '%';
+            if (parseInt(variance) === 0) varianceSpan.style.color = '#fecdd3'; else varianceSpan.style.color = '#fff';
+
+            document.getElementById('val-gen-scatter').innerText = document.getElementById('gen-scatter').value + '%';
+            document.getElementById('val-gen-size').innerText = document.getElementById('gen-size').value;
+        }
+
+        function createBaseCutoutNode(sh, fakeColor) {
+            let node;
+            if(sh.isText) {
+                node = new Konva.Text({
+                    text: sh.str, fontSize: sh.sz, fontFamily: sh.fontFam, fontStyle: 'bold',
+                    x: sh.x, y: sh.y, fill: fakeColor || 'black'
+                });
+                node.offsetX(node.width() / 2); node.offsetY(node.height() / 2);
+            } else if (sh.type === 'custom_img' && customUploadedSvgElement) {
+                const ratio = customUploadedSvgElement.width / customUploadedSvgElement.height;
+                const width = ratio >= 1 ? sh.sz : sh.sz * ratio;
+                const height = ratio < 1 ? sh.sz : sh.sz / ratio;
+                node = new Konva.Image({
+                    image: customUploadedSvgElement, x: sh.x, y: sh.y, width: width, height: height,
+                    offsetX: width / 2, offsetY: height / 2
+                });
+            } else {
+                node = new Konva.Path({
+                    data: SVG_PATHS[sh.type] || SVG_PATHS['drop'],
+                    x: sh.x, y: sh.y, fill: fakeColor || 'black', offsetX: 12, offsetY: 12,
+                    scaleX: sh.sz / 24, scaleY: sh.sz / 24
+                });
+            }
+            return node;
+        }
+
+        function rebuildMaskLayer() {
+            if(!maskLayer) return;
+            maskLayer.destroyChildren();
+
+            const W = stage.width(), H = stage.height();
+            const maskTop = H * (1 - config.coverage / 100);
+
+            const bgRect = new Konva.Rect({
+                x: 0, y: maskTop, width: W, height: H - maskTop,
+                fill: makeHexColorAlpha(config.bgColor, config.bgOpacity),
+                listening: false 
+            });
+            maskLayer.add(bgRect);
+
+            cachedShapesData.forEach(sh => {
+                const isUnderWall = sh.y >= maskTop;
+                if(isUnderWall) {
+                    const node = createBaseCutoutNode(sh, 'black');
+                    node.globalCompositeOperation('destination-out');
+                    node.listening(false);
+                    maskLayer.add(node);
+                }
+            });
+            maskLayer.batchDraw();
+        }
+
+        function rebuildUILayer() {
+            if(!uiLayer) return;
+            uiLayer.destroyChildren();
+
+            const maskTop = stage.height() * (1 - config.coverage / 100);
+
+            cachedShapesData.forEach(sh => {
+                const isUnderWall = sh.y >= maskTop;
+                const displayColor = isUnderWall ? 'rgba(0,0,0,0.01)' : config.fgColor;
+                const node = createBaseCutoutNode(sh, displayColor);
+                
+                node.draggable(true);
+                if (isUnderWall) {
+                    node.opacity(0.01);
+                } else {
+                    node.opacity(1);
+                    if (sh.type === 'custom_img') {
+                         node.shadowColor('rgba(0,0,0,0.6)'); node.shadowBlur(15);
+                    } else {
+                         node.shadowColor(config.fgColor); node.shadowBlur(25);
+                    }
+                }
+
+                node.on('dragmove', () => {
+                    sh.x = node.x(); sh.y = node.y();
+                    const newMaskTop = stage.height() * (1 - config.coverage / 100);
+                    const nowUnderWall = sh.y >= newMaskTop;
+                    
+                    if(nowUnderWall) {
+                        node.opacity(0.01); node.shadowBlur(0);
+                    } else {
+                        node.opacity(1); 
+                        node.shadowBlur(sh.type === 'custom_img' ? 15 : 25);
+                    }
+                    rebuildMaskLayer();
+                });
+
+                node.on('dblclick dbltap', () => {
+                    cachedShapesData = cachedShapesData.filter(item => item.id !== sh.id);
+                    node.destroy();
+                    rebuildMaskLayer(); 
+                    uiLayer.batchDraw();
+                });
+
+                node.on('mouseenter', () => document.body.style.cursor = 'grab');
+                node.on('mouseleave', () => document.body.style.cursor = 'default');
+                node.on('mousedown', () => document.body.style.cursor = 'grabbing');
+                node.on('mouseup', () => { document.body.style.cursor = 'grab'; rebuildMaskLayer(); });
+
+                uiLayer.add(node);
+            });
+            uiLayer.batchDraw();
+        }
+
+        function recompileShapes() {
+            if(!stage) return showToast("未检测到源文件，请先载入图片。");
+
+            const W = stage.width(), H = stage.height();
+            const count = parseInt(document.getElementById('gen-count').value);
+            const variance = parseInt(document.getElementById('gen-variance').value) / 100;
+            const scatter = parseInt(document.getElementById('gen-scatter').value) / 100;
+            const basicSize = parseInt(document.getElementById('gen-size').value) / 100;
+            const defS = (W*0.06) * basicSize;
+
+            if (config.spAnchor === 'grid') {
+                const effectiveW = W * 0.8 * scatter;
+                const effectiveH = H * 0.8 * scatter;
+                const startX = (W - effectiveW) / 2;
+                const startY = (H - effectiveH) / 2;
+                
+                const ratio = effectiveW / effectiveH;
+                let cols = Math.ceil(Math.sqrt(count * ratio));
+                let rows = Math.ceil(count / cols);
+                
+                const stepX = effectiveW / Math.max(1, cols - 1);
+                const stepY = effectiveH / Math.max(1, rows - 1);
+                
+                let drawn = 0;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (drawn >= count) break;
+                        const sz = defS * (1 + (Math.random() * variance * 2 - variance));
+                        cachedShapesData.push({ 
+                            id: Math.random().toString(), type: config.spShape, 
+                            x: startX + c * stepX, y: startY + r * stepY, sz: Math.max(10, Math.min(sz, 600)), isText:false 
+                        });
+                        drawn++;
+                    }
+                }
+            } else {
+                let bx1 = 0, bx2 = W, by1 = 0, by2 = H;
+                if(config.spAnchor !== 'all' && config.spAnchor !== 'center') {
+                    bx1 = config.spAnchor.includes('l') ? W*0.1 : W/2; bx2 = config.spAnchor.includes('l') ? W/2 : W*0.9;
+                    by1 = config.spAnchor.includes('t') ? H*0.1 : H/2; by2 = config.spAnchor.includes('t') ? H/2 : H*0.9;
+                } else if(config.spAnchor === 'center') {
+                    bx1 = W*0.2; bx2 = W*0.8; by1 = H*0.2; by2 = H*0.8;
+                }
+
+                const cx = (bx1+bx2)/2; const cy = (by1+by2)/2;
+                const rw = (bx2-bx1)/2 * scatter; const rh = (by2-by1)/2 * scatter;
+
+                for(let i=0; i<count; i++) {
+                    const rx = cx + (Math.random() * rw * 2 - rw);
+                    const ry = cy + (Math.random() * rh * 2 - rh);
+                    const sz = defS * (1 + (Math.random() * variance * 2 - variance));
+                    cachedShapesData.push({ id: Math.random().toString(), type: config.spShape, x: rx, y: ry, sz: Math.max(10, Math.min(sz, 600)), isText:false });
+                }
+            }
+
+            rebuildMaskLayer();
+            rebuildUILayer();
+        }
+
+        function initApp() {
+            document.querySelectorAll('input[type="range"].sys-slider').forEach(r => r.addEventListener('input', syncSliders));
+            
+            // 修复覆盖度滑块
+            const covSlider = document.getElementById('layout-coverage');
+            covSlider.addEventListener('input', (e) => {
+                config.coverage = parseInt(e.target.value);
+                document.getElementById('val-layout-cov').innerText = config.coverage + '%';
+                rebuildMaskLayer();
+                rebuildUILayer();
+            });
+
+            const cpBg = document.getElementById('color-picker-bg');
+            const nBg = document.getElementById('native-bg-color');
+            const nBgLabel = document.getElementById('custom-picker-bg-label');
+            COLORS_BG.forEach(c => {
+                const d = document.createElement('div'); d.className = 'color-dot' + (c===config.bgColor?' active':''); d.style.background = c;
+                d.onclick = () => { 
+                    cpBg.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('active')); nBgLabel.classList.remove('active');
+                    d.classList.add('active'); config.bgColor = c; nBg.value = c; rebuildMaskLayer(); 
+                }
+                cpBg.insertBefore(d, nBgLabel);
+            });
+            nBg.onchange = (e) => {
+                config.bgColor = e.target.value;
+                cpBg.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('active'));
+                nBgLabel.classList.add('active');
+                rebuildMaskLayer();
+            };
+
+            const cpFg = document.getElementById('color-picker-fg');
+            const nFg = document.getElementById('native-fg-color');
+            const nFgLabel = document.getElementById('custom-picker-fg-label');
+            COLORS_FG.forEach(c => {
+                const d = document.createElement('div'); d.className = 'color-dot' + (c===config.fgColor?' active':''); d.style.background = c;
+                d.onclick = () => { 
+                    cpFg.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('active')); nFgLabel.classList.remove('active');
+                    d.classList.add('active'); config.fgColor = c; nFg.value = c; rebuildUILayer(); 
+                }
+                cpFg.insertBefore(d, nFgLabel);
+            });
+            nFg.onchange = (e) => {
+                config.fgColor = e.target.value;
+                cpFg.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('active'));
+                nFgLabel.classList.add('active');
+                rebuildUILayer();
+            };
+
+            const dz = document.getElementById("drop-zone");
+            const fi = document.getElementById("file-input");
+            dz.onclick = e => { if(!stage && (e.target === dz || e.target.closest('#inner-drop-zone'))) fi.click(); };
+            dz.ondblclick = e => { if(stage && e.target === dz) fi.click(); };
+            fi.onchange = e => loadBaseImage(e.target.files[0]);
+            dz.ondragover = dz.ondragenter = e => { e.preventDefault(); dz.classList.add("drag-active"); };
+            dz.ondragleave = e => { if (e.clientX === 0 || e.clientY === 0) dz.classList.remove("drag-active"); };
+            dz.ondrop = e => { e.preventDefault(); dz.classList.remove("drag-active"); loadBaseImage(e.dataTransfer.files[0]); };
+
+            // 外部定制 SVG 图案装载仪
+            document.getElementById('btn-upload-svg').onclick = () => { document.getElementById('svg-file-input').click(); };
+            document.getElementById('svg-file-input').onchange = e => {
+                const f = e.target.files[0];
+                if(!f || !f.name.toLowerCase().endsWith('.svg')) return showToast("请务必传入有效且透明的 SVG 矢量图形！");
+                
+                const r = new FileReader();
+                r.onload = ev => {
+                    const tempIg = new Image();
+                    tempIg.onload = () => {
+                        customUploadedSvgElement = tempIg;
+                        config.spShape = 'custom_img';
+                        document.querySelectorAll('.shape-item').forEach(x=>x.classList.remove('active'));
+                        document.getElementById('btn-upload-svg').classList.add('active');
+                        document.getElementById('btn-upload-svg').style.borderColor = '#8b5cf6';
+                        showToast("外部图形解析完毕，生成管线准备就绪。");
+                    };
+                    tempIg.src = ev.target.result;
+                };
+                r.readAsDataURL(f);
+            };
+
+            document.querySelectorAll('.shape-item:not(#btn-upload-svg)').forEach(b => {
+                b.onclick = () => { 
+                    document.querySelectorAll('.shape-item').forEach(x=>x.classList.remove('active')); 
+                    b.classList.add('active'); config.spShape = b.dataset.shape; 
+                    document.getElementById('btn-upload-svg').style.borderColor = '';
+                }
+            });
+            document.querySelectorAll('.pos-btn').forEach(b => {
+                b.onclick = () => { document.querySelectorAll('.pos-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); config.spAnchor = b.dataset.pos; }
+            });
+
+            // 【主生成按钮：每次生成前先清掉老数据（回归核心逻辑）】
+            document.getElementById('btn-fire-pattern').onclick = () => { 
+                cachedShapesData = []; // 重置清理
+                recompileShapes(); 
+                showToast("全新视觉混合矩阵就绪");
+            };
+            
+            // 【附加生成按钮：在原有的基础上增加（堆叠逻辑）】
+            document.getElementById('btn-append-pattern').onclick = () => { 
+                recompileShapes(); 
+                showToast("✅ 已成功向图层追加叠加了新元素集！");
+            };
+
+            // 系统字体读取引擎
+            document.getElementById('btn-scan-fonts').onclick = async () => {
+                try {
+                    if ('queryLocalFonts' in window) {
+                        const fonts = await window.queryLocalFonts();
+                        const familySet = new Set();
+                        fonts.forEach(f => familySet.add(f.family));
+                        const sel = document.getElementById('text-font-selector');
+                        const g = document.createElement('optgroup');
+                        g.label = "-- 本机系统授权字库 --";
+                        Array.from(familySet).slice(0, 150).forEach(fam => {
+                            const op = document.createElement('option');
+                            op.value = `"${fam}", sans-serif`; op.innerText = fam;
+                            g.appendChild(op);
+                        });
+                        sel.appendChild(g);
+                        showToast("字库挂载成功：已捕获系统本地字体资源。");
+                    } else {
+                        throw new Error('Not supported');
+                    }
+                } catch(err) {
+                    showToast("环境鉴权拒绝限制，已退回至跨平台安全字体库。");
+                    const common = [{n:'微软雅黑',v:'"Microsoft YaHei"'},{n:'楷体',v:'"KaiTi"'},{n:'Impact (无衬线)',v:'Impact'},{n:'黑体 标准',v:'SimHei'}];
+                    const g = document.createElement('optgroup'); g.label = "-- 安全系统备选字 --";
+                    common.forEach(f => {
+                        const op = document.createElement('option');
+                        op.value = f.v; op.innerText = f.n; g.appendChild(op);
+                    });
+                    document.getElementById('text-font-selector').appendChild(g);
+                }
+            };
+
+            document.getElementById('custom-text-input').onkeydown = e => { if(e.key==='Enter') document.getElementById('btn-add-custom-text').click(); }
+            document.getElementById('btn-add-custom-text').onclick = () => {
+                if(!stage) return showToast("请优先装载承载图像。");
+                const i = document.getElementById('custom-text-input');
+                if(!i.value) return showToast("无法传入空字段。");
+                const fFam = document.getElementById('text-font-selector').value;
+                cachedShapesData.push({ id: Math.random().toString(), isText: true, str: i.value.trim(), fontFam: fFam, x: stage.width()/2, y: stage.height()/2, sz: 65 });
+                i.value = ''; rebuildMaskLayer(); rebuildUILayer();
+            };
+
+            document.getElementById('btn-export').onclick = () => {
+                if(!stage) return showToast("渲染管线中无有效媒体文件。");
+                const dataURL = stage.toDataURL({ pixelRatio: 2 });
+                triggerMobileSave(dataURL, `MediaWorkspace_${Date.now()}.png`);
+            };
+        }
+
+        function loadBaseImage(f) {
+            if(!f || !f.type.startsWith("image/")) return showToast("不支持的文件解析格式。");
+            
+            const r = new FileReader();
+            r.onload = ev => {
+                const img = new Image();
+                img.onload = () => {
+                    const dz = document.getElementById("drop-zone");
+                    const mW = dz.clientWidth * 0.95, mH = dz.clientHeight * 0.95;
+                    const ratio = img.width / img.height;
+                    let tW = mW, tH = tW / ratio;
+                    if (tH > mH) { tH = mH; tW = tH * ratio; }
+
+                    document.getElementById("inner-drop-zone").style.display = 'none';
+
+                    if(!stage) {
+                        stage = new Konva.Stage({ container: 'canvas-container', width: tW, height: tH });
+                        photoLayer = new Konva.Layer();
+                        maskLayer = new Konva.Layer();
+                        uiLayer = new Konva.Layer();
+                        stage.add(photoLayer);
+                        stage.add(maskLayer);
+                        stage.add(uiLayer);
+                    } else {
+                        stage.width(tW); stage.height(tH);
+                        photoLayer.destroyChildren();
+                    }
+
+                    const bgPhoto = new Konva.Image({ x: 0, y: 0, image: img, width: tW, height: tH, listening: false });
+                    photoLayer.add(bgPhoto);
+                    photoLayer.batchDraw();
+
+                    cachedShapesData = [];
+                    rebuildMaskLayer(); rebuildUILayer();
+                };
+                img.src = ev.target.result;
+            };
+            r.readAsDataURL(f);
+        }
+
+        document.addEventListener('click', (e) => {
+            const wrap = e.target.closest('.color-picker-wrapper');
+            if (wrap) {
+                wrap.querySelector('input[type="color"]').click();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+<!-- ZhiRenDaShu Unified Premium UX Enhancement -->
+<style>
+#modern-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(22, 26, 36, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 100000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#modern-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+      /* ── 封面比例暗房 2.0 视觉覆盖样式 ── */
+      :root {
+        --bg: #050505 !important;
+        --bg-color: #050505 !important;
+        --surface: #111111 !important;
+        --surface-glass: rgba(17, 17, 17, 0.85) !important;
+        --card: #161616 !important;
+        --border: #222222 !important;
+        --border-focus: #444444 !important;
+        --accent: #FF2442 !important; /* 品牌红 */
+        --accent-primary: #FF2442 !important;
+        --accent2: #F6D365 !important; /* 胶片黄 */
+        --text: #F4F1E8 !important;
+        --text-dim: #8A8A8A !important;
+        --sub: #8A8A8A !important;
+      }
+      body {
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
+        font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .panel-card, .ctrl-group, .settings-panel, .control-panel, .step-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      .btn-primary, #export-btn, .btn-brand, .download-btn, #download-btn {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover, #export-btn:hover, .btn-brand:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(255, 36, 66, 0.5) !important;
+      }
+      .btn-secondary, .btn-dark, .btn-outline {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+      }
+      .btn-secondary:hover, .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--border-focus) !important;
+      }
+      .preview-area, #main-preview-box, .canvas-container-wrap, .canvas-container, #compare-container {
+        position: relative !important;
+        background-color: #020202 !important;
+        background-image: radial-gradient(circle at center, rgba(255, 36, 66, 0.03) 0%, transparent 75%) !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.9) !important;
+        border: 1px solid var(--border) !important;
+      }
+      .preview-area::before, #main-preview-box::before, .canvas-container-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .preview-area::after, #main-preview-box::after, .canvas-container-wrap::after {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 2;
+      }
+      input[type="range"] {
+        accent-color: var(--accent) !important;
+      }
+      header {
+        background: rgba(5, 5, 5, 0.85) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .header-back {
+        border: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
+      .header-back:hover {
+        border-color: var(--border-focus) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }</style>
+<div id="modern-toast"></div>
+<script>
+(function() {
+    // 1. Alert Override with Modern Toast
+    window.showToast = function(msg, type="info") {
+        const toast = document.getElementById("modern-toast");
+        if (!toast) return;
+        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
+        toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
+        toast.classList.add("show");
+        if(window._toastTimer) clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    };
+    window.alert = function(msg) {
+        window.showToast(msg, 'error');
+    };
+
+    // 2. Double-Click Range Reset
+    function initRangeResets() {
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            if (slider._hasDblclickReset) return;
+            slider._hasDblclickReset = true;
+            const defVal = slider.getAttribute('value') || slider.value || '0';
+            slider.addEventListener('dblclick', () => {
+                slider.value = defVal;
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                slider.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    }
+
+    // 3. Eyedropper API integration for color inputs
+    function initEyedropper() {
+        if (!window.EyeDropper) return;
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            if (colorInput.dataset.hasEyedropper) return;
+            colorInput.dataset.hasEyedropper = "true";
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '🎨';
+            btn.title = '屏幕吸色';
+            btn.style.marginLeft = '6px';
+            btn.style.padding = '4px 6px';
+            btn.style.background = 'rgba(255,255,255,0.06)';
+            btn.style.border = '1px solid rgba(255,255,255,0.1)';
+            btn.style.borderRadius = '6px';
+            btn.style.color = '#fff';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '0.75rem';
+            btn.style.display = 'inline-flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.height = '28px';
+            btn.style.transition = '0.2s';
+            btn.style.verticalAlign = 'middle';
+            
+            btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.12)';
+            btn.onmouseout = () => btn.style.background = 'rgba(255,255,255,0.06)';
+            
+            if (colorInput.nextSibling) {
+                colorInput.parentNode.insertBefore(btn, colorInput.nextSibling);
+            } else {
+                colorInput.parentNode.appendChild(btn);
+            }
+            
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                try {
+                    const dropper = new EyeDropper();
+                    const result = await dropper.open();
+                    colorInput.value = result.sRGBHex;
+                    colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    colorInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch(err) {}
+            };
+        });
+    }
+
+    // Initialize all components
+    function initAll() {
+        initRangeResets();
+        initEyedropper();
+    }
+    
+    document.addEventListener("DOMContentLoaded", initAll);
+    if (document.readyState === "interactive" || document.readyState === "complete") {
+        initAll();
+    }
+})();
+</script>
+<!-- Unified Premium UX End -->
+</body>
+</html>
