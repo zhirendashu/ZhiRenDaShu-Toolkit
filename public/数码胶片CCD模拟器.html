@@ -1758,6 +1758,7 @@ input, select { font: inherit; }
 </div><!-- /#content-area -->
 
 <!-- Scripts -->
+<script src="LUT/lut_data.js"></script>
 
 
 <script>
@@ -2220,12 +2221,110 @@ const FILTERS = [
   },
 ];
 
+// ── 动态加载自定义 LUT / XMP 预设 ─────────────────────────────────
+if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
+  window.CUSTOM_PRESETS.forEach(p => {
+    const filterObj = {
+      id: p.id,
+      name: p.name,
+      year: p.type === 'cube' ? 'LUT' : 'XMP',
+      tag: p.type === 'cube' ? 'LUT_3D' : 'XMP_PRESET',
+      description: p.type === 'cube' ? `自定义 3D LUT: ${p.name}` : `自定义 Lightroom 预设: ${p.name}`,
+      accentColor: p.type === 'cube' ? '#ec4899' : '#06b6d4',
+      params: p.type === 'xmp' ? p.params : {
+        brightness: 0, contrast: 1.0, saturation: 1.0, warmth: 0, tint: 0,
+        shadowTint: { r:0, g:0, b:0 }, highlightTint: { r:0, g:0, b:0 },
+        baseNoise: 30, baseChromaticAberration: 2.5, baseVignette: 0.50,
+        baseBloom: 0.35, bloomThreshold: 195, baseJpegArtifacts: 0.5,
+        baseLightLeak: 0.3, baseImperfections: 0.2,
+        baseFlashFlare: 0, flashFlarePos: 'topright',
+      },
+      lut: p.type === 'cube' ? { size: p.size, data: p.data } : null
+    };
+    FILTERS.push(filterObj);
+  });
+}
+
 
 /* ── processor.js ──────────────────────────────────────────── */
 // DigiCamFX — Image Processing Engine
 // Canvas 2D pixel-level CCD physics simulation
 
 class DigiCamProcessor {
+  // ── 3D LUT 三线性插值应用函数 ────────────────────────────────
+  static apply3dLut(r, g, b, lutData, size) {
+    const scale = size - 1;
+    const x = (r / 255) * scale;
+    const y = (g / 255) * scale;
+    const z = (b / 255) * scale;
+
+    const x0 = Math.floor(x);
+    const x1 = Math.min(scale, x0 + 1);
+    const y0 = Math.floor(y);
+    const y1 = Math.min(scale, y0 + 1);
+    const z0 = Math.floor(z);
+    const z1 = Math.min(scale, z0 + 1);
+
+    const tx = x - x0;
+    const ty = y - y0;
+    const tz = z - z0;
+
+    const getLutRgb = (cx, cy, cz) => {
+      const idx = (cz * size * size + cy * size + cx) * 3;
+      return {
+        r: lutData[idx] * 255,
+        g: lutData[idx + 1] * 255,
+        b: lutData[idx + 2] * 255
+      };
+    };
+
+    const c000 = getLutRgb(x0, y0, z0);
+    const c100 = getLutRgb(x1, y0, z0);
+    const c010 = getLutRgb(x0, y1, z0);
+    const c110 = getLutRgb(x1, y1, z0);
+    const c001 = getLutRgb(x0, y0, z1);
+    const c101 = getLutRgb(x1, y0, z1);
+    const c011 = getLutRgb(x0, y1, z1);
+    const c111 = getLutRgb(x1, y1, z1);
+
+    const c00 = {
+      r: c000.r + (c100.r - c000.r) * tx,
+      g: c000.g + (c100.g - c000.g) * tx,
+      b: c000.b + (c100.b - c000.b) * tx
+    };
+    const c10 = {
+      r: c010.r + (c110.r - c010.r) * tx,
+      g: c010.g + (c110.g - c010.g) * tx,
+      b: c010.b + (c110.b - c010.b) * tx
+    };
+    const c01 = {
+      r: c001.r + (c101.r - c001.r) * tx,
+      g: c001.g + (c101.g - c001.g) * tx,
+      b: c001.b + (c101.b - c001.b) * tx
+    };
+    const c11 = {
+      r: c011.r + (c111.r - c011.r) * tx,
+      g: c011.g + (c111.g - c011.g) * tx,
+      b: c011.b + (c111.b - c011.b) * tx
+    };
+
+    const c0 = {
+      r: c00.r + (c10.r - c00.r) * ty,
+      g: c00.g + (c10.g - c00.g) * ty,
+      b: c00.b + (c10.b - c00.b) * ty
+    };
+    const c1 = {
+      r: c01.r + (c11.r - c01.r) * ty,
+      g: c01.g + (c11.g - c01.g) * ty,
+      b: c01.b + (c11.b - c01.b) * ty
+    };
+
+    return {
+      r: c0.r + (c1.r - c0.r) * tz,
+      g: c0.g + (c1.g - c0.g) * tz,
+      b: c0.b + (c1.b - c0.b) * tz
+    };
+  }
   /**
    * Main process function
    * @param {ImageData} srcImageData - Source pixels
@@ -2270,11 +2369,21 @@ class DigiCamProcessor {
 
     // ── PASS 1: Per-pixel colour grade ──────────────────────────
     const graded = new Uint8ClampedArray(workData.length);
+    const hasLut = filterParams.lut && filterParams.lut.data;
+    const lutData = hasLut ? filterParams.lut.data : null;
+    const lutSize = hasLut ? filterParams.lut.size : 0;
 
     for (let i = 0; i < workData.length; i += 4) {
       let r = workData[i];
       let g = workData[i + 1];
       let b = workData[i + 2];
+
+      if (hasLut) {
+        const lutRGB = DigiCamProcessor.apply3dLut(r, g, b, lutData, lutSize);
+        r = lutRGB.r;
+        g = lutRGB.g;
+        b = lutRGB.b;
+      }
 
       // Brightness
       r += brightness;
