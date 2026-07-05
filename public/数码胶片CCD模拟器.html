@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -1498,6 +1498,9 @@ input, select { font: inherit; }
           <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">点阵</button>
           <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">8-bit</button>
           <button class="ts-pill" data-tsmode="white" aria-pressed="false">纯白</button>
+          <button class="ts-pill" data-tsmode="red_led" aria-pressed="false">赤红 LED</button>
+          <button class="ts-pill" data-tsmode="lcd_blue" aria-pressed="false">LCD 蓝</button>
+          <button class="ts-pill" data-tsmode="gold" aria-pressed="false">香槟金</button>
         </div>
 
         <input type="date" id="date-input" class="ctrl-date-input"
@@ -2625,18 +2628,21 @@ class DigiCamProcessor {
   static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316') {
     switch (mode) {
       case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color);
+      case 'lcd_blue':   return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color);
       case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color);
       case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color);
       case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color);
-      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color);
+      case 'red_led':    return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false);
+      case 'gold':       return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, true);
+      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false);
     }
   }
 
-  static _timestampClassic(ctx, w, h, dateStr, color) {
+  static _timestampClassic(ctx, w, h, dateStr, color, isGold = false) {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(14, Math.round(30 * scale));
     const pad   = Math.max(12, Math.round(22 * scale));
-    ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
+    ctx.font = isGold ? `bold ${fSize}px "Georgia", serif` : `bold ${fSize}px "Courier New", Courier, monospace`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
     
     // Draw neon fluorescent background glow using the custom color
@@ -2656,7 +2662,7 @@ class DigiCamProcessor {
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     
-    ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
+    ctx.font = isGold ? `bold ${fSize}px "Georgia", serif` : `bold ${fSize}px "Courier New", Courier, monospace`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
     
     // Glowing neon look in selected color
@@ -4172,6 +4178,26 @@ function bindTimestampMode() {
       const mode = pill.dataset.tsmode;
       if (!mode) return;
       State.patch('tsMode', mode);
+
+      // Automatically set the appropriate color for the selected mode!
+      let defaultColor = '#f97316'; // Default classic orange
+      if (mode === 'lcd') {
+        defaultColor = '#00ff66'; // LCD Green
+      } else if (mode === 'lcd_blue') {
+        defaultColor = '#00d2ff'; // LCD Blue
+      } else if (mode === 'white') {
+        defaultColor = '#ffffff'; // Pure White
+      } else if (mode === 'dotmatrix') {
+        defaultColor = '#ff5500'; // Dot Matrix Orange-Red
+      } else if (mode === 'eightbit') {
+        defaultColor = '#ff6600'; // 8-bit Orange
+      } else if (mode === 'red_led') {
+        defaultColor = '#ff1e1e'; // Red LED
+      } else if (mode === 'gold') {
+        defaultColor = '#ffd700'; // Champagne Gold
+      }
+      State.patch('tsColor', defaultColor);
+
       document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(p => {
         p.classList.toggle('active', p.dataset.tsmode === mode);
         p.setAttribute('aria-pressed', p.dataset.tsmode === mode ? 'true' : 'false');
