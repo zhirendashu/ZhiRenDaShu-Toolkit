@@ -2214,44 +2214,69 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
       // === 预设自媒体排版模板加载 ===
       const BUILTIN_TEMPLATES = {
         'neon-stagger': (w, h) => {
-          return [
-            new fabric.IText("如何评价佛得角", {
-              left: w * 0.1,
-              top: h * 0.15,
-              fontSize: Math.round(w * 0.088),
+          const list = [];
+          
+          // "如何评价佛得角" (7 chars)
+          const text1 = "如何评价佛得角";
+          const startX1 = w * 0.08;
+          const charW1 = w * 0.088; // base width per character roughly
+          const sizes1 = [w*0.085, w*0.092, w*0.083, w*0.088, w*0.095, w*0.085, w*0.090];
+          const yOffsets1 = [0, -5, 4, -2, -8, 5, -3];
+          
+          for (let i = 0; i < text1.length; i++) {
+            list.push(new fabric.IText(text1[i], {
+              left: startX1 + i * (charW1 * 0.96),
+              top: h * 0.15 + yOffsets1[i],
+              fontSize: Math.round(sizes1[i]),
               fontFamily: 'Noto Serif SC',
               fontWeight: '900',
               fill: '#ffffff',
               shadow: new fabric.Shadow({ color: '#f59e0b', blur: 30, offsetX: 0, offsetY: 0 })
-            }),
-            new fabric.IText("世界杯之旅", {
-              left: w * 0.35,
-              top: h * 0.25,
-              fontSize: Math.round(w * 0.078),
+            }));
+          }
+          
+          // "世界杯之旅" (5 chars)
+          const text2 = "世界杯之旅";
+          const startX2 = w * 0.28;
+          const charW2 = w * 0.078;
+          const sizes2 = [w*0.075, w*0.082, w*0.076, w*0.080, w*0.085];
+          const yOffsets2 = [0, 4, -3, 6, -2];
+          
+          for (let i = 0; i < text2.length; i++) {
+            list.push(new fabric.IText(text2[i], {
+              left: startX2 + i * (charW2 * 0.96),
+              top: h * 0.26 + yOffsets2[i],
+              fontSize: Math.round(sizes2[i]),
               fontFamily: 'Noto Serif SC',
               fontWeight: '900',
               fill: '#ffffff',
               shadow: new fabric.Shadow({ color: '#f59e0b', blur: 30, offsetX: 0, offsetY: 0 })
-            }),
-            new fabric.IText("？", {
-              left: w * 0.8,
-              top: h * 0.21,
-              fontSize: Math.round(w * 0.13),
-              fontFamily: 'Noto Serif SC',
-              fontWeight: '900',
-              fill: '#ffffff',
-              shadow: new fabric.Shadow({ color: '#f59e0b', blur: 35, offsetX: 0, offsetY: 0 })
-            }),
-            new fabric.IText("西班牙 0-0 佛得角\n乌拉圭 2-2 佛得角\n佛得角 0-0 沙特阿拉伯\n阿根廷 3-2 佛得角", {
-              left: w * 0.12,
-              top: h * 0.36,
-              fontSize: Math.round(w * 0.038),
-              fontFamily: 'Noto Serif SC',
-              lineHeight: 1.4,
-              fill: '#ffffff',
-              shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 6, offsetX: 1, offsetY: 1 })
-            })
-          ];
+            }));
+          }
+          
+          // "？" (1 char)
+          list.push(new fabric.IText("？", {
+            left: startX2 + text2.length * (charW2 * 0.96) + w * 0.02,
+            top: h * 0.21,
+            fontSize: Math.round(w * 0.13),
+            fontFamily: 'Noto Serif SC',
+            fontWeight: '900',
+            fill: '#ffffff',
+            shadow: new fabric.Shadow({ color: '#f59e0b', blur: 35, offsetX: 0, offsetY: 0 })
+          }));
+
+          // Detail lines (Left Serif list)
+          list.push(new fabric.IText("西班牙 0-0 佛得角\n乌拉圭 2-2 佛得角\n佛得角 0-0 沙特阿拉伯\n阿根廷 3-2 佛得角", {
+            left: w * 0.12,
+            top: h * 0.38,
+            fontSize: Math.round(w * 0.038),
+            fontFamily: 'Noto Serif SC',
+            lineHeight: 1.4,
+            fill: '#ffffff',
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 6, offsetX: 1, offsetY: 1 })
+          }));
+
+          return list;
         },
         'wkw-scope': (w, h) => {
           const barH = h * 0.12;
@@ -2319,27 +2344,23 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
           ];
         },
         'polaroid': (w, h) => {
-          const pad = Math.min(w, h) * 0.08;
-          const frame = new fabric.Rect({
-            left: pad, top: pad, width: w - pad * 2, height: h - pad * 3,
-            fill: '#ffffff', stroke: 'rgba(0,0,0,0.08)', strokeWidth: 1,
-            selectable: false, evented: false
-          });
           const text = new fabric.IText("二〇二六 · 初夏", {
             left: w / 2,
-            top: h - pad * 1.8,
+            top: h * 0.88,
             originX: 'center',
             originY: 'center',
-            fontSize: Math.round(w * 0.045),
+            fontSize: Math.round(w * 0.05),
             fontFamily: 'Noto Serif SC',
-            fill: '#334155',
-            charSpacing: 120
+            fontStyle: 'italic',
+            fill: '#ffffff',
+            charSpacing: 150,
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 10, offsetX: 2, offsetY: 2 })
           });
-          return [frame, text];
+          return [text];
         }
       };
 
-      document.querySelectorAll('.tpl-btn').forEach(btn => {
+            document.querySelectorAll('.tpl-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const tplKey = btn.dataset.tpl;
           const creator = BUILTIN_TEMPLATES[tplKey];

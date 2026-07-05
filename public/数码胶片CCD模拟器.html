@@ -1441,6 +1441,12 @@ input, select { font: inherit; }
           </div>
           <input type="range" class="ctrl-slider" id="slider-halftone"
                  min="0" max="100" value="0" aria-label="Halftone 丝网印刷网点强度" />
+          
+          <!-- 半调模式选择 -->
+          <div class="ts-mode-pills" id="ht-mode-pills" role="radiogroup" aria-label="半调模式" style="margin-top: 8px;">
+            <button class="ts-pill active" data-htmode="cmyk" aria-pressed="true" style="padding: 4px 8px; font-size: 0.65rem;">四色 CMYK 印刷</button>
+            <button class="ts-pill" data-htmode="mono" aria-pressed="false" style="padding: 4px 8px; font-size: 0.65rem;">单色 Pop-Art</button>
+          </div>
         </div>
       </div>
 
@@ -1823,6 +1829,25 @@ const FILTERS = [
       baseNoise: 22, baseChromaticAberration: 2.5, baseVignette: 0.45,
       baseBloom: 0.42, bloomThreshold: 185, baseJpegArtifacts: 0.55,
       baseLightLeak: 0.35, baseImperfections: 0.18,
+      baseFlashFlare: 0, flashFlarePos: 'topright',
+    }
+  },
+
+  // ── ①.⑤ CMYK 杂志印刷 ─────────────────────────────────────────
+  {
+    id: 'cmyk_print',
+    name: 'CMYK 杂志印刷',
+    year: 'PRESS',
+    tag: 'CMYK_004',
+    description: '四色网点 · 哑光墨黑 · 杂志套印错位偏色质感',
+    accentColor: '#06b6d4',
+    params: {
+      brightness: -4,  contrast: 1.25, saturation: 1.30, warmth: 8, tint: -3,
+      shadowTint:    { r: -12, g: 4,  b: 15 },  // 阴影偏蓝绿
+      highlightTint: { r: 18,  g: 14, b: -10 }, // 高光偏乳黄纸色
+      baseNoise: 35, baseChromaticAberration: 5.0, baseVignette: 0.65,
+      baseBloom: 0.38, bloomThreshold: 195, baseJpegArtifacts: 0.65,
+      baseLightLeak: 0, baseImperfections: 0.45,
       baseFlashFlare: 0, flashFlarePos: 'topright',
     }
   },
@@ -2391,7 +2416,8 @@ class DigiCamProcessor {
       // 网点间距：根据图像宽度自适应（6–18px 之间）
       const htDivisor = 380 - halftoneStr * 220;
       const htDot = Math.max(3, Math.round(w / htDivisor));
-      DigiCamProcessor._halftone(ctx, w, h, halftoneStr, htDot);
+      const mode = effectParams.halftoneMode || 'cmyk';
+      DigiCamProcessor._halftone(ctx, w, h, halftoneStr, htDot, mode);
     }
 
     // ── PASS 6: Film Border (last — frames everything) ────────────
@@ -3108,59 +3134,121 @@ class DigiCamProcessor {
 
   // ── Halftone 半调网点（丝网印刷 / 波普风格）──────────────────
   // strength: 0-1  dotSpacing: 像素间距（越大=粗网）
-  static _halftone(ctx, w, h, strength, dotSpacing) {
+  static _halftone(ctx, w, h, strength, dotSpacing, mode = 'cmyk') {
     if (strength < 0.01) return;
 
     const step = Math.max(3, Math.round(dotSpacing));
-    const angle = 22.5 * Math.PI / 180; // 经典半调角度
-    const cosA  = Math.cos(angle);
-    const sinA  = Math.sin(angle);
     const cx = w / 2, cy = h / 2;
 
-    // 采样原图像素
+    // Sample pixels
     const imgData = ctx.getImageData(0, 0, w, h);
     const src = imgData.data;
 
-    // 构建半调 canvas（透明背景，仅画点）
+    // Build halftone canvas
     const ht  = document.createElement('canvas');
     ht.width  = w; ht.height = h;
     const hc  = ht.getContext('2d');
 
-    // 深色背景（随 strength 加深）
-    hc.fillStyle = `rgba(0,0,0,${Math.min(0.96, strength * 1.1)})`;
-    hc.fillRect(0, 0, w, h);
+    if (mode === 'mono') {
+      // ── MONOCHROME MODE ──────────────────────────────────────────
+      const angle = 22.5 * Math.PI / 180;
+      const cosA  = Math.cos(angle);
+      const sinA  = Math.sin(angle);
+      
+      hc.fillStyle = `rgba(0,0,0,${Math.min(0.96, strength * 1.1)})`;
+      hc.fillRect(0, 0, w, h);
 
-    const diag = Math.ceil(Math.sqrt(w * w + h * h)) + step * 2;
+      const diag = Math.ceil(Math.sqrt(w * w + h * h)) + step * 2;
 
-    for (let gy = -diag; gy <= diag; gy += step) {
-      for (let gx = -diag; gx <= diag; gx += step) {
-        // 旋转网格坐标 → 图像坐标
-        const ix = Math.round(cx + gx * cosA - gy * sinA);
-        const iy = Math.round(cy + gx * sinA + gy * cosA);
-        if (ix < 0 || ix >= w || iy < 0 || iy >= h) continue;
+      for (let gy = -diag; gy <= diag; gy += step) {
+        for (let gx = -diag; gx <= diag; gx += step) {
+          const ix = Math.round(cx + gx * cosA - gy * sinA);
+          const iy = Math.round(cy + gx * sinA + gy * cosA);
+          if (ix < 0 || ix >= w || iy < 0 || iy >= h) continue;
 
-        const pidx = (iy * w + ix) * 4;
-        const r = src[pidx], g = src[pidx + 1], b = src[pidx + 2];
-        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const pidx = (iy * w + ix) * 4;
+          const r = src[pidx], g = src[pidx + 1], b = src[pidx + 2];
+          const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-        // 点半径：暗处大圆点，亮处小点
-        const maxR = step * 0.55;
-        const dotR = maxR * (1 - lum);
-        if (dotR < 0.5) continue;
+          const maxR = step * 0.55;
+          const dotR = maxR * (1 - lum);
+          if (dotR < 0.5) continue;
 
-        hc.fillStyle = `rgb(${r},${g},${b})`;
-        hc.beginPath();
-        hc.arc(ix, iy, dotR, 0, Math.PI * 2);
-        hc.fill();
+          hc.fillStyle = `rgb(${r},${g},${b})`;
+          hc.beginPath();
+          hc.arc(ix, iy, dotR, 0, Math.PI * 2);
+          hc.fill();
+        }
       }
+    } else {
+      // ── CMYK MODE (Subtractive Printing Press) ────────────────────
+      hc.fillStyle = '#fcf9f2';
+      hc.fillRect(0, 0, w, h);
+
+      const angles = {
+        c: 15 * Math.PI / 180,
+        m: 75 * Math.PI / 180,
+        y: 0 * Math.PI / 180,
+        k: 45 * Math.PI / 180
+      };
+
+      const maxR = step * 0.52;
+      const diag = Math.ceil(Math.sqrt(w * w + h * h)) + step * 2;
+
+      const cmykCanvas = document.createElement('canvas');
+      cmykCanvas.width = w; cmykCanvas.height = h;
+      const cc = cmykCanvas.getContext('2d');
+      
+      cc.fillStyle = '#fcf9f2';
+      cc.fillRect(0, 0, w, h);
+
+      cc.globalCompositeOperation = 'multiply';
+
+      const drawChannel = (angle, colorStr, getValFn) => {
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        cc.fillStyle = colorStr;
+
+        for (let gy = -diag; gy <= diag; gy += step) {
+          for (let gx = -diag; gx <= diag; gx += step) {
+            const ix = Math.round(cx + gx * cosA - gy * sinA);
+            const iy = Math.round(cy + gx * sinA + gy * cosA);
+            if (ix < 0 || ix >= w || iy < 0 || iy >= h) continue;
+
+            const pidx = (iy * w + ix) * 4;
+            const r = src[pidx], g = src[pidx + 1], b = src[pidx + 2];
+            
+            const r_ = r / 255, g_ = g / 255, b_ = b / 255;
+            const k = 1 - Math.max(r_, g_, b_);
+            const c = k === 1 ? 0 : (1 - r_ - k) / (1 - k);
+            const m = k === 1 ? 0 : (1 - g_ - k) / (1 - k);
+            const y = k === 1 ? 0 : (1 - b_ - k) / (1 - k);
+
+            const inkVal = getValFn(c, m, y, k);
+            const dotR = maxR * inkVal;
+            if (dotR < 0.4) continue;
+
+            cc.beginPath();
+            cc.arc(ix, iy, dotR, 0, Math.PI * 2);
+            cc.fill();
+          }
+        }
+      };
+
+      drawChannel(angles.c, 'rgba(0, 160, 220, 0.90)', (c, m, y, k) => c);
+      drawChannel(angles.m, 'rgba(230, 0, 110, 0.90)', (c, m, y, k) => m);
+      drawChannel(angles.y, 'rgba(235, 215, 0, 0.95)', (c, m, y, k) => y);
+      drawChannel(angles.k, 'rgba(12, 12, 18, 0.92)', (c, m, y, k) => k);
+
+      cc.globalCompositeOperation = 'source-over';
+      hc.drawImage(cmykCanvas, 0, 0);
     }
 
-    // 叠加到主画布：低 strength = 半透明叠加，高 = 完全替换
     ctx.globalAlpha = Math.min(1, strength);
     ctx.drawImage(ht, 0, 0);
     ctx.globalAlpha = 1;
   }
-}
+  
 
 
 /* ── app.js ────────────────────────────────────────────────── */
@@ -3222,6 +3310,7 @@ const State = (() => {
     timestampDate: '2005-10-24',
     tsMode:        'classic',
 tsColor:       '#f97316',
+    halftoneMode:  'cmyk',
 
     // 胶片效果
     filmBorder: 'none',   // 'none' | 'thin' | 'sprocket'
@@ -3278,6 +3367,7 @@ function init() {
   bindViewToggle();
   bindTimestampMode();
   bindTimestampColor();
+  bindHalftoneMode();
   bindFilmEffects();
   bindUploadZone();
   bindCompareHandle();
@@ -3358,6 +3448,19 @@ function selectFilter(id) {
   const f = FILTERS.find(f => f.id === id);
   $('chip-filter').textContent = f.name;
   // RAW 纯净模式：自动将所有效果滑块归零（颜色回中间），让滑块从零开始搭配
+  if (id === 'cmyk_print') {
+    State.get().params.halftone = 50;
+    const sl = $('slider-halftone'), vl = $('val-halftone');
+    if (sl && vl) { sl.value = 50; vl.textContent = '50%'; updateSliderTrack(sl); }
+    const ms = $('m-slider-halftone'), mv = $('m-val-halftone');
+    if (ms && mv) { ms.value = 50; mv.textContent = '50%'; updateSliderTrack(ms); }
+    
+    State.patch('halftoneMode', 'cmyk');
+    document.querySelectorAll('#ht-mode-pills .ts-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.htmode === 'cmyk');
+      p.setAttribute('aria-pressed', p.dataset.htmode === 'cmyk' ? 'true' : 'false');
+    });
+  }
   if (id === 'raw_pure') {
     const rawZero = { grain:0, chroma:0, vignette:0, bloom:0, artifacts:0, lightleak:0, imperfections:0, scanlines:0, crtlines:0, halftone:0, warmth:50 };
     Object.assign(State.get().params, rawZero);
@@ -3628,6 +3731,7 @@ async function processAndRender() {
     filmBorder: s.filmBorder,
     flashFlare: s.flashFlare,
     seed:       s.filmSeed,
+    halftoneMode: s.halftoneMode || 'cmyk',
   };
 
   const processed = DigiCamProcessor.process(
@@ -3903,6 +4007,21 @@ function bindFilmEffects() {
 // ══════════════════════════════════════════════════════════════
 //  时间戳样式选择
 // ══════════════════════════════════════════════════════════════
+function bindHalftoneMode() {
+  document.querySelectorAll('#ht-mode-pills .ts-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const mode = pill.dataset.htmode;
+      if (!mode) return;
+      State.patch('halftoneMode', mode);
+      document.querySelectorAll('#ht-mode-pills .ts-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.htmode === mode);
+        p.setAttribute('aria-pressed', p.dataset.htmode === mode ? 'true' : 'false');
+      });
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  });
+}
+
 function bindTimestampColor() {
   const picker = document.getElementById('ts-color-picker');
   if (picker) {
