@@ -1205,8 +1205,7 @@ input, select { font: inherit; }
       </div>
       <!-- 移动端：控制面板开关 -->
       <button id="mobile-controls-btn" class="btn btn-ghost"
-              aria-label="打开参数控制面板" aria-expanded="false"
-              style="display:none">
+              aria-label="打开参数控制面板" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
           <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
         </svg>
@@ -1597,52 +1596,139 @@ input, select { font: inherit; }
     <span style="font-family:var(--mono);font-size:0.65rem;color:var(--gold);font-weight:700;letter-spacing:0.15em">参数调节</span>
     <button id="mobile-controls-close" class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem">关闭</button>
   </div>
-  <!-- 信号参数（复制） -->
+
+  <!-- 强度 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>强度</span><span class="ctrl-label-val" id="m-val-intensity">80%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-intensity" min="0" max="100" value="80" />
   </div>
+
+  <!-- 自动白平衡/冷暖 -->
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>白平衡 (冷暖)</span><span class="ctrl-label-val" id="m-val-warmth">±0 (自动)</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-warmth" min="0" max="100" value="50" />
+  </div>
+
+  <!-- 胶片颗粒 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>胶片颗粒</span><span class="ctrl-label-val" id="m-val-grain">50%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-grain" min="0" max="100" value="50" />
   </div>
+
+  <!-- 色差 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>色差</span><span class="ctrl-label-val" id="m-val-chroma">50%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-chroma" min="0" max="100" value="50" />
   </div>
+
+  <!-- 暗角 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>暗角</span><span class="ctrl-label-val" id="m-val-vignette">50%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-vignette" min="0" max="100" value="50" />
   </div>
+
+  <!-- 高光溢出 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>高光溢出</span><span class="ctrl-label-val" id="m-val-bloom">50%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-bloom" min="0" max="100" value="50" />
   </div>
+
+  <!-- JPEG 压缩块 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>JPEG 压缩块</span><span class="ctrl-label-val" id="m-val-artifacts">30%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-artifacts" min="0" max="100" value="30" />
   </div>
+
+  <!-- 漏光强度 -->
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>色彩漏光</span><span class="ctrl-label-val" id="m-val-lightleak">50%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-lightleak" min="0" max="100" value="50" />
+  </div>
+
+  <!-- 胶片缺陷 -->
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>胶片缺陷</span><span class="ctrl-label-val" id="m-val-imperfections">30%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-imperfections" min="0" max="100" value="30" />
+  </div>
+
+  <!-- 横条纹·断墨 -->
+  <div class="ctrl-row">
+    <div class="ctrl-label"><span>横条纹·断墨</span><span class="ctrl-label-val" id="m-val-scanlines">0%</span></div>
+    <input type="range" class="ctrl-slider" id="m-slider-scanlines" min="0" max="100" value="0" />
+  </div>
+
+  <!-- 📺 CRT 扫描线 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>📺 CRT 扫描线</span><span class="ctrl-label-val" id="m-val-crtlines">0%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-crtlines" min="0" max="100" value="0" />
   </div>
+
+  <!-- 🔵 半调网点 -->
   <div class="ctrl-row">
     <div class="ctrl-label"><span>🔵 半调网点</span><span class="ctrl-label-val" id="m-val-halftone">0%</span></div>
     <input type="range" class="ctrl-slider" id="m-slider-halftone" min="0" max="100" value="0" />
   </div>
-  <div style="height:1px;background:var(--border);margin:12px 0"></div>
+
+  <!-- 半调模式选择 -->
+  <div class="ctrl-label" style="margin-bottom:8px;margin-top:12px">
+    <span>半调模式</span>
+  </div>
+  <div class="ts-mode-pills" id="m-ht-mode-pills" role="radiogroup" aria-label="半调模式">
+    <button class="ts-pill active" data-htmode="rgb"  aria-pressed="true">彩色 RGB</button>
+    <button class="ts-pill" data-htmode="cmyk"        aria-pressed="false">复古 CMYK</button>
+  </div>
+
+  <div style="height:1px;background:var(--border);margin:16px 0"></div>
+
+  <!-- 胶片边框 -->
+  <div class="ctrl-label" style="margin-bottom:8px">
+    <span>胶片边框</span>
+  </div>
+  <div class="ts-mode-pills" id="m-border-pills" role="radiogroup" aria-label="胶片边框样式">
+    <button class="ts-pill active" data-border="none"   aria-pressed="true">无</button>
+    <button class="ts-pill" data-border="thin"          aria-pressed="false">细边框</button>
+    <button class="ts-pill" data-border="sprocket"      aria-pressed="false">齿孔胶片</button>
+  </div>
+
+  <!-- 闪光点开关 -->
+  <div class="ctrl-toggle-row" style="margin-top:12px">
+    <label class="ctrl-toggle-label">闪光点（Huji 风）</label>
+    <label class="toggle-pill" aria-label="闪光点">
+      <input type="checkbox" id="m-toggle-flare" />
+      <span class="toggle-track"></span>
+      <span class="toggle-thumb"></span>
+    </label>
+  </div>
+
+  <div style="height:1px;background:var(--border);margin:16px 0"></div>
+
+  <!-- 日期水印 -->
   <div class="ctrl-toggle-row">
     <label class="ctrl-toggle-label">显示日期水印</label>
-    <label class="toggle-pill">
+    <label class="toggle-pill" aria-label="显示日期水印">
       <input type="checkbox" id="m-toggle-ts" checked />
       <span class="toggle-track"></span>
       <span class="toggle-thumb"></span>
     </label>
   </div>
-  <input type="date" id="m-date-input" class="ctrl-date-input" value="2005-10-24" style="margin-top:8px" />
-</div>
 
-<!-- ══════════════════════════════════════════════════════════════
+  <!-- 水印样式 -->
+  <div class="ctrl-label" style="margin-bottom:8px;margin-top:12px">
+    <span>水印样式</span>
+  </div>
+  <div class="ts-mode-pills" id="m-ts-mode-pills" role="radiogroup" aria-label="时间戳样式">
+    <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">经典橙</button>
+    <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">LCD 绿</button>
+    <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">点阵</button>
+    <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">8-bit</button>
+    <button class="ts-pill" data-tsmode="white" aria-pressed="false">纯白</button>
+    <button class="ts-pill" data-tsmode="red_led" aria-pressed="false">赤红 LED</button>
+    <button class="ts-pill" data-tsmode="lcd_blue" aria-pressed="false">LCD 蓝</button>
+    <button class="ts-pill" data-tsmode="gold" aria-pressed="false">香槟金</button>
+  </div>
+
+  <input type="date" id="m-date-input" class="ctrl-date-input" value="2005-10-24" style="margin-top:10px;margin-bottom:12px" />
+</div><!-- ══════════════════════════════════════════════════════════════
      内容区（营销页）
 ══════════════════════════════════════════════════════════════ -->
 <div id="content-area">
@@ -4137,26 +4223,39 @@ function bindViewToggle() {
 //  胶片边框 & 闪光点效果
 // ══════════════════════════════════════════════════════════════
 function bindFilmEffects() {
-  // 胶片边框选择
-  document.querySelectorAll('#border-pills .ts-pill').forEach(pill => {
+  // 胶片边框选择 (支持移动端同步)
+  const selectBorder = (border) => {
+    State.patch('filmBorder', border);
+    document.querySelectorAll('#border-pills .ts-pill, #m-border-pills .ts-pill').forEach(p => {
+      const active = p.dataset.border === border;
+      p.classList.toggle('active', active);
+      p.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (State.get().srcImageData) scheduleProcess();
+  };
+
+  document.querySelectorAll('#border-pills .ts-pill, #m-border-pills .ts-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const border = pill.dataset.border;
-      State.patch('filmBorder', border);
-      document.querySelectorAll('#border-pills .ts-pill').forEach(p => {
-        p.classList.toggle('active', p.dataset.border === border);
-        p.setAttribute('aria-pressed', p.dataset.border === border ? 'true' : 'false');
-      });
-      if (State.get().srcImageData) scheduleProcess();
+      if (border) selectBorder(border);
     });
   });
 
-  // 闪光点（Huji 风）开关
+  // 闪光点（Huji 风）开关 (支持移动端同步)
   const flareChk = $('toggle-flare-chk');
+  const mFlareChk = $('m-toggle-flare');
+  const syncFlare = (enabled) => {
+    State.patch('flashFlare', enabled);
+    if (flareChk) flareChk.checked = enabled;
+    if (mFlareChk) mFlareChk.checked = enabled;
+    if (State.get().srcImageData) scheduleProcess();
+  };
+
   if (flareChk) {
-    flareChk.addEventListener('change', () => {
-      State.patch('flashFlare', flareChk.checked);
-      if (State.get().srcImageData) scheduleProcess();
-    });
+    flareChk.addEventListener('change', () => syncFlare(flareChk.checked));
+  }
+  if (mFlareChk) {
+    mFlareChk.addEventListener('change', () => syncFlare(mFlareChk.checked));
   }
 }
 
@@ -4164,16 +4263,20 @@ function bindFilmEffects() {
 //  时间戳样式选择
 // ══════════════════════════════════════════════════════════════
 function bindHalftoneMode() {
-  document.querySelectorAll('#ht-mode-pills .ts-pill').forEach(pill => {
+  const selectHtMode = (mode) => {
+    State.patch('halftoneMode', mode);
+    document.querySelectorAll('#ht-mode-pills .ts-pill, #m-ht-mode-pills .ts-pill').forEach(p => {
+      const active = p.dataset.htmode === mode;
+      p.classList.toggle('active', active);
+      p.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (State.get().srcImageData) scheduleProcess();
+  };
+
+  document.querySelectorAll('#ht-mode-pills .ts-pill, #m-ht-mode-pills .ts-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const mode = pill.dataset.htmode;
-      if (!mode) return;
-      State.patch('halftoneMode', mode);
-      document.querySelectorAll('#ht-mode-pills .ts-pill').forEach(p => {
-        p.classList.toggle('active', p.dataset.htmode === mode);
-        p.setAttribute('aria-pressed', p.dataset.htmode === mode ? 'true' : 'false');
-      });
-      if (State.get().srcImageData) scheduleProcess();
+      if (mode) selectHtMode(mode);
     });
   });
 }
@@ -4206,37 +4309,40 @@ function bindTimestampColor() {
 }
 
 function bindTimestampMode() {
-  // 仅处理带有 data-tsmode 的 pill，避免胶片边框 pills 混入
-  document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(pill => {
+  const selectTsMode = (mode) => {
+    State.patch('tsMode', mode);
+
+    // Automatically set the appropriate color for the selected mode!
+    let defaultColor = '#f97316'; // Default classic orange
+    if (mode === 'lcd') {
+      defaultColor = '#00ff66'; // LCD Green
+    } else if (mode === 'lcd_blue') {
+      defaultColor = '#00d2ff'; // LCD Blue
+    } else if (mode === 'white') {
+      defaultColor = '#ffffff'; // Pure White
+    } else if (mode === 'dotmatrix') {
+      defaultColor = '#ff5500'; // Dot Matrix Orange-Red
+    } else if (mode === 'eightbit') {
+      defaultColor = '#ff6600'; // 8-bit Orange
+    } else if (mode === 'red_led') {
+      defaultColor = '#ff1e1e'; // Red LED
+    } else if (mode === 'gold') {
+      defaultColor = '#ffd700'; // Champagne Gold
+    }
+    State.patch('tsColor', defaultColor);
+
+    document.querySelectorAll('#ts-mode-pills .ts-pill, #m-ts-mode-pills .ts-pill').forEach(p => {
+      const active = p.dataset.tsmode === mode;
+      p.classList.toggle('active', active);
+      p.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (State.get().srcImageData) scheduleProcess();
+  };
+
+  document.querySelectorAll('#ts-mode-pills .ts-pill, #m-ts-mode-pills .ts-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const mode = pill.dataset.tsmode;
-      if (!mode) return;
-      State.patch('tsMode', mode);
-
-      // Automatically set the appropriate color for the selected mode!
-      let defaultColor = '#f97316'; // Default classic orange
-      if (mode === 'lcd') {
-        defaultColor = '#00ff66'; // LCD Green
-      } else if (mode === 'lcd_blue') {
-        defaultColor = '#00d2ff'; // LCD Blue
-      } else if (mode === 'white') {
-        defaultColor = '#ffffff'; // Pure White
-      } else if (mode === 'dotmatrix') {
-        defaultColor = '#ff5500'; // Dot Matrix Orange-Red
-      } else if (mode === 'eightbit') {
-        defaultColor = '#ff6600'; // 8-bit Orange
-      } else if (mode === 'red_led') {
-        defaultColor = '#ff1e1e'; // Red LED
-      } else if (mode === 'gold') {
-        defaultColor = '#ffd700'; // Champagne Gold
-      }
-      State.patch('tsColor', defaultColor);
-
-      document.querySelectorAll('#ts-mode-pills .ts-pill').forEach(p => {
-        p.classList.toggle('active', p.dataset.tsmode === mode);
-        p.setAttribute('aria-pressed', p.dataset.tsmode === mode ? 'true' : 'false');
-      });
-      if (State.get().srcImageData) scheduleProcess();
+      if (mode) selectTsMode(mode);
     });
   });
 }
