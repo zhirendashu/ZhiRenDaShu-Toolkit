@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -354,13 +354,13 @@
       <div class="nav-item active" data-target="view-copywriting">✍️ 爆款文案生成</div>
       <div class="nav-item" data-target="view-script">🎬 拍摄脚本撰写</div>
       <div class="nav-item" data-target="view-tags">🏷️ 热门 TAG 提取</div>
-      <div class="nav-item" data-target="view-colors">🎨 情绪配色顾问</div>
+      <div class="nav-item" data-target="view-colors"> 情绪配色顾问</div>
       <div class="nav-item" data-target="view-watermark">💎 Gemini 水印修复</div>
     </nav>
     
     <div class="nav-bottom">
       <div class="nav-item" id="nav-settings" data-target="view-settings">
-        ⚙️ 自定义大模型 API
+         自定义大模型 API
       </div>
       <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:10px;margin-top:8px;color:#586380;text-decoration:none;font-size:14px;font-weight:500;border:1px solid rgba(99,132,255,.15);transition:all .2s;" onmouseover="this.style.color='#e8ecff';this.style.background='rgba(99,132,255,.1)'" onmouseout="this.style.color='#586380';this.style.background='transparent'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -399,9 +399,9 @@
           <label class="form-label">设定文案的人设与语言风格</label>
           <select class="input-base" id="copyPersonaSelect" style="margin-bottom: 12px; cursor: pointer;" onchange="document.getElementById('copyCustomPersona').style.display = this.value === 'custom' ? 'block' : 'none'">
             <option value="restrained">🌲「植人大树」专属（克制、专业干货、极简极少表情）</option>
-            <option value="default">🔥 大众爆款操盘手（网感十足、高情绪价值、多 Emoji）</option>
+            <option value="default"> 大众爆款操盘手（网感十足、高情绪价值、多 Emoji）</option>
             <option value="storyteller">☕ 碎碎念生活家（松弛感流水账、温暖舒服散文风）</option>
-            <option value="custom">⚙️ 完全自定义人设指令 (自由度最高)</option>
+            <option value="custom"> 完全自定义人设指令 (自由度最高)</option>
           </select>
           <textarea class="input-base" id="copyCustomPersona" placeholder="这也就是让大模型进行 Role-play (角色扮演)。例如：你是一个幽默风趣的北漂段子手摄影师，文风必须押韵，喜欢嘲讽但心地善良，必须带三个冷笑话。" style="display: none; min-height: 80px;"></textarea>
         </div>
@@ -411,7 +411,7 @@
           <textarea class="input-base" id="copyInput" placeholder="例如：一张在三亚海边拍的晚霞，主体是一个穿着白色长裙的女孩，整体色调是橙粉色，电影感极强..."></textarea>
         </div>
         <button class="btn" onclick="generateContent('copywriting', 'copyInput', this)">
-          <div class="spinner"></div> 🚀 一键生成网感文案
+          <div class="spinner"></div>  一键生成网感文案
         </button>
         <div class="result-box">
           <div class="result-content" id="copywritingResult">等待生成中...</div>
@@ -476,7 +476,7 @@
           <input type="text" class="input-base" id="colorInput" placeholder="例如：适合王家卫复古电影感的字幕配色，要有对比">
         </div>
         <button class="btn" onclick="generateContent('colors', 'colorInput', this)">
-          <div class="spinner"></div> 🎨 获取颜色方案
+          <div class="spinner"></div>  获取颜色方案
         </button>
         <div class="result-box">
           <div class="result-content" id="colorsResult">等待生成中...</div>
@@ -497,7 +497,7 @@
           本工具完全在浏览器本地运行，不上传任何隐私数据。专门针对 Google Gemini 生成的 48px 和 96px 水印进行了像素级适配。
         </p>
         <a href="Gemini水印修复.html" target="_blank" class="btn" style="text-decoration: none; display: inline-flex;">
-          🚀 开启独立修复窗口
+           开启独立修复窗口
         </a>
         <div style="margin-top: 24px; font-size: 12px; color: var(--text-ter);">
           注：为了最佳性能与稳定性，修复工具将在新窗口中以独立模式运行。
@@ -508,14 +508,14 @@
     <!-- 5. 全局设置视图 -->
     <section class="view-container" id="view-settings">
       <div class="view-header">
-        <h2 class="view-title">⚙️ 自定义大模型中转站配置</h2>
+        <h2 class="view-title"> 自定义大模型中转站配置</h2>
         <p class="view-desc">通过浏览器免后端直连全球各大模型。配置将自动加密保存在你的本地浏览器中。</p>
       </div>
       <div class="glass-card">
 
         <!-- “一键选择”预设模型區 -->
         <div class="preset-section">
-          <div class="preset-label">✨ 一键选择预设大模型</div>
+          <div class="preset-label"> 一键选择预设大模型</div>
           <div class="preset-grid" id="presetGrid">
 
             <div class="preset-card" onclick="selectPreset(this, 'openai')">
@@ -554,7 +554,7 @@
             </div>
 
             <div class="preset-card" onclick="selectPreset(this, 'custom')">
-              <div class="preset-name">⚙️ 自定义</div>
+              <div class="preset-name"> 自定义</div>
               <div class="preset-model">手动填写下方</div>
             </div>
 
@@ -564,7 +564,7 @@
 
         <!-- 文生图专属预设区 -->
         <div class="preset-section" style="margin-top:28px">
-          <div class="preset-label">🎨 文生图尓 · 专属驱动预设</div>
+          <div class="preset-label"> 文生图尓 · 专属驱动预设</div>
           <div class="preset-grid" id="imgPresetGrid">
 
             <div class="preset-card" onclick="selectPreset(this, 'jimeng')">
@@ -573,7 +573,7 @@
             </div>
 
             <div class="preset-card" onclick="selectPreset(this, 'wanx')">
-              <div class="preset-name">🎨 通义万象</div>
+              <div class="preset-name"> 通义万象</div>
               <div class="preset-model">wanx2.1-t2i-turbo</div>
             </div>
 
@@ -583,7 +583,7 @@
             </div>
 
             <div class="preset-card" onclick="selectPreset(this, 'flux')">
-              <div class="preset-name">⚡ FLUX.1</div>
+              <div class="preset-name"> FLUX.1</div>
               <div class="preset-model">flux-1.1-pro-ultra</div>
             </div>
 
@@ -593,7 +593,7 @@
             </div>
 
             <div class="preset-card" onclick="selectPreset(this, 'customimg')">
-              <div class="preset-name">⚙️ 自定义兟口</div>
+              <div class="preset-name"> 自定义兟口</div>
               <div class="preset-model">手动填写下方</div>
             </div>
 
@@ -620,7 +620,7 @@
         </div>
         <div style="margin-top: 20px; display: flex; gap: 12px;">
           <button class="btn" onclick="saveSettings()">💾 保存并应用配置</button>
-          <button class="btn btn-outline" onclick="testConnection()">⚡ 测试连通性</button>
+          <button class="btn btn-outline" onclick="testConnection()"> 测试连通性</button>
         </div>
         <div id="cfg-status" class="api-status" style="display:none;"></div>
     </section>
@@ -869,7 +869,99 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
-</style>
+
+      /* ── 封面比例暗房 2.0 视觉覆盖样式 ── */
+      :root {
+        --bg: #050505 !important;
+        --bg-color: #050505 !important;
+        --surface: #111111 !important;
+        --surface-glass: rgba(17, 17, 17, 0.85) !important;
+        --card: #161616 !important;
+        --border: #222222 !important;
+        --border-focus: #444444 !important;
+        --accent: #FF2442 !important; /* 品牌红 */
+        --accent-primary: #FF2442 !important;
+        --accent2: #F6D365 !important; /* 胶片黄 */
+        --text: #F4F1E8 !important;
+        --text-dim: #8A8A8A !important;
+        --sub: #8A8A8A !important;
+      }
+      body {
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
+        font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .panel-card, .ctrl-group, .settings-panel, .control-panel, .step-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      .btn-primary, #export-btn, .btn-brand, .download-btn, #download-btn {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover, #export-btn:hover, .btn-brand:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(255, 36, 66, 0.5) !important;
+      }
+      .btn-secondary, .btn-dark, .btn-outline {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+      }
+      .btn-secondary:hover, .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--border-focus) !important;
+      }
+      .preview-area, #main-preview-box, .canvas-container-wrap, .canvas-container, #compare-container {
+        position: relative !important;
+        background-color: #020202 !important;
+        background-image: radial-gradient(circle at center, rgba(255, 36, 66, 0.03) 0%, transparent 75%) !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.9) !important;
+        border: 1px solid var(--border) !important;
+      }
+      .preview-area::before, #main-preview-box::before, .canvas-container-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .preview-area::after, #main-preview-box::after, .canvas-container-wrap::after {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 2;
+      }
+      input[type="range"] {
+        accent-color: var(--accent) !important;
+      }
+      header {
+        background: rgba(5, 5, 5, 0.85) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .header-back {
+        border: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
+      .header-back:hover {
+        border-color: var(--border-focus) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }</style>
 <div id="modern-toast"></div>
 <script>
 (function() {
@@ -877,7 +969,7 @@
     window.showToast = function(msg, type="info") {
         const toast = document.getElementById("modern-toast");
         if (!toast) return;
-        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
+        const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '');
         toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
         toast.classList.add("show");
         if(window._toastTimer) clearTimeout(window._toastTimer);
@@ -910,7 +1002,7 @@
             
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.innerHTML = '🎨';
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="m2 22 1-1h3l9-9-3-3-9 9v3h3z"></path><path d="M19 9 15 5"></path><path d="m19 5 2-2-4-4-2 2z"></path></svg>';
             btn.title = '屏幕吸色';
             btn.style.marginLeft = '6px';
             btn.style.padding = '4px 6px';

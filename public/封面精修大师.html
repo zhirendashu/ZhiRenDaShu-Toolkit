@@ -513,7 +513,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
              <label>字体颜色</label>
              <div style="display: flex; gap: 8px; align-items: center;">
                <input type="color" id="text-color" value="#ffffff" style="flex: 1; height: 36px; padding: 2px;">
-               <button class="btn btn-ghost" id="eyedropper-btn" style="padding: 0 12px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;" title="画面颜色提取吸管">🎨 吸色</button>
+               <button class="btn btn-ghost" id="eyedropper-btn" style="padding: 0 12px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;" title="画面颜色提取吸管">吸色</button>
              </div>
              <div style="display: flex; gap: 8px;">
                <div style="flex: 1;">
@@ -615,7 +615,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
              <input type="range" id="text-stroke-width" min="0" max="10" value="0">
              <label>描边颜色</label>
              <input type="color" id="text-stroke-color" value="#000000">
-             <label style="color: var(--accent); margin-top: 8px; display: flex; align-items: center; gap: 4px;">✨ 文字投影 (阴影)</label>
+             <label style="color: var(--accent); margin-top: 8px; display: flex; align-items: center; gap: 4px;"> 文字投影 (阴影)</label>
              <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
                <div style="display: flex; gap: 8px; align-items: center;">
                  <label style="width: 60px; font-size: 0.72rem; margin-bottom: 0;">投影颜色</label>
@@ -636,7 +636,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                  <input type="range" id="text-shadow-distance" min="0" max="50" value="0" style="flex: 1;">
                </div>
              </div>
-             <label style="display:flex;justify-content:space-between;align-items:center;">背景填充 <button id="text-bg-clear" style="background:var(--border);border:none;color:var(--sub);font-size:0.65rem;padding:2px 8px;border-radius:4px;cursor:pointer;">✕ 无背景</button></label>
+             <label style="display:flex;justify-content:space-between;align-items:center;">背景填充 <button id="text-bg-clear" style="background:var(--border);border:none;color:var(--sub);font-size:0.65rem;padding:2px 8px;border-radius:4px;cursor:pointer;">× 无背景</button></label>
              <input type="color" id="text-bg-color" value="#ff2442">
              <div style="display: flex; gap: 8px; margin-top: 8px;">
                <div style="flex: 1;">
@@ -657,12 +657,12 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         <div class="panel-section" id="section-sticker">
             <div class="section-title">内置贴图</div>
             <div class="sticker-grid">
-              <div class="sticker-item" data-val="🔥">🔥</div>
+              <div class="sticker-item" data-val=""></div>
               <div class="sticker-item" data-val="⭐">⭐</div>
               <div class="sticker-item" data-val="✅">✅</div>
-              <div class="sticker-item" data-val="📷">📷</div>
-              <div class="sticker-item" data-val="🎨">🎨</div>
-              <div class="sticker-item" data-val="✨">✨</div>
+              <div class="sticker-item" data-val=""></div>
+              <div class="sticker-item" data-val=""></div>
+              <div class="sticker-item" data-val=""></div>
               <div class="sticker-item" data-val="❤️">❤️</div>
               <div class="sticker-item" data-val="📌">📌</div>
               <div class="sticker-item" data-val="🎁">🎁</div>
@@ -713,7 +713,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                    <span style="color:var(--sub); font-size:0.6rem;">小红书/世界杯爆款</span>
                 </button>
                 <button class="btn btn-ghost tpl-btn" data-tpl="wkw-scope" style="padding: 10px 6px; font-size: 0.72rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); height: auto; cursor: pointer;">
-                   <span style="font-size: 1.1rem; margin-bottom: 4px;">🎞️</span>
+                   <span style="font-size: 1.1rem; margin-bottom: 4px;"></span>
                    <strong>窄银幕独白经典</strong>
                    <span style="color:var(--sub); font-size:0.6rem;">电影遮幅+手写体</span>
                 </button>
@@ -723,7 +723,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                    <span style="color:var(--sub); font-size:0.6rem;">重叠大霓虹招牌</span>
                 </button>
                 <button class="btn btn-ghost tpl-btn" data-tpl="polaroid" style="padding: 10px 6px; font-size: 0.72rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); height: auto; cursor: pointer;">
-                   <span style="font-size: 1.1rem; margin-bottom: 4px;">📸</span>
+                   <span style="font-size: 1.1rem; margin-bottom: 4px;"></span>
                    <strong>拍立得手写微风</strong>
                    <span style="color:var(--sub); font-size:0.6rem;">文艺纯白相纸框</span>
                 </button>
@@ -814,7 +814,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
       <div class="canvas-container-wrap">
         <div id="inner-drop-zone" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; cursor: pointer; width: 440px; height: 280px; max-width: 88vw; border-radius: 24px; z-index: 5;">
             <input type="file" id="file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10;" accept="image/*,.svg">
-            <div class="dz-icon" style="font-size: 2.8rem; line-height: 1;">📷</div>
+            <div class="dz-icon" style="font-size: 2.8rem; line-height: 1;"></div>
             <div class="dz-title" style="font-size: 1.05rem; font-weight: 700; color: #fff;">拖入图片 或 点此上传</div>
             <div class="dz-sub" style="font-size: .84rem; color: var(--sub);">导入图像作为精修画布背景</div>
             <div class="dz-chip" style="font-size: .72rem; color: #94a3b8; padding: 5px 14px; border-radius: 100px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.03); margin-top: 4px;">PNG · JPG · WebP</div>
@@ -1023,7 +1023,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                   <div class="mobile-save-card">
                       <div class="mobile-save-title">图片保存指南</div>
                       <img class="mobile-save-img" src="${finalUrl}" alt="Generated Image" />
-                      <div class="mobile-save-tip">💡 提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
+                      <div class="mobile-save-tip">提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
                       <button class="mobile-save-btn">我知道了</button>
                   </div>
               `;
@@ -2570,7 +2570,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
             
             canvas.renderAll();
           } else {
-             alert('💡 请先在左侧画板中点击选中一段你想改色的文字！');
+             alert('• 请先在左侧画板中点击选中一段你想改色的文字！');
           }
         };
       });
@@ -3178,7 +3178,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
           saveCanvasState();
           showToast('🎲 随机配色已生成！', 'success');
         } else {
-          alert('💡 请先选中一段你想配色的文字！');
+          alert('• 请先选中一段你想配色的文字！');
         }
       };
 
@@ -3474,12 +3474,104 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
     box-shadow: 0 0 30px rgba(99, 102, 241, 0.3) inset !important;
     background: rgba(99, 102, 241, 0.08) !important;
 }
-</style>
+
+      /* ── 封面比例暗房 2.0 视觉覆盖样式 ── */
+      :root {
+        --bg: #050505 !important;
+        --bg-color: #050505 !important;
+        --surface: #111111 !important;
+        --surface-glass: rgba(17, 17, 17, 0.85) !important;
+        --card: #161616 !important;
+        --border: #222222 !important;
+        --border-focus: #444444 !important;
+        --accent: #FF2442 !important; /* 品牌红 */
+        --accent-primary: #FF2442 !important;
+        --accent2: #F6D365 !important; /* 胶片黄 */
+        --text: #F4F1E8 !important;
+        --text-dim: #8A8A8A !important;
+        --sub: #8A8A8A !important;
+      }
+      body {
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
+        font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .panel-card, .ctrl-group, .settings-panel, .control-panel, .step-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      .btn-primary, #export-btn, .btn-brand, .download-btn, #download-btn {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover, #export-btn:hover, .btn-brand:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(255, 36, 66, 0.5) !important;
+      }
+      .btn-secondary, .btn-dark, .btn-outline {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+      }
+      .btn-secondary:hover, .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--border-focus) !important;
+      }
+      .preview-area, #main-preview-box, .canvas-container-wrap, .canvas-container, #compare-container {
+        position: relative !important;
+        background-color: #020202 !important;
+        background-image: radial-gradient(circle at center, rgba(255, 36, 66, 0.03) 0%, transparent 75%) !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.9) !important;
+        border: 1px solid var(--border) !important;
+      }
+      .preview-area::before, #main-preview-box::before, .canvas-container-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .preview-area::after, #main-preview-box::after, .canvas-container-wrap::after {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 2;
+      }
+      input[type="range"] {
+        accent-color: var(--accent) !important;
+      }
+      header {
+        background: rgba(5, 5, 5, 0.85) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .header-back {
+        border: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
+      .header-back:hover {
+        border-color: var(--border-focus) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }</style>
 <div id="modern-toast"></div>
 <script>
 window.showToast = function(msg, type="info") {
     const toast = document.getElementById("modern-toast");
-    const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '✨');
+    const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : '');
     toast.innerHTML = `${icon} <span style="margin-left:4px;">${msg}</span>`;
     toast.classList.add("show");
     if(window._toastTimer) clearTimeout(window._toastTimer);
@@ -3525,20 +3617,20 @@ document.addEventListener("DOMContentLoaded", () => {
           `<div class="panel-section" id="section-mask">
               <div class="section-title">IG 镂空画报蒙版</div>
               <div style="font-size: 0.75rem; color: var(--sub); line-height: 1.6; margin-bottom: 8px;">
-                 ✨ 这是类似 WalkColor 等最前沿的设计，为海报盖上一层带镂空的物理画框蒙版，营造绝佳的时髦空间感！
+                  这是类似 WalkColor 等最前沿的设计，为海报盖上一层带镂空的物理画框蒙版，营造绝佳的时髦空间感！
               </div>
               
               <div class="prop-row">
                   <label>镂空形状预设</label>
                   <div class="style-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px;">
-                      <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="polaroid">📷 拍立得</button>
+                      <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="polaroid"> 拍立得</button>
                       <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="square">🖼 现代方窗</button>
                       <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="circle">⭕ 唱片圆窗</button>
                       <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="ticket">🎫 撕掉票根</button>
                       <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="arch">🏛 罗马拱门</button>
                       <button class="btn btn-ghost mask-ctrl-btn" style="padding:10px 4px;font-size:0.75rem;" data-type="heart">❤️ 多巴胺爱心</button>
                   </div>
-                  <button class="btn btn-ghost mask-ctrl-btn" style="margin-top: 6px; border: 1px solid #fb7185; color: #fb7185;" data-type="none">✕ 移除蒙版框</button>
+                  <button class="btn btn-ghost mask-ctrl-btn" style="margin-top: 6px; border: 1px solid #fb7185; color: #fb7185;" data-type="none">× 移除蒙版框</button>
               </div>
 
               <div class="prop-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">

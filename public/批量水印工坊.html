@@ -653,7 +653,99 @@
             <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
             <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
         </svg>
-        <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+        <style>@keyframes spin { 100% { transform: rotate(360deg); } }
+      /* ── 封面比例暗房 2.0 视觉覆盖样式 ── */
+      :root {
+        --bg: #050505 !important;
+        --bg-color: #050505 !important;
+        --surface: #111111 !important;
+        --surface-glass: rgba(17, 17, 17, 0.85) !important;
+        --card: #161616 !important;
+        --border: #222222 !important;
+        --border-focus: #444444 !important;
+        --accent: #FF2442 !important; /* 品牌红 */
+        --accent-primary: #FF2442 !important;
+        --accent2: #F6D365 !important; /* 胶片黄 */
+        --text: #F4F1E8 !important;
+        --text-dim: #8A8A8A !important;
+        --sub: #8A8A8A !important;
+      }
+      body {
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
+        font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .panel-card, .ctrl-group, .settings-panel, .control-panel, .step-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      .btn-primary, #export-btn, .btn-brand, .download-btn, #download-btn {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover, #export-btn:hover, .btn-brand:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(255, 36, 66, 0.5) !important;
+      }
+      .btn-secondary, .btn-dark, .btn-outline {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+      }
+      .btn-secondary:hover, .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--border-focus) !important;
+      }
+      .preview-area, #main-preview-box, .canvas-container-wrap, .canvas-container, #compare-container {
+        position: relative !important;
+        background-color: #020202 !important;
+        background-image: radial-gradient(circle at center, rgba(255, 36, 66, 0.03) 0%, transparent 75%) !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.9) !important;
+        border: 1px solid var(--border) !important;
+      }
+      .preview-area::before, #main-preview-box::before, .canvas-container-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .preview-area::after, #main-preview-box::after, .canvas-container-wrap::after {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 2;
+      }
+      input[type="range"] {
+        accent-color: var(--accent) !important;
+      }
+      header {
+        background: rgba(5, 5, 5, 0.85) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .header-back {
+        border: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
+      .header-back:hover {
+        border-color: var(--border-focus) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }</style>
         <span id="loading-msg">处理中...</span>
     </div>
 
