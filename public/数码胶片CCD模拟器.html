@@ -2222,6 +2222,16 @@ const FILTERS = [
 ];
 
 // ── 动态加载自定义 LUT / XMP 预设 ─────────────────────────────────
+function decodeBase64ToFloatArray(base64Str) {
+  const binaryString = atob(base64Str);
+  const len = binaryString.length;
+  const arr = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    arr[i] = binaryString.charCodeAt(i) / 255;
+  }
+  return arr;
+}
+
 if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
   window.CUSTOM_PRESETS.forEach(p => {
     const filterObj = {
@@ -2229,7 +2239,7 @@ if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
       name: p.name,
       year: p.type === 'cube' ? 'LUT' : 'XMP',
       tag: p.type === 'cube' ? 'LUT_3D' : 'XMP_PRESET',
-      description: p.type === 'cube' ? `自定义 3D LUT: ${p.name}` : `自定义 Lightroom 预设: ${p.name}`,
+      description: p.type === 'cube' ? `3D LUT 胶片预设: ${p.name}` : `Lightroom 预设: ${p.name}`,
       accentColor: p.type === 'cube' ? '#ec4899' : '#06b6d4',
       params: p.type === 'xmp' ? p.params : {
         brightness: 0, contrast: 1.0, saturation: 1.0, warmth: 0, tint: 0,
@@ -2239,12 +2249,11 @@ if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
         baseLightLeak: 0.3, baseImperfections: 0.2,
         baseFlashFlare: 0, flashFlarePos: 'topright',
       },
-      lut: p.type === 'cube' ? { size: p.size, data: p.data } : null
+      lut: p.type === 'cube' ? { size: p.size, data: decodeBase64ToFloatArray(p.data) } : null
     };
     FILTERS.push(filterObj);
   });
 }
-
 
 /* ── processor.js ──────────────────────────────────────────── */
 // DigiCamFX — Image Processing Engine
