@@ -2421,49 +2421,6 @@ if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
   });
 }
 
-if (window.VSCO_FILM_02_PRESETS && Array.isArray(window.VSCO_FILM_02_PRESETS)) {
-  window.VSCO_FILM_02_PRESETS.forEach(p => {
-    // Pre-calculate curves
-    const curveMasterLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveMaster);
-    const curveRedLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveRed);
-    const curveGreenLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveGreen);
-    const curveBlueLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveBlue);
-
-    const filterObj = {
-      id: p.id,
-      name: p.name.replace(/^S\s*-\s*/i, ''),
-      year: 'VSCO',
-      tag: 'FILM_02',
-      description: `经典胶片模拟: ${p.name.replace(/^S\s*-\s*/i, '')}`,
-      accentColor: '#FF2442',
-      params: {
-        brightness: p.params.brightness,
-        contrast: p.params.contrast,
-        saturation: p.params.saturation,
-        warmth: 0,
-        tint: 0,
-        shadowTint: { r:0, g:0, b:0 },
-        highlightTint: { r:0, g:0, b:0 },
-        baseNoise: p.params.grainAmount || 30,
-        baseChromaticAberration: 1.5,
-        baseVignette: 0.50,
-        baseBloom: 0.35,
-        bloomThreshold: 195,
-        baseJpegArtifacts: 0.4,
-        baseLightLeak: 0.3,
-        baseImperfections: 0.2,
-        baseFlashFlare: 0,
-        flashFlarePos: 'topright',
-        // Curves LUTs
-        curveMasterLUT,
-        curveRedLUT,
-        curveGreenLUT,
-        curveBlueLUT
-      }
-    };
-    FILTERS.push(filterObj);
-  });
-}
 
 /* ── processor.js ──────────────────────────────────────────── */
 // DigiCamFX — Image Processing Engine
@@ -3697,6 +3654,50 @@ class DigiCamProcessor {
   
 
 
+}
+
+if (window.VSCO_FILM_02_PRESETS && Array.isArray(window.VSCO_FILM_02_PRESETS)) {
+  window.VSCO_FILM_02_PRESETS.forEach(p => {
+    // Pre-calculate curves
+    const curveMasterLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveMaster);
+    const curveRedLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveRed);
+    const curveGreenLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveGreen);
+    const curveBlueLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveBlue);
+
+    const filterObj = {
+      id: p.id,
+      name: p.name.replace(/^S\s*-\s*/i, ''),
+      year: 'VSCO',
+      tag: 'FILM_02',
+      description: `经典胶片模拟: ${p.name.replace(/^S\s*-\s*/i, '')}`,
+      accentColor: '#FF2442',
+      params: {
+        brightness: p.params.brightness,
+        contrast: p.params.contrast,
+        saturation: p.params.saturation,
+        warmth: 0,
+        tint: 0,
+        shadowTint: { r:0, g:0, b:0 },
+        highlightTint: { r:0, g:0, b:0 },
+        baseNoise: p.params.grainAmount || 30,
+        baseChromaticAberration: 1.5,
+        baseVignette: 0.50,
+        baseBloom: 0.35,
+        bloomThreshold: 195,
+        baseJpegArtifacts: 0.4,
+        baseLightLeak: 0.3,
+        baseImperfections: 0.2,
+        baseFlashFlare: 0,
+        flashFlarePos: 'topright',
+        // Curves LUTs
+        curveMasterLUT,
+        curveRedLUT,
+        curveGreenLUT,
+        curveBlueLUT
+      }
+    };
+    FILTERS.push(filterObj);
+  });
 }
 
 /* ── app.js ────────────────────────────────────────────────── */
