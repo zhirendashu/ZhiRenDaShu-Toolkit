@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -64,7 +64,7 @@
   --dur: 200ms;
 
   /* 布局 */
-  --sidebar-w:  210px;
+  --sidebar-w:  240px;
   --controls-w: 272px;
   --topbar-h:   52px;
   --exportbar-h: 58px;
@@ -253,13 +253,36 @@ input, select { font: inherit; }
 .camera-item:hover .camera-swatch {
   box-shadow: 0 0 8px currentColor;
 }
-.camera-item-info { display: flex; flex-direction: column; min-width: 0; }
+.camera-item-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .camera-item-name {
-  font-size: 0.78rem; font-weight: 500; color: var(--text-1);
+  font-size: 0.8rem; font-weight: 500; color: var(--text-1);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.25;
 }
 .camera-item-year {
-  font-family: var(--mono); font-size: 0.58rem; color: var(--text-3);
+  font-family: var(--mono); font-size: 0.6rem; color: var(--text-3);
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+/* 分组标题样式 */
+.preset-group-header {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  text-transform: uppercase;
+  padding: var(--s2) var(--s3);
+  margin-top: var(--s3);
+  opacity: 0.85;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: var(--s1);
+  display: flex;
+  align-items: center;
+}
+.preset-group-header:first-of-type {
+  margin-top: var(--s1);
 }
 
 /* RAW 纯净模式特殊样式 */
@@ -1905,7 +1928,6 @@ input, select { font: inherit; }
 
 <!-- Scripts -->
 <script src="LUT/lut_data.js"></script>
-<script src="vsco-film-02-presets.js"></script>
 
 
 <script>
@@ -2405,6 +2427,7 @@ if (window.CUSTOM_PRESETS && Array.isArray(window.CUSTOM_PRESETS)) {
       name: p.name,
       year: p.type === 'cube' ? 'LUT' : 'XMP',
       tag: p.type === 'cube' ? 'LUT_3D' : 'XMP_PRESET',
+      group: 'custom',
       description: p.type === 'cube' ? `3D LUT 胶片预设: ${p.name}` : `Lightroom 预设: ${p.name}`,
       accentColor: p.type === 'cube' ? '#ec4899' : '#06b6d4',
       params: p.type === 'xmp' ? { ...p.params, lut: null } : {
@@ -3656,49 +3679,7 @@ class DigiCamProcessor {
 
 }
 
-if (window.VSCO_FILM_02_PRESETS && Array.isArray(window.VSCO_FILM_02_PRESETS)) {
-  window.VSCO_FILM_02_PRESETS.forEach(p => {
-    // Pre-calculate curves
-    const curveMasterLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveMaster);
-    const curveRedLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveRed);
-    const curveGreenLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveGreen);
-    const curveBlueLUT = DigiCamProcessor.precomputeCurveLUT(p.params.curveBlue);
-
-    const filterObj = {
-      id: p.id,
-      name: p.name.replace(/^S\s*-\s*/i, ''),
-      year: 'VSCO',
-      tag: 'FILM_02',
-      description: `经典胶片模拟: ${p.name.replace(/^S\s*-\s*/i, '')}`,
-      accentColor: '#FF2442',
-      params: {
-        brightness: p.params.brightness,
-        contrast: p.params.contrast,
-        saturation: p.params.saturation,
-        warmth: 0,
-        tint: 0,
-        shadowTint: { r:0, g:0, b:0 },
-        highlightTint: { r:0, g:0, b:0 },
-        baseNoise: p.params.grainAmount || 30,
-        baseChromaticAberration: 1.5,
-        baseVignette: 0.50,
-        baseBloom: 0.35,
-        bloomThreshold: 195,
-        baseJpegArtifacts: 0.4,
-        baseLightLeak: 0.3,
-        baseImperfections: 0.2,
-        baseFlashFlare: 0,
-        flashFlarePos: 'topright',
-        // Curves LUTs
-        curveMasterLUT,
-        curveRedLUT,
-        curveGreenLUT,
-        curveBlueLUT
-      }
-    };
-    FILTERS.push(filterObj);
-  });
-}
+// VSCO presets disabled to improve page load speed
 
 /* ── app.js ────────────────────────────────────────────────── */
 /**
@@ -3841,25 +3822,67 @@ function init() {
 // ═══════════════════════════════════════════════════════════════
 //  相机列表
 // ═══════════════════════════════════════════════════════════════
+function getPresetGroup(f) {
+  if (f.group) return f.group;
+  const id = f.id;
+  if (id === 'raw_pure' || id === 'lucidbloom_vibe' || id === 'cmyk_print' || id === 'y2k_neon' || id === 'soft_pink' || id === 'dark_academia') {
+    return 'custom';
+  }
+  if (id.startsWith('wkw_') || id === 'disposable' || id === 'vhs' || id === 'polaroid') {
+    return 'film';
+  }
+  return 'camera';
+}
+
 function renderCameraList() {
   const list = $('camera-list');
   list.innerHTML = '';
+
+  const groups = [
+    { key: 'camera', title: '相机机型 (CCD/Digital)' },
+    { key: 'film', title: '胶卷滤镜 (Film/WKW)' },
+    { key: 'custom', title: '自制风格 (Vibe/LUT)' }
+  ];
+
+  const groupedPresets = {
+    camera: [],
+    film: [],
+    custom: []
+  };
+
   FILTERS.forEach(f => {
-    const item = el('button', {
-      class: 'camera-item' + (f.id === State.get().filterId ? ' active' : ''),
-      'data-id': f.id,
-      role: 'radio',
-      'aria-checked': f.id === State.get().filterId ? 'true' : 'false',
-    });
-    const dot  = el('span', { class: 'camera-swatch', style: `background:${f.accentColor}` });
-    const info = el('div',  { class: 'camera-item-info' });
-    info.append(
-      el('span', { class: 'camera-item-name' }, [f.name]),
-      el('span', { class: 'camera-item-year' }, [f.year])
-    );
-    item.append(dot, info);
-    item.addEventListener('click', () => selectFilter(f.id));
-    list.appendChild(item);
+    const groupKey = f.group || getPresetGroup(f);
+    if (groupedPresets[groupKey]) {
+      groupedPresets[groupKey].push(f);
+    } else {
+      groupedPresets.custom.push(f);
+    }
+  });
+
+  groups.forEach(g => {
+    const items = groupedPresets[g.key];
+    if (items && items.length > 0) {
+      const header = el('div', { class: 'preset-group-header' }, [g.title]);
+      list.appendChild(header);
+
+      items.forEach(f => {
+        const item = el('button', {
+          class: 'camera-item' + (f.id === State.get().filterId ? ' active' : ''),
+          'data-id': f.id,
+          role: 'radio',
+          'aria-checked': f.id === State.get().filterId ? 'true' : 'false',
+        });
+        const dot  = el('span', { class: 'camera-swatch', style: `background:${f.accentColor}` });
+        const info = el('div',  { class: 'camera-item-info' });
+        info.append(
+          el('span', { class: 'camera-item-name' }, [f.name]),
+          el('span', { class: 'camera-item-year' }, [f.year])
+        );
+        item.append(dot, info);
+        item.addEventListener('click', () => selectFilter(f.id));
+        list.appendChild(item);
+      });
+    }
   });
 }
 
