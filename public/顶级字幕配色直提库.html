@@ -403,9 +403,95 @@
       .header-back:hover {
         border-color: var(--border-focus) !important;
         background: rgba(255, 255, 255, 0.06) !important;
-      }</style>
+      }
+/* ═══ 全局品牌导航条 ═══════════════════════════════════════════ */
+.zt-global-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 9998;
+  pointer-events: none;
+}
+.zt-nav-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, #FF2442 0%, #F6D365 50%, #FF2442 100%);
+  background-size: 200% 100%;
+  animation: zt-stripe-move 4s linear infinite;
+}
+@keyframes zt-stripe-move {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+.zt-nav-body {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  height: 0; overflow: hidden; opacity: 0;
+  background: rgba(5,5,5,0.97);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid #1a1a1a;
+  transition: height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+  pointer-events: auto;
+}
+.zt-global-nav:hover .zt-nav-body { height: 44px; opacity: 1; }
+.zt-nav-home {
+  display: flex; align-items: center; gap: 5px;
+  color: #8a8a8a; text-decoration: none;
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-size: 0.75rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 100px;
+  border: 1px solid #1e1e1e;
+  background: rgba(255,255,255,0.02);
+  white-space: nowrap; flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.zt-nav-home:hover { color: #fff; border-color: #333; background: rgba(255,255,255,0.06); }
+.zt-nav-home svg { stroke: currentColor; flex-shrink: 0; }
+.zt-nav-sep { width: 1px; height: 20px; background: #1e1e1e; flex-shrink: 0; }
+.zt-nav-links {
+  display: flex; align-items: center; gap: 2px;
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+}
+.zt-nav-links::-webkit-scrollbar { display: none; }
+.zt-nav-link {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 100px;
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-size: 0.7rem; font-weight: 500;
+  color: #555; text-decoration: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+.zt-nav-link:hover { color: #ccc; border-color: #2a2a2a; background: rgba(255,255,255,0.04); }
+.zt-nav-current {
+  color: #FF2442 !important; border-color: rgba(255,36,66,0.25) !important;
+  background: rgba(255,36,66,0.06) !important;
+}
+.zt-nav-brand {
+  font-family: 'Outfit', sans-serif; font-size: 0.62rem; font-weight: 700;
+  color: #2a2a2a; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0;
+  text-transform: uppercase;
+}</style>
 </head>
 <body>
+<!-- 全局品牌导航条 -->
+<nav class="zt-global-nav" aria-label="工具导航">
+  <div class="zt-nav-stripe"></div>
+  <div class="zt-nav-body">
+    <a href="index.html" class="zt-nav-home" title="返回工具箱首页">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>工具箱</span>
+    </a>
+    <div class="zt-nav-sep"></div>
+    <div class="zt-nav-links">
+      <a href="封面比例转换工具.html" class="zt-nav-link">比例转换</a>
+      <a href="小红书拼图工具.html" class="zt-nav-link">拼图大师</a>
+      <a href="封面精修大师.html" class="zt-nav-link">精修大师</a>
+      <a href="数码胶片CCD模拟器.html" class="zt-nav-link">CCD滤镜</a>
+      <a href="批量水印工坊.html" class="zt-nav-link">水印工坊</a>
+    </div>
+    <div class="zt-nav-brand">植人大树 Studio</div>
+  </div>
+</nav>
 
   <!-- 动态背景光斑 -->
   <div class="bg-blobs" aria-hidden="true">
