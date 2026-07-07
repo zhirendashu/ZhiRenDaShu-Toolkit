@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
@@ -45,12 +45,6 @@
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    $m = $args[0]
-    if ($m.Groups[1].Value -notmatch 'padding-top') {
-        $m.Groups[1].Value + "            padding-top: 3px;`r`n" + $m.Groups[2].Value
-    } else { $m.Value }
-
 
         header {
             padding: 14px 24px;
@@ -390,6 +384,72 @@
             backdrop-filter: blur(20px); font-size: 0.88rem; font-weight: 600;
             display: none; align-items: center; gap: 10px;
         }
+
+/* ═══ 水印风格预设系统 ═══════════════════════════════════════ */
+.preset-save-row { display: flex; gap: 8px; align-items: center; }
+.preset-name-input {
+    flex: 1; padding: 7px 10px;
+    background: rgba(0,0,0,0.25); border: 1px solid var(--border-glass);
+    border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;
+    transition: border-color 0.2s ease; font-family: var(--font-display);
+    width: auto;
+}
+.preset-name-input:focus { border-color: var(--accent-primary); }
+.btn-save-preset {
+    padding: 7px 13px;
+    background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 8px; color: #a5b4fc;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    transition: all 0.2s ease; font-family: var(--font-display);
+}
+.btn-save-preset:hover { background: rgba(99,102,241,0.28); color: #fff; }
+.preset-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 210px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+.preset-list::-webkit-scrollbar { width: 3px; }
+.preset-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.preset-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.025); border: 1px solid var(--border-glass);
+    border-radius: 8px; transition: all 0.18s ease;
+}
+.preset-item:hover { background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.12); }
+.preset-color-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.18);
+}
+.preset-item-name {
+    flex: 1; font-size: 0.8rem; font-weight: 500; color: var(--text-main);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.preset-item-sub {
+    font-size: 0.66rem; color: var(--text-muted); font-family: monospace;
+    white-space: nowrap;
+}
+.btn-apply-preset {
+    padding: 3px 9px;
+    background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.22);
+    border-radius: 6px; color: #a5b4fc; font-size: 0.7rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s ease; flex-shrink: 0;
+    font-family: var(--font-display);
+}
+.btn-apply-preset:hover { background: rgba(99,102,241,0.26); color: #fff; }
+.btn-del-preset {
+    width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: #3a3a3a; font-size: 14px;
+    cursor: pointer; border-radius: 4px; transition: all 0.15s ease; flex-shrink: 0;
+    line-height: 1;
+}
+.btn-del-preset:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+.preset-empty {
+    text-align: center; padding: 16px;
+    font-size: 0.73rem; color: var(--text-muted);
+    border: 1px dashed rgba(255,255,255,0.07); border-radius: 8px;
+    line-height: 1.5;
+}
     </style>
 </head>
 <body>
@@ -836,6 +896,72 @@
   font-family: 'Outfit', sans-serif; font-size: 0.62rem; font-weight: 700;
   color: #2a2a2a; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0;
   text-transform: uppercase;
+}
+
+/* ═══ 水印风格预设系统 ═══════════════════════════════════════ */
+.preset-save-row { display: flex; gap: 8px; align-items: center; }
+.preset-name-input {
+    flex: 1; padding: 7px 10px;
+    background: rgba(0,0,0,0.25); border: 1px solid var(--border-glass);
+    border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;
+    transition: border-color 0.2s ease; font-family: var(--font-display);
+    width: auto;
+}
+.preset-name-input:focus { border-color: var(--accent-primary); }
+.btn-save-preset {
+    padding: 7px 13px;
+    background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 8px; color: #a5b4fc;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    transition: all 0.2s ease; font-family: var(--font-display);
+}
+.btn-save-preset:hover { background: rgba(99,102,241,0.28); color: #fff; }
+.preset-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 210px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+.preset-list::-webkit-scrollbar { width: 3px; }
+.preset-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.preset-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.025); border: 1px solid var(--border-glass);
+    border-radius: 8px; transition: all 0.18s ease;
+}
+.preset-item:hover { background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.12); }
+.preset-color-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.18);
+}
+.preset-item-name {
+    flex: 1; font-size: 0.8rem; font-weight: 500; color: var(--text-main);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.preset-item-sub {
+    font-size: 0.66rem; color: var(--text-muted); font-family: monospace;
+    white-space: nowrap;
+}
+.btn-apply-preset {
+    padding: 3px 9px;
+    background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.22);
+    border-radius: 6px; color: #a5b4fc; font-size: 0.7rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s ease; flex-shrink: 0;
+    font-family: var(--font-display);
+}
+.btn-apply-preset:hover { background: rgba(99,102,241,0.26); color: #fff; }
+.btn-del-preset {
+    width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: #3a3a3a; font-size: 14px;
+    cursor: pointer; border-radius: 4px; transition: all 0.15s ease; flex-shrink: 0;
+    line-height: 1;
+}
+.btn-del-preset:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+.preset-empty {
+    text-align: center; padding: 16px;
+    font-size: 0.73rem; color: var(--text-muted);
+    border: 1px dashed rgba(255,255,255,0.07); border-radius: 8px;
+    line-height: 1.5;
 }
     </style>
         <span id="loading-msg">处理中...</span>
@@ -1849,5 +1975,77 @@
             restoreConfigFromCache();
         });
     </script>
+<script>
+(function() {
+    var PRESET_KEY = 'zt_wm_presets_v1';
+    function gid(id) { return document.getElementById(id); }
+    function captureSettings() {
+        var v = function(id) { var e=gid(id); return e?e.value:null; };
+        var ck = function(id) { var e=gid(id); return e?e.checked:false; };
+        var ap = document.querySelector('#pos-grid .pos-cell.active');
+        return { text:v('wm-text'), font:v('wm-font'), effect:v('wm-effect'),
+            neonPreset:v('wm-neon-preset'), color:v('wm-color'), shadowBlur:v('wm-shadow-blur'),
+            fontSize:v('wm-font-size'), opacity:v('wm-opacity'), angle:v('wm-angle'),
+            tile:ck('wm-tile'), position:ap?ap.dataset.pos:'BR',
+            offsetX:v('wm-offset-x'), offsetY:v('wm-offset-y'),
+            tileGapX:v('wm-tile-gap-x'), tileGapY:v('wm-tile-gap-y'), savedAt:Date.now() };
+    }
+    function applySettings(s) {
+        var sv = function(id,val) { var e=gid(id); if(e&&val!=null){e.value=val;e.dispatchEvent(new Event('input',{bubbles:true}));} };
+        var sk = function(id,val) { var e=gid(id); if(e){e.checked=val;e.dispatchEvent(new Event('change',{bubbles:true}));} };
+        sv('wm-text',s.text); sv('wm-font',s.font); sv('wm-effect',s.effect);
+        sv('wm-neon-preset',s.neonPreset); sv('wm-color',s.color); sv('wm-shadow-blur',s.shadowBlur);
+        sv('wm-font-size',s.fontSize); sv('wm-opacity',s.opacity); sv('wm-angle',s.angle);
+        sk('wm-tile',s.tile); sv('wm-offset-x',s.offsetX); sv('wm-offset-y',s.offsetY);
+        sv('wm-tile-gap-x',s.tileGapX); sv('wm-tile-gap-y',s.tileGapY);
+        if(s.position) {
+            document.querySelectorAll('#pos-grid .pos-cell').forEach(function(c) {
+                c.classList.toggle('active', c.dataset.pos===s.position);
+                if(c.dataset.pos===s.position) c.click();
+            });
+        }
+    }
+    function loadPresets() { try{return JSON.parse(localStorage.getItem(PRESET_KEY)||'[]');}catch(e){return[];} }
+    function savePresets(p) { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); }
+    function fmtDate(ts) { if(!ts)return''; var d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate(); }
+    function renderPresetList() {
+        var el=gid('wm-preset-list'); if(!el)return;
+        var presets=loadPresets();
+        if(!presets.length){el.innerHTML='<div class="preset-empty">还没有保存的风格<br>调好水印后点「保存」</div>';return;}
+        el.innerHTML='';
+        presets.forEach(function(p,i) {
+            var item=document.createElement('div'); item.className='preset-item';
+            var dot=document.createElement('div'); dot.className='preset-color-dot'; dot.style.background=p.color||'#fff';
+            var name=document.createElement('span'); name.className='preset-item-name'; name.textContent=p.name; name.title=p.text||'';
+            var sub=document.createElement('span'); sub.className='preset-item-sub'; sub.textContent=fmtDate(p.savedAt);
+            var bA=document.createElement('button'); bA.className='btn-apply-preset'; bA.textContent='应用';
+            bA.onclick=function(){ applySettings(p); item.style.borderColor='rgba(99,102,241,0.5)'; setTimeout(function(){item.style.borderColor='';},800); };
+            var bD=document.createElement('button'); bD.className='btn-del-preset'; bD.innerHTML='&times;'; bD.title='删除';
+            bD.onclick=function(){
+                if(!confirm('删除预设「'+p.name+'」？'))return;
+                var ps=loadPresets(); ps.splice(i,1); savePresets(ps); renderPresetList();
+            };
+            item.append(dot,name,sub,bA,bD); el.appendChild(item);
+        });
+    }
+    function initPresetUI() {
+        var bS=gid('btn-save-preset'), nI=gid('preset-name-input');
+        if(!bS||!nI)return;
+        bS.onclick=function(){
+            var name=nI.value.trim(); if(!name){nI.focus();nI.style.borderColor='#f87171';setTimeout(function(){nI.style.borderColor='';},1200);return;}
+            var s=captureSettings(); s.name=name;
+            var ps=loadPresets(); var ei=ps.findIndex(function(x){return x.name===name;});
+            if(ei>=0)ps[ei]=s; else ps.unshift(s);
+            savePresets(ps); nI.value=''; renderPresetList();
+            bS.textContent='✓ 已保存'; bS.style.cssText='background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4);color:#6ee7b7';
+            setTimeout(function(){bS.textContent='✓ 保存';bS.style.cssText='';},1500);
+        };
+        nI.addEventListener('keydown',function(e){if(e.key==='Enter')bS.click();});
+        renderPresetList();
+    }
+    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initPresetUI);}
+    else{setTimeout(initPresetUI,300);}
+})();
+</script>
 </body>
 </html>

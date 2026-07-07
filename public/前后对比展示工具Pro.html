@@ -2639,11 +2639,6 @@ exportStartBtn.addEventListener('click', async () => {
         --sub: #8A8A8A !important;
       }
 
-    $m = $args[0]
-    if ($m.Groups[1].Value -notmatch 'padding-top') {
-        $m.Groups[1].Value + "        padding-top: 3px;`r`n" + $m.Groups[2].Value
-    } else { $m.Value }
-
       body::before {
         content: '';
         position: fixed;

@@ -34,12 +34,6 @@
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        
-
-    $m = $args[0]
-    if ($m.Groups[1].Value -notmatch 'padding-top') {
-        $m.Groups[1].Value + "            padding-top: 3px;`r`n" + $m.Groups[2].Value
-    } else { $m.Value }
 
 
         /* 背景光斑 */
