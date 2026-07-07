@@ -1144,6 +1144,39 @@ input, select { font: inherit; }
   color: var(--gold-light);
 }
 
+/* ── 九宫格位置选择器 ──────────────────────────────────── */
+.ts-pos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 100%;
+  margin-top: 6px;
+}
+.ts-pos-btn {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-3);
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.55rem; color: var(--text-3);
+}
+.ts-pos-btn:hover { border-color: var(--border-3); color: var(--text-1); background: var(--bg-4); }
+.ts-pos-btn.active {
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+  color: var(--gold-light);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.ts-sig-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.ts-sig-label {
+  font-size: 0.62rem; color: var(--text-2); flex-shrink: 0; font-family: var(--mono);
+}
+
 /* ── LUT 胶片色彩芯片网格 ───────────────────────────────── */
 .lut-chip-grid {
   display: flex;
@@ -1546,20 +1579,46 @@ input, select { font: inherit; }
 
       <!-- 时间戳 -->
       <div class="ctrl-section">
-        <div class="ctrl-section-title">时间戳</div>
+        <div class="ctrl-section-title">时间戳 / 个人签名</div>
 
         <div class="ctrl-toggle-row">
-          <label class="ctrl-toggle-label" for="toggle-ts-chk">显示日期水印</label>
-          <label class="toggle-pill" aria-label="显示日期水印">
+          <label class="ctrl-toggle-label" for="toggle-ts-chk">显示水印</label>
+          <label class="toggle-pill" aria-label="显示水印">
             <input type="checkbox" id="toggle-ts-chk" checked />
             <span class="toggle-track"></span>
             <span class="toggle-thumb"></span>
           </label>
         </div>
 
+        <!-- 水印内容模式 -->
+        <div class="ctrl-label" style="margin-bottom:6px;margin-top:10px">
+          <span>水印内容</span>
+        </div>
+        <div class="ts-mode-pills" id="ts-text-mode-pills" role="radiogroup" aria-label="水印内容模式">
+          <button class="ts-pill active" data-textmode="date" aria-pressed="true">📅 日期戳</button>
+          <button class="ts-pill" data-textmode="sig" aria-pressed="false">✍ 个人签名</button>
+          <button class="ts-pill" data-textmode="both" aria-pressed="false">🔗 日期+签名</button>
+        </div>
+
+        <!-- 日期输入（date模式/both模式显示） -->
+        <div id="ts-date-row" style="margin-top:8px">
+          <input type="date" id="date-input" class="ctrl-date-input"
+                 aria-label="水印日期" style="width:100%" />
+        </div>
+
+        <!-- 签名文字输入（sig模式/both模式显示） -->
+        <div id="ts-sig-row" style="margin-top:6px; display:none">
+          <input type="text" id="ts-sig-input" class="ctrl-text-input"
+                 placeholder="输入签名文字，支持中文，如：植人大树"
+                 value="" style="width:100%; font-size:0.8rem;" />
+        </div>
+
+        <!-- 品牌附加文字（原有，始终显示） -->
+        <input type="text" id="ts-brand-input" class="ctrl-text-input" placeholder="附加文字 (如: CYBER-SHOT, ©2025)" value="" style="margin-top: 6px; width: 100%;" />
+
         <!-- 时间戳样式 -->
-        <div class="ctrl-label" style="margin-bottom:8px;margin-top:12px">
-          <span>水印样式</span>
+        <div class="ctrl-label" style="margin-bottom:6px;margin-top:12px">
+          <span>发光样式</span>
         </div>
         <div class="ts-mode-pills" id="ts-mode-pills" role="radiogroup" aria-label="时间戳样式">
           <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">经典橙</button>
@@ -1572,9 +1631,21 @@ input, select { font: inherit; }
           <button class="ts-pill" data-tsmode="gold" aria-pressed="false">香槟金</button>
         </div>
 
-        <input type="date" id="date-input" class="ctrl-date-input"
-               value="2005-10-24" aria-label="水印日期" style="margin-top:10px" />
-        <input type="text" id="ts-brand-input" class="ctrl-text-input" placeholder="水印文字 (如: COOLPIX, CYBER-SHOT)" value="" style="margin-top: 6px; width: 100%;" />
+        <!-- 九宫格位置选择器 -->
+        <div class="ctrl-label" style="margin-bottom:4px;margin-top:12px">
+          <span>水印位置</span>
+        </div>
+        <div class="ts-pos-grid" id="ts-pos-grid" role="radiogroup" aria-label="水印位置">
+          <button class="ts-pos-btn" data-pos="top-left"     aria-label="左上" title="左上">↖</button>
+          <button class="ts-pos-btn" data-pos="top-center"   aria-label="顶部居中" title="顶部居中">↑</button>
+          <button class="ts-pos-btn" data-pos="top-right"    aria-label="右上" title="右上">↗</button>
+          <button class="ts-pos-btn" data-pos="mid-left"     aria-label="左侧居中" title="左侧居中">←</button>
+          <button class="ts-pos-btn" data-pos="center"       aria-label="正中" title="正中">⊙</button>
+          <button class="ts-pos-btn" data-pos="mid-right"    aria-label="右侧居中" title="右侧居中">→</button>
+          <button class="ts-pos-btn" data-pos="bot-left"     aria-label="左下" title="左下">↙</button>
+          <button class="ts-pos-btn" data-pos="bot-center"   aria-label="底部居中" title="底部居中">↓</button>
+          <button class="ts-pos-btn active" data-pos="bot-right" aria-label="右下（默认）" title="右下（默认）">↘</button>
+        </div>
       </div>
 
 
@@ -2763,12 +2834,14 @@ class DigiCamProcessor {
       DigiCamProcessor._filmImperfections(ctx, w, h, impStr, seed);
     }
 
-    // ── PASS 5: Timestamp ─────────────────────────────────────────
-    if (stampParams && stampParams.enabled && stampParams.date) {
-      const fullText = stampParams.brand 
-        ? `${stampParams.date}  ${stampParams.brand}`
-        : stampParams.date;
-      DigiCamProcessor._timestamp(ctx, w, h, fullText, stampParams.mode || 'classic', stampParams.color || '#f97316');
+    // ── PASS 5: Timestamp / Signature ────────────────────────────
+    if (stampParams && stampParams.enabled && stampParams.text) {
+      DigiCamProcessor._timestamp(
+        ctx, w, h, stampParams.text,
+        stampParams.mode || 'classic',
+        stampParams.color || '#f97316',
+        stampParams.pos || 'bot-right'
+      );
     }
 
     // ── PASS 5.5: Flash Flare (Huji-style) ───────────────────────
@@ -2900,54 +2973,84 @@ class DigiCamProcessor {
   }
 
   // ── Timestamp dispatcher ──────────────────────────────────────
-  static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316') {
+  /**
+   * 计算水印在画布上的 (x, y) 坐标
+   * pos: 'top-left'|'top-center'|'top-right'|'mid-left'|'center'|'mid-right'|'bot-left'|'bot-center'|'bot-right'
+   */
+  static _stampPosition(w, h, pos, fSize, pad) {
+    let x, y, align, baseline;
+    switch (pos) {
+      case 'top-left':    x=pad;     y=pad+fSize; align='left';   baseline='top';    break;
+      case 'top-center':  x=w/2;     y=pad+fSize; align='center'; baseline='top';    break;
+      case 'top-right':   x=w-pad;   y=pad+fSize; align='right';  baseline='top';    break;
+      case 'mid-left':    x=pad;     y=h/2;       align='left';   baseline='middle'; break;
+      case 'center':      x=w/2;     y=h/2;       align='center'; baseline='middle'; break;
+      case 'mid-right':   x=w-pad;   y=h/2;       align='right';  baseline='middle'; break;
+      case 'bot-left':    x=pad;     y=h-pad;     align='left';   baseline='bottom'; break;
+      case 'bot-center':  x=w/2;     y=h-pad;     align='center'; baseline='bottom'; break;
+      case 'bot-right':
+      default:            x=w-pad;   y=h-pad;     align='right';  baseline='bottom'; break;
+    }
+    return { x, y, align, baseline };
+  }
+
+  static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316', pos = 'bot-right') {
     switch (mode) {
-      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color);
-      case 'lcd_blue':   return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color);
-      case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color);
-      case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color);
-      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color);
-      case 'red_led':    return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false);
-      case 'gold':       return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, true);
-      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false);
+      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos);
+      case 'lcd_blue':   return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos);
+      case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color, pos);
+      case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color, pos);
+      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color, pos);
+      case 'red_led':    return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos);
+      case 'gold':       return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, true, pos);
+      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos);
     }
   }
 
-  static _timestampClassic(ctx, w, h, dateStr, color, isGold = false) {
+  static _timestampClassic(ctx, w, h, dateStr, color, isGold = false, pos = 'bot-right') {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(14, Math.round(30 * scale));
     const pad   = Math.max(12, Math.round(22 * scale));
-    ctx.font = isGold ? `bold ${fSize}px "Georgia", serif` : `bold ${fSize}px "Courier New", Courier, monospace`;
-    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    // 中文签名用系统中文字体，纯ASCII用等宽字体
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
+    ctx.font = isGold
+      ? `bold ${fSize}px "Georgia", serif`
+      : hasCJK
+        ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif`
+        : `bold ${fSize}px "Courier New", Courier, monospace`;
     
-    // Draw neon fluorescent background glow using the custom color
+    const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
+    ctx.textAlign = align; ctx.textBaseline = baseline;
+    
     ctx.shadowColor = color; ctx.shadowBlur = fSize * 0.9;
     ctx.fillStyle = color;
-    ctx.fillText(dateStr, w - pad, h - pad);
+    ctx.fillText(dateStr, x, y);
     
-    // Draw bright inner core highlight (semi-transparent white) to create the fluorescent bulb look
     ctx.shadowBlur = fSize * 0.25; 
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillText(dateStr, w - pad, h - pad);
+    ctx.fillText(dateStr, x, y);
     ctx.shadowBlur = 0;
   }
 
-  static _timestampLCD(ctx, w, h, dateStr, color) {
+  static _timestampLCD(ctx, w, h, dateStr, color, pos = 'bot-right') {
     const scale = Math.min(1, w / 800);
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
+    ctx.font = hasCJK
+      ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif`
+      : `bold ${fSize}px "Courier New", Courier, monospace`;
     
-    ctx.font = `bold ${fSize}px "Courier New", Courier, monospace`;
-    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
+    ctx.textAlign = align; ctx.textBaseline = baseline;
     
-    // Glowing neon look in selected color
     ctx.shadowColor = color; ctx.shadowBlur = fSize * 0.8;
     ctx.fillStyle = color;
-    ctx.fillText(dateStr, w - pad, h - pad);
+    ctx.fillText(dateStr, x, y);
     
     ctx.shadowBlur = fSize * 0.22;
     ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.fillText(dateStr, w - pad, h - pad);
+    ctx.fillText(dateStr, x, y);
     ctx.shadowBlur = 0;
   }
 
@@ -3739,8 +3842,11 @@ const State = (() => {
     timestampOn:   true,
     timestampDate: '2005-10-24',
     tsBrand:       '',
+    tsSig:         '',         // 个人签名文字
+    tsTextMode:    'date',     // 'date' | 'sig' | 'both'
     tsMode:        'classic',
     tsColor:       '#f97316',
+    tsPos:         'bot-right', // 九宫格位置
     halftoneMode:  'cmyk',
 
     // 胶片效果
@@ -3798,6 +3904,8 @@ function init() {
   bindViewToggle();
   bindTimestampMode();
   bindTimestampColor();
+  bindTextMode();
+  bindPositionGrid();
   bindHalftoneMode();
   bindFilmEffects();
   bindUploadZone();
@@ -3805,6 +3913,7 @@ function init() {
   bindButtons();
   bindKeyboard();
   bindMobileControls();
+
 
   const ro = new ResizeObserver(() => {
     if (State.get().processedCanvas) renderCompare();
@@ -4237,12 +4346,23 @@ async function processAndRender() {
     await new Promise(r => setTimeout(r, 8)); // 让 UI 更新
 
     const filter = FILTERS.find(f => f.id === s.filterId);
+    // 水印文字内容：根据模式拼接
+    let stampText = '';
+    if (s.tsTextMode === 'date' || s.tsTextMode === 'both') {
+      stampText = formatDate(s.timestampDate);
+    }
+    if (s.tsTextMode === 'sig' || s.tsTextMode === 'both') {
+      const sig = (s.tsSig || '').trim();
+      if (sig) stampText = stampText ? `${stampText}  ${sig}` : sig;
+    }
+    if (s.tsBrand) stampText = stampText ? `${stampText}  ${s.tsBrand}` : s.tsBrand;
+
     const stamp = {
       enabled: s.timestampOn,
-      date:    formatDate(s.timestampDate),
-      brand:   s.tsBrand || '',
+      text:    stampText,
       mode:    s.tsMode,
       color:   s.tsColor || '#f97316',
+      pos:     s.tsPos || 'bot-right',
     };
     const effectParams = {
       filmBorder: s.filmBorder,
@@ -4628,7 +4748,65 @@ function bindTimestampMode() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  滑块
+//  水印内容模式切换（日期 / 签名 / 两者）
+// ═══════════════════════════════════════════════════════════════
+function bindTextMode() {
+  const dateRow = $('ts-date-row');
+  const sigRow  = $('ts-sig-row');
+  const sigInput = $('ts-sig-input');
+
+  function applyTextMode(mode) {
+    State.patch('tsTextMode', mode);
+    // 显示/隐藏输入区域
+    if (dateRow) dateRow.style.display = (mode === 'sig') ? 'none' : 'block';
+    if (sigRow)  sigRow.style.display  = (mode === 'date') ? 'none' : 'block';
+    // 更新 pill 激活状态
+    document.querySelectorAll('#ts-text-mode-pills .ts-pill').forEach(p => {
+      const active = p.dataset.textmode === mode;
+      p.classList.toggle('active', active);
+      p.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (State.get().srcImageData) scheduleProcess();
+  }
+
+  document.querySelectorAll('#ts-text-mode-pills .ts-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const mode = pill.dataset.textmode;
+      if (mode) applyTextMode(mode);
+    });
+  });
+
+  // 签名文字输入
+  if (sigInput) {
+    sigInput.addEventListener('input', () => {
+      State.patch('tsSig', sigInput.value);
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  }
+
+  // 初始化默认状态
+  applyTextMode('date');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  九宫格位置选择器
+// ═══════════════════════════════════════════════════════════════
+function bindPositionGrid() {
+  document.querySelectorAll('#ts-pos-grid .ts-pos-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pos = btn.dataset.pos;
+      if (!pos) return;
+      State.patch('tsPos', pos);
+      // 更新激活状态
+      document.querySelectorAll('#ts-pos-grid .ts-pos-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.pos === pos);
+      });
+      if (State.get().srcImageData) scheduleProcess();
+    });
+  });
+}
+
+
 // ═══════════════════════════════════════════════════════════════
 function bindSliders() {
   const pairs = [
