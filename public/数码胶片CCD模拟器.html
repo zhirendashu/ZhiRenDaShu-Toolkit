@@ -245,13 +245,37 @@ input, select { font: inherit; }
   border-color: var(--gold-border);
 }
 .camera-item.active::before { transform: scaleY(1); }
-.camera-swatch {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  transition: box-shadow var(--dur);
+
+/* ── 预设缩略图 ───────────────────────────────────── */
+.camera-thumb {
+  width: 44px; height: 44px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  background: var(--bg-3);
+  image-rendering: optimizeSpeed;
+  display: block;
 }
-.camera-item.active .camera-swatch,
-.camera-item:hover .camera-swatch {
-  box-shadow: 0 0 8px currentColor;
+.camera-item:hover .camera-thumb { border-color: var(--border-2); }
+.camera-item.active .camera-thumb {
+  border-color: var(--gold-border);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+/* 占位展示加载中状态（长条形动画） */
+.camera-thumb.thumb-loading {
+  background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
+  background-size: 200% 100%;
+  animation: thumb-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes thumb-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* 对应的色点旧元素保留兼容 */
+.camera-swatch {
+  display: none; /* 用 canvas 替代后隐藏旧色点 */
 }
 .camera-item-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .camera-item-name {
@@ -4040,23 +4064,16 @@ function renderCameraList() {
 
   const groups = [
     { key: 'camera', title: '相机机型 (CCD/Digital)' },
-    { key: 'film', title: '胶卷滤镜 (Film/WKW)' },
+    { key: 'film',   title: '胶卷滤镜 (Film/WKW)' },
     { key: 'custom', title: '自制风格 (Vibe/LUT)' }
   ];
 
-  const groupedPresets = {
-    camera: [],
-    film: [],
-    custom: []
-  };
+  const groupedPresets = { camera: [], film: [], custom: [] };
 
   FILTERS.forEach(f => {
     const groupKey = f.group || getPresetGroup(f);
-    if (groupedPresets[groupKey]) {
-      groupedPresets[groupKey].push(f);
-    } else {
-      groupedPresets.custom.push(f);
-    }
+    if (groupedPresets[groupKey]) groupedPresets[groupKey].push(f);
+    else groupedPresets.custom.push(f);
   });
 
   groups.forEach(g => {
@@ -4072,19 +4089,31 @@ function renderCameraList() {
           role: 'radio',
           'aria-checked': f.id === State.get().filterId ? 'true' : 'false',
         });
-        const dot  = el('span', { class: 'camera-swatch', style: `background:${f.accentColor}` });
-        const info = el('div',  { class: 'camera-item-info' });
+
+        // 缩略图 canvas（替代旧色点）
+        const thumb = document.createElement('canvas');
+        thumb.width  = 44;
+        thumb.height = 44;
+        thumb.className = 'camera-thumb thumb-loading';
+        thumb.dataset.filterId = f.id;
+        thumb.title = f.name;
+
+        const info = el('div', { class: 'camera-item-info' });
         info.append(
           el('span', { class: 'camera-item-name' }, [f.name]),
           el('span', { class: 'camera-item-year' }, [f.year])
         );
-        item.append(dot, info);
+        item.append(thumb, info);
         item.addEventListener('click', () => selectFilter(f.id));
         list.appendChild(item);
       });
     }
   });
+
+  // 初始化时先用测试场景渲染占位缩略图
+  generateSidebarThumbnails(null);
 }
+
 
 function renderMobileCameraStrip() {
   const strip = $('mobile-camera-strip');
@@ -4100,6 +4129,72 @@ function renderMobileCameraStrip() {
     strip.appendChild(pill);
   });
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  预设实时缩略图生成器
+// ═══════════════════════════════════════════════════════════════
+/**
+ * 异步生成所有预设的 44x44 色调缩略图。
+ * srcData: 真实上传图片的 ImageData，传 null 时使用内置测试场景。
+ */
+async function generateSidebarThumbnails(srcData) {
+  const SIZE = 44;
+  // 准备源图：将原图小中心裁剪到 44x44
+  let thumbSrc;
+  if (srcData) {
+    // 从真实图片中取中心正方边裁剪
+    const sw = srcData.width, sh = srcData.height;
+    const side = Math.min(sw, sh);
+    const sx = Math.floor((sw - side) / 2);
+    const sy = Math.floor((sh - side) / 2);
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = SIZE;
+    const tc = tmp.getContext('2d');
+    const orig = dataToCanvas(srcData);
+    tc.drawImage(orig, sx, sy, side, side, 0, 0, SIZE, SIZE);
+    thumbSrc = tc.getImageData(0, 0, SIZE, SIZE);
+  } else {
+    // 使用内置测试场景
+    const scene = DigiCamProcessor.generateTestScene(SIZE * 2, SIZE * 2);
+    const sc = scene.getContext('2d');
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = SIZE;
+    tmp.getContext('2d').drawImage(scene, 0, 0, SIZE * 2, SIZE * 2, 0, 0, SIZE, SIZE);
+    thumbSrc = tmp.getContext('2d').getImageData(0, 0, SIZE, SIZE);
+  }
+
+  const thumbCanvases = document.querySelectorAll('.camera-thumb[data-filter-id]');
+
+  // 分批处理，每批 5 个，避免阻塞主线程
+  const batchSize = 5;
+  const canvasArr = Array.from(thumbCanvases);
+
+  for (let i = 0; i < canvasArr.length; i += batchSize) {
+    const batch = canvasArr.slice(i, i + batchSize);
+    batch.forEach(canvas => {
+      const filterId = canvas.dataset.filterId;
+      const filter = FILTERS.find(f => f.id === filterId);
+      if (!filter) return;
+
+      // 运行滤镜处理（无水印、无胶片边框）
+      const processed = DigiCamProcessor.process(
+        thumbSrc,
+        filter.params,
+        { intensity: 85, grain: 45, chroma: 50, vignette: 55, bloom: 50,
+          artifacts: 20, lightleak: 0, imperfections: 0, scanlines: 0, crtlines: 0, halftone: 0, warmth: 50 },
+        { enabled: false, text: '' },  // 无水印
+        { filmBorder: 'none', flashFlare: false, filmSeed: 12345 }
+      );
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(processed, 0, 0, SIZE, SIZE);
+      canvas.classList.remove('thumb-loading');
+    });
+    // 让布局有机会更新
+    await new Promise(r => setTimeout(r, 16));
+  }
+}
+
 
 function selectFilter(id) {
   State.patch('filterId', id);
@@ -4321,6 +4416,8 @@ async function loadSingle(file) {
   });
   showWorkspace();
   await processAndRender();
+  // 图片加载后用真实图片重新生成所有预设缩略图
+  generateSidebarThumbnails(data);
 }
 
 async function loadBatchAt(idx) {
