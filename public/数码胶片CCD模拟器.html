@@ -3189,7 +3189,7 @@ class DigiCamProcessor {
   }
 
   static _timestampClassic(ctx, w, h, dateStr, color, isGold = false, pos = 'bot-right') {
-    const scale = Math.min(1, w / 800);
+    const scale = (w / 800);
     const fSize = Math.max(14, Math.round(30 * scale));
     const pad   = Math.max(12, Math.round(22 * scale));
     // 中文签名用系统中文字体，纯ASCII用等宽字体
@@ -3214,7 +3214,7 @@ class DigiCamProcessor {
   }
 
   static _timestampLCD(ctx, w, h, dateStr, color, pos = 'bot-right') {
-    const scale = Math.min(1, w / 800);
+    const scale = (w / 800);
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
@@ -3279,7 +3279,7 @@ class DigiCamProcessor {
       'Z': [0b11111,0b00001,0b00010,0b00100,0b01000,0b10000,0b11111],
     };
     const upperStr = dateStr.toUpperCase();
-    const scale = Math.min(1, w / 800);
+    const scale = (w / 800);
     const dot   = Math.max(2, Math.round(4 * scale));   // dot radius
     const gap   = Math.max(1, Math.round(1.5 * scale)); // gap between dots
     const step  = dot + gap;
@@ -3345,7 +3345,7 @@ class DigiCamProcessor {
   }
 
   static _timestampEightBit(ctx, w, h, dateStr, color) {
-    const scale   = Math.min(1, w / 800);
+    const scale   = (w / 800);
     const fSizeSmall = 8;  // render tiny, then scale up
     const upScale    = Math.max(2, Math.round(4 * scale));
     const pad        = Math.max(10, Math.round(18 * scale));
@@ -3399,7 +3399,7 @@ class DigiCamProcessor {
   }
 
   static _timestampWhite(ctx, w, h, dateStr, color) {
-    const scale = Math.min(1, w / 800);
+    const scale = (w / 800);
     const fSize = Math.max(13, Math.round(26 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     ctx.font = `300 ${fSize}px "Helvetica Neue", Arial, sans-serif`;
