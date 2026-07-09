@@ -1,6 +1,38 @@
 // 自动生成的自定义 3D LUT & XMP 预设数据。不需要手动修改。
 window.CUSTOM_PRESETS = [
   {
+    "id": "custom_____________",
+    "name": "奥山由之-宝矿力调色预设",
+    "type": "xmp",
+    "params": {
+      "brightness": 10,
+      "contrast": 1,
+      "saturation": 0.97,
+      "warmth": 0,
+      "tint": 3,
+      "shadowTint": {
+        "r": -5,
+        "g": 0,
+        "b": 5
+      },
+      "highlightTint": {
+        "r": -5,
+        "g": 0,
+        "b": 5
+      },
+      "baseNoise": 20,
+      "baseChromaticAberration": 2,
+      "baseVignette": 0.4,
+      "baseBloom": 0.3,
+      "bloomThreshold": 200,
+      "baseJpegArtifacts": 0.5,
+      "baseLightLeak": 0.2,
+      "baseImperfections": 0.15,
+      "baseFlashFlare": 0,
+      "flashFlarePos": "topright"
+    }
+  },
+  {
     "id": "custom__________1",
     "name": "植人大树调色方案#1",
     "type": "cube",
