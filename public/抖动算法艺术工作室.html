@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -627,6 +627,8 @@
             <option value="atkinson">Atkinson (高对比/干净)</option>
             <option value="stucki">Stucki (精细过渡)</option>
             <option value="burkes">Burkes (柔和)</option>
+            <option value="sierra3">Sierra 3-row (塞拉 3行)</option>
+            <option value="sierra2">Sierra 2-row (塞拉 2行)</option>
             <option value="sierra_lite">Sierra Lite (复古极简)</option>
             <option value="jarvis">Jarvis-Judice-Ninke (重噪点)</option>
           </optgroup>
@@ -634,9 +636,11 @@
             <option value="bayer2">Bayer 2x2 网格</option>
             <option value="bayer4" selected>Bayer 4x4 网格</option>
             <option value="bayer8">Bayer 8x8 网格</option>
+            <option value="bayer16">Bayer 16x16 网格</option>
             <option value="halftone">Dot Screen (印刷网点)</option>
           </optgroup>
-          <optgroup label="其他抖动">
+          <optgroup label="其他抖动与拼贴">
+            <option value="ascii">ASCII 字符印花 (Color ASCII)</option>
             <option value="random">Random Noise (随机白噪声)</option>
             <option value="none">无抖动 (直接临近匹配)</option>
           </optgroup>
@@ -705,6 +709,25 @@
   </div>
 
   <script>
+    // 递归/位运算生成任意大小 (2的幂) 的 Bayer 抖动阈值
+    function getBayerThreshold(x, y, size) {
+      let xc = x, yc = y;
+      let value = 0;
+      let tempSize = size;
+      let bits = 0;
+      while (tempSize > 1) {
+        tempSize >>= 1;
+        bits++;
+      }
+      for (let bit = 0; bit < bits; bit++) {
+        const bx = xc & 1;
+        const by = yc & 1;
+        value += ((bx ^ by) << (2 * (bits - 1 - bit) + 1)) + (by << (2 * (bits - 1 - bit)));
+        xc >>= 1;
+        yc >>= 1;
+      }
+      return (value + 0.5) / (size * size);
+    }
     // ═══════════════════════════════════════════════════════════════
     //  DOM 节点助手
     // ═══════════════════════════════════════════════════════════════
@@ -1116,8 +1139,37 @@
       // 5. 应用抖动算法
       const processedData = applyDithering(imgData, palette, State.algorithm, State.strength / 100);
 
-      // 6. 将处理后的像素放入效果画布中
-      procCtx.putImageData(processedData, 0, 0);
+            // 6. 将处理后的像素放入效果画布中
+      if (State.algorithm === 'ascii') {
+        const cell = 8;
+        procCanvas.width  = w * cell;
+        procCanvas.height = h * cell;
+        
+        procCtx.fillStyle = '#05030a';
+        procCtx.fillRect(0, 0, w * cell, h * cell);
+        procCtx.font = `bold ${cell}px "JetBrains Mono", monospace`;
+        procCtx.textBaseline = 'top';
+        procCtx.textAlign = 'left';
+
+        // 字符印花密度表
+        const chars = " .:-=+*#%@";
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            const r = processedData.data[idx];
+            const g = processedData.data[idx + 1];
+            const b = processedData.data[idx + 2];
+            
+            const l = 0.299 * r + 0.587 * g + 0.114 * b;
+            const char = chars[Math.min(chars.length - 1, Math.floor(l / 256 * chars.length))];
+            
+            procCtx.fillStyle = `rgb(${r},${g},${b})`;
+            procCtx.fillText(char, x * cell, y * cell);
+          }
+        }
+      } else {
+        procCtx.putImageData(processedData, 0, 0);
+      }
 
       // 更新底栏状态数据
       $('info-res').textContent = `${w} × ${h} px`;
@@ -1211,43 +1263,11 @@
       // ── TYPE A: 无序/点阵 Ordered Dithering (Bayer Matrix) ─────────
       if (algorithm.startsWith('bayer') || algorithm === 'halftone') {
         let size = 4;
-        let matrix = [];
+        if (algorithm === 'bayer2') size = 2;
+        else if (algorithm === 'bayer4') size = 4;
+        else if (algorithm === 'bayer8') size = 8;
+        else if (algorithm === 'bayer16') size = 16;
 
-        if (algorithm === 'bayer2') {
-          size = 2;
-          matrix = [
-            [0, 2],
-            [3, 1]
-          ].map(row => row.map(v => (v + 0.5) / 4));
-        } else if (algorithm === 'bayer4') {
-          size = 4;
-          matrix = [
-            [ 0,  8,  2, 10],
-            [12,  4, 14,  6],
-            [ 3, 11,  1,  9],
-            [15,  7, 13,  5]
-          ].map(row => row.map(v => (v + 0.5) / 16));
-        } else if (algorithm === 'bayer8') {
-          size = 8;
-          // 递归生成 8x8 Bayer 矩阵
-          const b4 = [
-            [ 0,  8,  2, 10],
-            [12,  4, 14,  6],
-            [ 3, 11,  1,  9],
-            [15,  7, 13,  5]
-          ];
-          matrix = Array.from({length: 8}, () => new Array(8));
-          for (let y = 0; y < 8; y++) {
-            for (let x = 0; x < 8; x++) {
-              const x4 = x % 4, y4 = y % 4;
-              const quarter = (x >= 4 ? 1 : 0) + (y >= 4 ? 2 : 0);
-              const val = b4[y4][x4] * 4 + (quarter === 0 ? 0 : quarter === 1 ? 2 : quarter === 2 ? 3 : 1);
-              matrix[y][x] = (val + 0.5) / 64;
-            }
-          }
-        }
-
-        // 应用 Bayer 有序网格
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
             const idx = (y * w + x) * 4;
@@ -1263,7 +1283,6 @@
               const rotY = x * Math.sin(angle) + y * Math.cos(angle);
               const threshold = (Math.sin(rotX * frequency) * Math.cos(rotY * frequency) + 1) / 2;
               
-              // 抖动强度影响
               const spread = 70 * strength;
               const adjR = r + (threshold - 0.5) * spread;
               const adjG = g + (threshold - 0.5) * spread;
@@ -1274,10 +1293,8 @@
               d[idx + 1] = match.g;
               d[idx + 2] = match.b;
             } else {
-              // 有序 Bayer 网格
-              const threshold = matrix[y % size][x % size];
-              
-              // 扩散幅度 (50 - 110)
+              // 统一生成的 Bayer 有序网格
+              const threshold = getBayerThreshold(x, y, size);
               const spread = 85 * strength; 
               
               const adjR = r + (threshold - 0.5) * spread;
@@ -1356,26 +1373,7 @@
             [-2, 1, 2/32], [-1, 1, 4/32], [0, 1, 8/32], [1, 1, 4/32], [2, 1, 2/32]
           ];
           break;
-        case 'sierra_lite':
-          distribution = [
-            [1, 0, 2/4],
-            [-1, 1, 1/4], [0, 1, 1/4]
-          ];
-          break;
-        case 'jarvis':
-          distribution = [
-            [1, 0, 7/48], [2, 0, 5/48],
-            [-2, 1, 3/48], [-1, 1, 5/48], [0, 1, 7/48], [1, 1, 5/48], [2, 1, 3/48],
-            [-2, 2, 1/48], [-1, 2, 3/48], [0, 2, 5/48], [1, 2, 3/48], [2, 2, 1/48]
-          ];
-          break;
-        case 'floyd':
-        default:
-          distribution = [
-            [1, 0, 7/16],
-            [-1, 1, 3/16], [0, 1, 5/16], [1, 1, 1/16]
-          ];
-          break;
+        
       }
 
       // 执行主遍历
@@ -1498,8 +1496,8 @@
       const w = procCanvas.width;
       const h = procCanvas.height;
 
-      // 我们无损放大 8 倍作为成品导出
-      const upscaleFactor = 8; 
+      // 如果已经是 ASCII 字符印花，本身就是高分辨率，不需要再放大 8 倍
+      const upscaleFactor = State.algorithm === 'ascii' ? 1 : 8; 
       exportCanvas.width = w * upscaleFactor;
       exportCanvas.height = h * upscaleFactor;
       const ctx = exportCanvas.getContext('2d');
