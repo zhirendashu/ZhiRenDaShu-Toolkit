@@ -1452,13 +1452,13 @@ input, select { font: inherit; }
 
   <!-- ① 顶栏 -->
   <header id="topbar" role="banner">
-    <div class="topbar-brand">
+    <a href="index.html" class="topbar-brand">
       <div class="brand-icon" aria-hidden="true"></div>
       <div>
         <span class="brand-name">数码胶片</span>
         <span class="brand-sub">DigiCamFX · CCD 模拟器</span>
       </div>
-    </div>
+    </a>
 
     <nav class="topbar-nav" aria-label="主导航">
       <a href="#gallery-section">滤镜库</a>
@@ -4283,15 +4283,15 @@ function selectFilter(id) {
   $('chip-filter').textContent = f.name;
 
   // 1. 设置默认的信号参数基础配置（50% 代表使用预设默认强度，0% 代表关闭）
-  const targetParams = {
-    intensity: 80,
+    const targetParams = {
+    intensity: 50,
     grain:     50,
-    chroma:    50,
-    vignette:  50,
-    bloom:     50,
-    artifacts: 30,
-    lightleak: 50,
-    imperfections: 30,
+    chroma:    0,
+    vignette:  0,
+    bloom:     0,
+    artifacts: 0,
+    lightleak: 0,
+    imperfections: 0,
     scanlines: 0,
     crtlines:  0,
     halftone:  0,
@@ -5454,12 +5454,12 @@ function bindButtons() {
 
 function resetParams() {
   const defaults = {
-    intensity: 80, grain: 50, chroma: 50,
-    vignette: 50, bloom: 50, artifacts: 30,
-    lightleak: 50, imperfections: 30, scanlines: 0, crtlines: 0, halftone: 0, warmth: 50,
+    intensity: 50, grain: 50, chroma: 0,
+    vignette: 0, bloom: 0, artifacts: 0,
+    lightleak: 0, imperfections: 0, scanlines: 0, crtlines: 0, halftone: 0, warmth: 50,
   };
   State.get().params = { ...defaults };
-  ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections','scanlines','crtlines','warmth'].forEach(k => {
+  ['intensity','grain','chroma','vignette','bloom','artifacts','lightleak','imperfections','scanlines','crtlines','halftone','warmth'].forEach(k => {
     const sl = $('slider-' + k), vl = $('val-' + k);
     if (sl) { sl.value = defaults[k]; vl.textContent = defaults[k] + '%'; updateSliderTrack(sl); }
     const ms = $('m-slider-' + k), mv = $('m-val-' + k);
