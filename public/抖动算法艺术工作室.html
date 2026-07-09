@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>像素抖动艺术工作室 | Dithering Art Studio</title>
+  <!-- Google Fonts Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ── 核心设计系统与色彩 (Lucidbloom Dark Mode) ────────────────── */
+    :root {
+      --bg: #090b10;
+      --bg-2: #0f131a;
+      --bg-3: #161c27;
+      --border: #222a3a;
+      --border-2: #2d384d;
+      
+      --text: #f3f4f6;
+      --text-2: #9ca3af;
+      --text-3: #6b7280;
+      
+      --accent: #22d3ee;       /* 青色 */
+      --accent-glow: rgba(34, 211, 238, 0.15);
+      --pink: #f43f5e;         /* 粉红 */
+      --pink-glow: rgba(244, 63, 94, 0.15);
+      --gold: #f59e0b;         /* 金色 */
+      --green: #10b981;        /* 绿色 */
+      
+      --r: 12px;
+      --r-sm: 6px;
+      --dur: 0.2s;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ── 滚动条样式 ────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-2);
+    }
+
+    /* ── 顶栏 ─────────────────────────────────────────────────────── */
+    #topbar {
+      height: 56px;
+      background: rgba(9, 11, 16, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.4));
+    }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--text-3);
+      border-left: 1px solid var(--border);
+      padding-left: 8px;
+      margin-left: 4px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ts-btn {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border-2);
+      background: var(--bg-2);
+      color: var(--text-2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--dur) var(--ease);
+    }
+    .ts-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* ── 主体布局 ──────────────────────────────────────────────────── */
+    #app-container {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 56px);
+      position: relative;
+    }
+
+    /* ── 左侧控制面板 ──────────────────────────────────────────────── */
+    #control-sidebar {
+      width: 320px;
+      background: var(--bg-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .section-header {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      padding: 18px 16px 8px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ctrl-group {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .ctrl-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .ctrl-label-val {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+
+    /* 上传区域 */
+    .upload-box {
+      border: 2px dashed var(--border-2);
+      border-radius: var(--r);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg-3);
+      transition: all var(--dur) var(--ease);
+    }
+    .upload-box:hover {
+      border-color: var(--accent);
+      background: rgba(34, 211, 238, 0.02);
+    }
+    .upload-box svg {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 6px;
+      color: var(--text-3);
+    }
+    .upload-box p {
+      font-size: 0.72rem;
+      color: var(--text-2);
+    }
+    .upload-box span {
+      font-size: 0.62rem;
+      color: var(--text-3);
+      display: block;
+      margin-top: 4px;
+    }
+
+    /* 下拉选择框 */
+    .ts-select {
+      width: 100%;
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-size: 0.78rem;
+      padding: 8px 10px;
+      outline: none;
+      cursor: pointer;
+      transition: all var(--dur) var(--ease);
+    }
+    .ts-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* 滑块控件 */
+    .ctrl-slider {
+      width: 100%;
+      height: 4px;
+      background: var(--border-2);
+      border-radius: 10px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    .ctrl-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      transition: transform 0.1s;
+    }
+    .ctrl-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* 快捷预设按钮组 */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 6px 0;
+    }
+    .preset-btn {
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 6px 10px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      color: var(--text-2);
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      transition: all var(--dur) var(--ease);
+    }
+    .preset-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--bg-2);
+    }
+
+    /* 调色板预览列表 */
+    .palette-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    
+    .palette-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: all var(--dur) var(--ease);
+    }
+    .palette-item.active {
+      border-color: var(--accent);
+      background: rgba(34, 211, 238, 0.05);
+    }
+    
+    .palette-meta {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .palette-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .palette-count {
+      font-size: 0.6rem;
+      color: var(--text-3);
+    }
+
+    .palette-colors {
+      display: flex;
+      gap: 2px;
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* 自定义调色板文本域 */
+    .custom-palette-area {
+      width: 100%;
+      height: 52px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 6px;
+      resize: none;
+      outline: none;
+    }
+    .custom-palette-area:focus {
+      border-color: var(--accent);
+    }
+
+    /* ── 右侧工作区 ────────────────────────────────────────────────── */
+    #workspace {
+      flex: 1;
+      background: #06070a;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 分屏对比预览区 */
+    #preview-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+    }
+
+    /* 对比包装器 */
+    .comparison-wrapper {
+      position: relative;
+      max-width: 100%;
+      max-height: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: repeating-conic-gradient(#111 0% 25%, #181818 0% 50%) 50% / 20px 20px; /* 棋盘背景 */
+    }
+
+    .preview-canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      image-rendering: pixelated; /* 像素锐化 */
+    }
+
+    #canvas-processed {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* 左右分屏滑块 */
+    .slider-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      cursor: ew-resize;
+      z-index: 10;
+    }
+    
+    .slider-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-2);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 8px var(--accent-glow);
+      pointer-events: none;
+    }
+
+    /* 底部操作条 */
+    #export-bar {
+      height: 58px;
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .export-info {
+      font-size: 0.72rem;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .info-item span {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .btn-export {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #000;
+      background: var(--accent);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 100px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 12px var(--accent-glow);
+      transition: all var(--dur) var(--ease);
+    }
+    .btn-export:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px var(--accent);
+    }
+    .btn-export:active {
+      transform: translateY(0);
+    }
+
+    /* ── 隐藏文件输入框 ────────────────────────────────────────────── */
+    #file-input {
+      display: none;
+    }
+
+    /* ── 响应式适配 ────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      #app-container {
+        flex-direction: column;
+        height: auto;
+      }
+      #control-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      #preview-container {
+        min-height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ① 顶栏 -->
+  <header id="topbar" role="banner">
+    <div class="topbar-brand">
+      <a href="index.html" style="display: flex; align-items: center; gap: 10px;">
+        <span class="brand-icon">✨</span>
+        <div>
+          <span class="brand-name">像素抖动艺术工作室</span>
+          <span class="brand-sub">Dithering Art Studio</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="ts-btn" id="btn-demo-synth" title="生成合成波渐变测试图">🌅 渐变测试图</button>
+      <button class="ts-btn" id="btn-how" onclick="alert('【使用说明】\n1. 点击左侧上传一张您的图片，或者点击顶部的【渐变测试图】。\n2. 在左侧面板调节【像素分辨率】进行像素化（越小越复古）。\n3. 选择各种经典复古系统调色板（如 Game Boy, NES, Pico-8）。\n4. 选取不同的误差扩散（如 Floyd-Steinberg, Atkinson）或有序网格（Bayer Matrix）抖动算法。\n5. 拖动右侧预览区的分屏摇杆，实时对比原图与抖动像素画的效果。')">❓ 帮助</button>
+    </div>
+  </header>
+
+  <!-- ② 主体 -->
+  <div id="app-container">
+    
+    <!-- 左边：控制面板 -->
+    <aside id="control-sidebar">
+      
+      <div class="section-header">
+        <span>图片与尺寸</span>
+      </div>
+      
+      <!-- 导入 -->
+      <div class="ctrl-group">
+        <div class="upload-box" onclick="$('file-input').click()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p>拖拽或点击上传图片</p>
+          <span>支持 PNG, JPG, WebP 格式</span>
+        </div>
+        <input type="file" id="file-input" accept="image/*" />
+      </div>
+
+      <!-- 像素分辨率下采样 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>下采样分辨率 (Width)</span>
+          <span class="ctrl-label-val" id="val-downscale">128 px</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-downscale" min="32" max="512" step="16" value="128" />
+      </div>
+
+      <div class="section-header">
+        <span>快捷预设</span>
+      </div>
+      
+      <div class="ctrl-group">
+        <div class="preset-grid">
+          <button class="preset-btn" data-preset="gameboy">📟 经典 Game Boy</button>
+          <button class="preset-btn" data-preset="eink">📰 墨水屏报纸</button>
+          <button class="preset-btn" data-preset="nes">🎮 红白机像素</button>
+          <button class="preset-btn" data-preset="pico8">👾 Pico-8 极客</button>
+          <button class="preset-btn" data-preset="popart">🔵 波普网点</button>
+          <button class="preset-btn" data-preset="monochrome">🌓 极简黑白</button>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <span>调色板 (Palettes)</span>
+      </div>
+
+      <!-- 调色板选择 -->
+      <div class="ctrl-group">
+        <div class="palette-list" id="palette-list-container">
+          <!-- 动态载入 -->
+        </div>
+      </div>
+
+      <!-- 自定义调色板 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>自定义 Hex 颜色组 (逗号分隔)</span>
+        </div>
+        <textarea class="custom-palette-area" id="custom-palette-hex" placeholder="#000000, #ff00ff, #00ffff, #ffffff"></textarea>
+      </div>
+
+      <div class="section-header">
+        <span>抖动算法 (Dithering)</span>
+      </div>
+
+      <!-- 算法 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>抖动方式</span>
+        </div>
+        <select class="ts-select" id="select-algorithm">
+          <optgroup label="误差扩散抖动 (Error Diffusion)">
+            <option value="floyd">Floyd-Steinberg (标准)</option>
+            <option value="atkinson">Atkinson (高对比/干净)</option>
+            <option value="stucki">Stucki (精细过渡)</option>
+            <option value="burkes">Burkes (柔和)</option>
+            <option value="sierra_lite">Sierra Lite (复古极简)</option>
+            <option value="jarvis">Jarvis-Judice-Ninke (重噪点)</option>
+          </optgroup>
+          <optgroup label="有序网格抖动 (Ordered)">
+            <option value="bayer2">Bayer 2x2 网格</option>
+            <option value="bayer4" selected>Bayer 4x4 网格</option>
+            <option value="bayer8">Bayer 8x8 网格</option>
+            <option value="halftone">Dot Screen (印刷网点)</option>
+          </optgroup>
+          <optgroup label="其他抖动">
+            <option value="random">Random Noise (随机白噪声)</option>
+            <option value="none">无抖动 (直接临近匹配)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- 误差传播强度 / 噪点强度 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>抖动强度/纹理扩散</span>
+          <span class="ctrl-label-val" id="val-strength">80%</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-strength" min="0" max="100" value="80" />
+      </div>
+
+      <!-- 色彩对比参数 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>对比度</span>
+          <span class="ctrl-label-val" id="val-contrast">1.10</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-contrast" min="0.5" max="2.0" step="0.05" value="1.10" />
+      </div>
+      
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>饱和度</span>
+          <span class="ctrl-label-val" id="val-saturation">1.15</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-saturation" min="0.0" max="2.0" step="0.05" value="1.15" />
+      </div>
+
+    </aside>
+
+    <!-- 右边：工作区 -->
+    <main id="workspace" role="main">
+      <div id="preview-container">
+        <div class="comparison-wrapper" id="comparison-box">
+          <!-- 原图 Canvas (在左侧被部分裁切) -->
+          <canvas id="canvas-original" class="preview-canvas"></canvas>
+          <!-- 渲染效果 Canvas (在右侧铺满) -->
+          <canvas id="canvas-processed" class="preview-canvas"></canvas>
+          
+          <!-- 分屏拖拽条 -->
+          <div class="slider-divider" id="divider-slider">
+            <div class="slider-handle">↔</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部状态与导出 -->
+      <footer id="export-bar" role="contentinfo">
+        <div class="export-info">
+          <div class="info-item">画布尺寸: <span id="info-res">128 × 128 px</span></div>
+          <div class="info-item">调色板数: <span id="info-colors">4 色</span></div>
+        </div>
+        <button class="btn-export" id="btn-download">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          导出无损像素 PNG
+        </button>
+      </footer>
+    </main>
+
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    //  DOM 节点助手
+    // ═══════════════════════════════════════════════════════════════
+    const $ = id => document.getElementById(id);
+
+    // ═══════════════════════════════════════════════════════════════
+    //  预设调色板集 (经典游戏机与复古显示设备)
+    // ═══════════════════════════════════════════════════════════════
+    const PALETTES = [
+      {
+        id: 'monochrome',
+        name: '🌓 复古双色 (黑白)',
+        colors: ['#000000', '#ffffff']
+      },
+      {
+        id: 'gameboy',
+        name: '📟 Game Boy Classic',
+        colors: ['#0f380f', '#306230', '#8bac0f', '#9bbc0f']
+      },
+      {
+        id: 'gb_pocket',
+        name: '📓 Game Boy Pocket',
+        colors: ['#1f211a', '#4c533c', '#8b966c', '#c4cfa1']
+      },
+      {
+        id: 'nes',
+        name: '🎮 NES (任天堂红白机)',
+        colors: [
+          '#000000', '#fc9838', '#bc0018', '#d81878', '#9018bc', 
+          '#4818e4', '#0020d8', '#0038a8', '#006000', '#005800', 
+          '#a4e400', '#183c5c', '#185018', '#0078f8', '#00b800', 
+          '#f8b800', '#e45c10', '#f87858', '#fc54fc', '#c8c8c8', 
+          '#fcfcfc'
+        ]
+      },
+      {
+        id: 'pico8',
+        name: '👾 Pico-8 虚拟主机',
+        colors: [
+          '#000000', '#1D2B53', '#7E2553', '#008751', '#AB5236', 
+          '#5F574F', '#C2C3C7', '#FFF1E8', '#FF004D', '#FFA300', 
+          '#FFEC27', '#00E436', '#29ADFF', '#83769C', '#FF77A8', 
+          '#FFCCAA'
+        ]
+      },
+      {
+        id: 'c64',
+        name: '🖥️ Commodore 64',
+        colors: [
+          '#000000', '#ffffff', '#68372B', '#70A4B2', '#6F3D86', 
+          '#588D43', '#352879', '#B8C76F', '#6F4F25', '#433900', 
+          '#9A6759', '#444444', '#6C6C6C', '#9AD284', '#6C5EB5', 
+          '#959595'
+        ]
+      },
+      {
+        id: 'cga',
+        name: '📟 CGA Palette 1 (高对比)',
+        colors: ['#000000', '#55ffff', '#ff55ff', '#ffffff']
+      },
+      {
+        id: 'apple2',
+        name: '🍎 Apple II Classic',
+        colors: [
+          '#000000', '#84154c', '#00137e', '#bd2aeb', '#005050', 
+          '#808080', '#008df8', '#afd5ff', '#505000', '#e77207', 
+          '#ffafb0', '#00ca0b', '#d5d518', '#4be584', '#ffffff'
+        ]
+      }
+    ];
+
+    // ═══════════════════════════════════════════════════════════════
+    //  全局应用状态
+    // ═══════════════════════════════════════════════════════════════
+    const State = {
+      image: null,            // 原图 Image 对象
+      downscaleWidth: 128,    // 像素化宽度
+      paletteId: 'gameboy',  // 当前选中的调色板 ID
+      customColors: [],       // 自定义调色板的 RGB 颜色组
+      algorithm: 'bayer4',    // 抖动算法
+      strength: 80,           // 抖动扩散强度 (0-100)
+      contrast: 1.10,         // 对比度 (0.5-2.0)
+      saturation: 1.15,       // 饱和度 (0.0-2.0)
+      splitRatio: 0.5         // 分屏对比横轴位置 (0.0-1.0)
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    //  初始化与调色板生成
+    // ═══════════════════════════════════════════════════════════════
+    window.addEventListener('DOMContentLoaded', () => {
+      buildPaletteList();
+      initEventListeners();
+      generateDefaultSynthwave(); // 启动时生成默认的测试画面
+    });
+
+    // 生成左侧调色板列表
+    function buildPaletteList() {
+      const container = $('palette-list-container');
+      container.innerHTML = '';
+
+      PALETTES.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'palette-item' + (p.id === State.paletteId ? ' active' : '');
+        item.dataset.id = p.id;
+        
+        // 元数据
+        const meta = document.createElement('div');
+        meta.className = 'palette-meta';
+        const name = document.createElement('span');
+        name.className = 'palette-name';
+        name.textContent = p.name;
+        const count = document.createElement('span');
+        count.className = 'palette-count';
+        count.textContent = `${p.colors.length} 色`;
+        meta.appendChild(name);
+        meta.appendChild(count);
+        item.appendChild(meta);
+
+        // 颜色圆点预览
+        const colorBox = document.createElement('div');
+        colorBox.className = 'palette-colors';
+        p.colors.slice(0, 5).forEach(c => {
+          const dot = document.createElement('div');
+          dot.className = 'color-dot';
+          dot.style.backgroundColor = c;
+          colorBox.appendChild(dot);
+        });
+        if (p.colors.length > 5) {
+          const dots = document.createElement('span');
+          dots.style.fontSize = '0.6rem';
+          dots.style.color = 'var(--text-3)';
+          dots.style.alignSelf = 'center';
+          dots.style.marginLeft = '2px';
+          dots.textContent = '+';
+          colorBox.appendChild(dots);
+        }
+        item.appendChild(colorBox);
+
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          State.paletteId = p.id;
+          // 清空自定义输入框
+          $('custom-palette-hex').value = '';
+          State.customColors = [];
+          
+          processImage();
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  事件监听
+    // ═══════════════════════════════════════════════════════════════
+    function initEventListeners() {
+      // 1. 上传图片
+      $('file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              State.image = img;
+              processImage();
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // 2. 下采样滑块
+      const dsSlider = $('slider-downscale'), dsVal = $('val-downscale');
+      dsSlider.addEventListener('input', () => {
+        State.downscaleWidth = parseInt(dsSlider.value, 10);
+        dsVal.textContent = State.downscaleWidth + ' px';
+        processImage();
+      });
+
+      // 3. 抖动强度
+      const stSlider = $('slider-strength'), stVal = $('val-strength');
+      stSlider.addEventListener('input', () => {
+        State.strength = parseInt(stSlider.value, 10);
+        stVal.textContent = State.strength + '%';
+        processImage();
+      });
+
+      // 4. 对比度
+      const ctSlider = $('slider-contrast'), ctVal = $('val-contrast');
+      ctSlider.addEventListener('input', () => {
+        State.contrast = parseFloat(ctSlider.value);
+        ctVal.textContent = State.contrast.toFixed(2);
+        processImage();
+      });
+
+      // 5. 饱和度
+      const saSlider = $('slider-saturation'), saVal = $('val-saturation');
+      saSlider.addEventListener('input', () => {
+        State.saturation = parseFloat(saSlider.value);
+        saVal.textContent = State.saturation.toFixed(2);
+        processImage();
+      });
+
+      // 6. 算法选择
+      $('select-algorithm').addEventListener('change', (e) => {
+        State.algorithm = e.target.value;
+        processImage();
+      });
+
+      // 7. 自定义调色板输入
+      $('custom-palette-hex').addEventListener('input', (e) => {
+        const text = e.target.value;
+        if (!text.trim()) {
+          State.customColors = [];
+          return;
+        }
+        // 解析 comma-separated hex codes
+        const hexes = text.split(/[,，\s\n]+/).map(h => h.trim()).filter(h => /^#[0-9a-fA-F]{6}$/.test(h));
+        if (hexes.length > 0) {
+          State.paletteId = 'custom';
+          // 取消侧边栏高亮
+          document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('active'));
+          State.customColors = hexes.map(hexToRgb);
+          processImage();
+        }
+      });
+
+      // 8. 合成波测试渐变图生成按钮
+      $('btn-demo-synth').addEventListener('click', generateDefaultSynthwave);
+
+      // 9. 导出无损 PNG 按钮
+      $('btn-download').addEventListener('click', downloadOutput);
+
+      // 10. 分屏对比拖拽手柄
+      const box = $('comparison-box');
+      const divider = $('divider-slider');
+      const processed = $('canvas-processed');
+      
+      let isDragging = false;
+      
+      divider.addEventListener('mousedown', () => { isDragging = true; });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        updateDividerPosition(e.clientX);
+      });
+
+      // 移动端触摸支持
+      divider.addEventListener('touchstart', () => { isDragging = true; });
+      window.addEventListener('touchend', () => { isDragging = false; });
+      window.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        updateDividerPosition(e.touches[0].clientX);
+      });
+
+      function updateDividerPosition(clientX) {
+        const rect = box.getBoundingClientRect();
+        let ratio = (clientX - rect.left) / rect.width;
+        ratio = Math.max(0, Math.min(1, ratio));
+        State.splitRatio = ratio;
+        
+        divider.style.left = (ratio * 100) + '%';
+        processed.style.clipPath = `polygon(${ratio * 100}% 0, 100% 0, 100% 100%, ${ratio * 100}% 100%)`;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  合成波 (Synthwave) 测试渐变图生成
+    //  - 包含太阳、高对比发光渐变、3D 地平线网格
+    //  - 这是展示抖动算法极佳的选择！
+    // ═══════════════════════════════════════════════════════════════
+    function generateDefaultSynthwave() {
+      const cvs = document.createElement('canvas');
+      cvs.width = 640;
+      cvs.height = 480;
+      const ctx = cvs.getContext('2d');
+
+      // 1. 深太空背景
+      ctx.fillStyle = '#05030a';
+      ctx.fillRect(0, 0, 640, 480);
+
+      // 2. 紫红色极光星云背景渐变
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, 240);
+      skyGrad.addColorStop(0, '#0e021c');
+      skyGrad.addColorStop(0.5, '#2e0854');
+      skyGrad.addColorStop(1, '#65096f');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, 640, 260);
+
+      // 3. 复古线条太阳 (Synthwave Sun)
+      const sunY = 160, sunR = 80;
+      const sunGrad = ctx.createLinearGradient(0, sunY - sunR, 0, sunY + sunR);
+      sunGrad.addColorStop(0, '#ffec27');
+      sunGrad.addColorStop(0.5, '#ff007f');
+      sunGrad.addColorStop(1, '#ff003c');
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(320, sunY, sunR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 条纹遮罩切槽
+      ctx.fillStyle = '#05030a';
+      for (let y = sunY - sunR; y < sunY + sunR; y += 12) {
+        if (y > sunY - 40) {
+          const cutHeight = Math.max(1, (y - (sunY - 40)) * 0.12);
+          ctx.fillRect(320 - sunR - 10, y, sunR * 2 + 20, cutHeight);
+        }
+      }
+
+      // 4. 地平线发光
+      const glow = ctx.createLinearGradient(0, 240, 0, 260);
+      glow.addColorStop(0, 'rgba(0, 228, 255, 0.8)');
+      glow.addColorStop(1, 'rgba(101, 9, 111, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 240, 640, 20);
+
+      // 5. 地面发光渐变 (从亮青蓝到黑紫)
+      const groundGrad = ctx.createLinearGradient(0, 260, 0, 480);
+      groundGrad.addColorStop(0, '#06203d');
+      groundGrad.addColorStop(1, '#05030a');
+      ctx.fillStyle = groundGrad;
+      ctx.fillRect(0, 260, 640, 220);
+
+      // 6. 3D 纵深线条网格地平线
+      ctx.strokeStyle = '#00e4ff';
+      ctx.lineWidth = 2;
+      const horizonY = 260;
+      const vanishingX = 320;
+      
+      // 纵向线条
+      for (let x = -200; x <= 840; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(vanishingX, horizonY);
+        ctx.lineTo(x, 480);
+        ctx.stroke();
+      }
+
+      // 横向线条（以逐渐缩窄的指数间距向下画）
+      let gy = horizonY;
+      let step = 2;
+      while (gy < 480) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(640, gy);
+        ctx.stroke();
+        step *= 1.35;
+        gy += step;
+      }
+
+      // 7. 炫光半透明小球展示色阶过渡
+      const ballGrad = ctx.createRadialGradient(160, 200, 5, 170, 210, 45);
+      ballGrad.addColorStop(0, '#ffffff');
+      ballGrad.addColorStop(0.2, '#29adff');
+      ballGrad.addColorStop(0.8, '#1d2b53');
+      ballGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ballGrad;
+      ctx.beginPath();
+      ctx.arc(180, 220, 45, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 创建虚拟 Image 对象装载该 Canvas
+      const img = new Image();
+      img.onload = () => {
+        State.image = img;
+        processImage();
+      };
+      img.src = cvs.toDataURL('image/png');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  核心处理引擎：下采样 ➔ 色彩对比度调整 ➔ 抖动渲染
+    // ═══════════════════════════════════════════════════════════════
+    function processImage() {
+      if (!State.image) return;
+
+      const img = State.image;
+      const origCanvas = $('canvas-original');
+      const procCanvas = $('canvas-processed');
+      
+      // 1. 根据下采样分辨率，确定处理宽高并设置画布
+      const aspect = img.height / img.width;
+      const w = State.downscaleWidth;
+      const h = Math.round(w * aspect);
+      
+      origCanvas.width  = w;
+      origCanvas.height = h;
+      procCanvas.width  = w;
+      procCanvas.height = h;
+
+      const origCtx = origCanvas.getContext('2d');
+      const procCtx = procCanvas.getContext('2d');
+
+      // 2. 将原图渲染到原图画布中（利用浏览器插值自动下采样）
+      origCtx.drawImage(img, 0, 0, w, h);
+
+      // 获取像素数据
+      const imgData = origCtx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      // 3. 预处理：对比度和饱和度
+      adjustContrastAndSaturation(data, State.contrast, State.saturation);
+
+      // 4. 获取当前使用的调色板 RGB 数组
+      const palette = getActivePaletteRGB();
+
+      // 5. 应用抖动算法
+      const processedData = applyDithering(imgData, palette, State.algorithm, State.strength / 100);
+
+      // 6. 将处理后的像素放入效果画布中
+      procCtx.putImageData(processedData, 0, 0);
+
+      // 更新底栏状态数据
+      $('info-res').textContent = `${w} × ${h} px`;
+      $('info-colors').textContent = `${palette.length} 色`;
+
+      // 强制同步分屏裁切位置
+      const ratio = State.splitRatio;
+      procCanvas.style.clipPath = `polygon(${ratio * 100}% 0, 100% 0, 100% 100%, ${ratio * 100}% 100%)`;
+    }
+
+    // 调整对比度与饱和度
+    function adjustContrastAndSaturation(pixels, contrast, saturation) {
+      for (let i = 0; i < pixels.length; i += 4) {
+        let r = pixels[i];
+        let g = pixels[i + 1];
+        let b = pixels[i + 2];
+
+        // 1. 对比度
+        r = ((r - 128) * contrast) + 128;
+        g = ((g - 128) * contrast) + 128;
+        b = ((b - 128) * contrast) + 128;
+
+        // 2. 饱和度
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = gray + (r - gray) * saturation;
+        g = gray + (g - gray) * saturation;
+        b = gray + (b - gray) * saturation;
+
+        // 裁切限制到 0..255
+        pixels[i]     = Math.min(255, Math.max(0, r));
+        pixels[i + 1] = Math.min(255, Math.max(0, g));
+        pixels[i + 2] = Math.min(255, Math.max(0, b));
+      }
+    }
+
+    // 获取选定调色板的 RGB 数组 (三元组数组)
+    function getActivePaletteRGB() {
+      if (State.paletteId === 'custom' && State.customColors.length > 0) {
+        return State.customColors;
+      }
+      const p = PALETTES.find(x => x.id === State.paletteId) || PALETTES[0];
+      return p.colors.map(hexToRgb);
+    }
+
+    // Hex 转 RGB
+    function hexToRgb(hex) {
+      const c = hex.replace('#', '');
+      const r = parseInt(c.substring(0, 2), 16);
+      const g = parseInt(c.substring(2, 4), 16);
+      const b = parseInt(c.substring(4, 6), 16);
+      return { r, g, b };
+    }
+
+    // 🎨 最临近颜色检索算法 (基于 Redmean 视觉感知模型加权空间差)
+    function findNearestColor(r, g, b, palette) {
+      let minDistance = Infinity;
+      let nearestColor = palette[0];
+
+      for (let i = 0; i < palette.length; i++) {
+        const c = palette[i];
+        
+        // 人眼对红绿蓝敏感度不同的视觉加权算法 (Redmean)
+        const meanR = (r + c.r) / 2;
+        const wR = 2 + meanR / 256;
+        const wG = 4;
+        const wB = 2 + (255 - meanR) / 256;
+
+        const dR = r - c.r;
+        const dG = g - c.g;
+        const dB = b - c.b;
+
+        const distance = wR * dR * dR + wG * dG * dG + wB * dB * dB;
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestColor = c;
+        }
+      }
+      return nearestColor;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  抖动算法库实现
+    // ═══════════════════════════════════════════════════════════════
+    function applyDithering(imageData, palette, algorithm, strength) {
+      const w = imageData.width;
+      const h = imageData.height;
+      const out = new ImageData(new Uint8ClampedArray(imageData.data), w, h);
+      const d = out.data;
+
+      // ── TYPE A: 无序/点阵 Ordered Dithering (Bayer Matrix) ─────────
+      if (algorithm.startsWith('bayer') || algorithm === 'halftone') {
+        let size = 4;
+        let matrix = [];
+
+        if (algorithm === 'bayer2') {
+          size = 2;
+          matrix = [
+            [0, 2],
+            [3, 1]
+          ].map(row => row.map(v => (v + 0.5) / 4));
+        } else if (algorithm === 'bayer4') {
+          size = 4;
+          matrix = [
+            [ 0,  8,  2, 10],
+            [12,  4, 14,  6],
+            [ 3, 11,  1,  9],
+            [15,  7, 13,  5]
+          ].map(row => row.map(v => (v + 0.5) / 16));
+        } else if (algorithm === 'bayer8') {
+          size = 8;
+          // 递归生成 8x8 Bayer 矩阵
+          const b4 = [
+            [ 0,  8,  2, 10],
+            [12,  4, 14,  6],
+            [ 3, 11,  1,  9],
+            [15,  7, 13,  5]
+          ];
+          matrix = Array.from({length: 8}, () => new Array(8));
+          for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+              const x4 = x % 4, y4 = y % 4;
+              const quarter = (x >= 4 ? 1 : 0) + (y >= 4 ? 2 : 0);
+              const val = b4[y4][x4] * 4 + (quarter === 0 ? 0 : quarter === 1 ? 2 : quarter === 2 ? 3 : 1);
+              matrix[y][x] = (val + 0.5) / 64;
+            }
+          }
+        }
+
+        // 应用 Bayer 有序网格
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            let r = d[idx];
+            let g = d[idx + 1];
+            let b = d[idx + 2];
+
+            if (algorithm === 'halftone') {
+              // 印刷半调圆点圆弧形纹理
+              const frequency = 0.25;
+              const angle = Math.PI / 4;
+              const rotX = x * Math.cos(angle) - y * Math.sin(angle);
+              const rotY = x * Math.sin(angle) + y * Math.cos(angle);
+              const threshold = (Math.sin(rotX * frequency) * Math.cos(rotY * frequency) + 1) / 2;
+              
+              // 抖动强度影响
+              const spread = 70 * strength;
+              const adjR = r + (threshold - 0.5) * spread;
+              const adjG = g + (threshold - 0.5) * spread;
+              const adjB = b + (threshold - 0.5) * spread;
+
+              const match = findNearestColor(adjR, adjG, adjB, palette);
+              d[idx]     = match.r;
+              d[idx + 1] = match.g;
+              d[idx + 2] = match.b;
+            } else {
+              // 有序 Bayer 网格
+              const threshold = matrix[y % size][x % size];
+              
+              // 扩散幅度 (50 - 110)
+              const spread = 85 * strength; 
+              
+              const adjR = r + (threshold - 0.5) * spread;
+              const adjG = g + (threshold - 0.5) * spread;
+              const adjB = b + (threshold - 0.5) * spread;
+
+              const match = findNearestColor(adjR, adjG, adjB, palette);
+              d[idx]     = match.r;
+              d[idx + 1] = match.g;
+              d[idx + 2] = match.b;
+            }
+          }
+        }
+        return out;
+      }
+
+      // ── TYPE B: 随机噪声 Random Dithering ─────────────────────────
+      if (algorithm === 'random') {
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            const rand = (Math.random() - 0.5) * 110 * strength;
+            const r = d[idx] + rand;
+            const g = d[idx + 1] + rand;
+            const b = d[idx + 2] + rand;
+
+            const match = findNearestColor(r, g, b, palette);
+            d[idx]     = match.r;
+            d[idx + 1] = match.g;
+            d[idx + 2] = match.b;
+          }
+        }
+        return out;
+      }
+
+      // ── TYPE C: 直接临近匹配 (无抖动) ─────────────────────────────
+      if (algorithm === 'none') {
+        for (let idx = 0; idx < d.length; idx += 4) {
+          const match = findNearestColor(d[idx], d[idx+1], d[idx+2], palette);
+          d[idx]     = match.r;
+          d[idx + 1] = match.g;
+          d[idx + 2] = match.b;
+        }
+        return out;
+      }
+
+      // ── TYPE D: 误差扩散抖动 (Error Diffusion Dithering) ───────────
+      // 使用 Float32 复制像素数据，防止在传播误差相加时被 Clamped 阶段丢失负数或溢出值
+      const errBuffer = new Float32Array(w * h * 3);
+      for (let i = 0; i < w * h; i++) {
+        errBuffer[i * 3]     = d[i * 4];
+        errBuffer[i * 3 + 1] = d[i * 4 + 1];
+        errBuffer[i * 3 + 2] = d[i * 4 + 2];
+      }
+
+      // 误差扩散权重表配置
+      let distribution = [];
+      switch (algorithm) {
+        case 'atkinson':
+          distribution = [
+            [1, 0, 1/8],  [2, 0, 1/8],
+            [-1, 1, 1/8], [0, 1, 1/8], [1, 1, 1/8],
+            [0, 2, 1/8]
+          ];
+          break;
+        case 'stucki':
+          distribution = [
+            [1, 0, 8/42], [2, 0, 4/42],
+            [-2, 1, 2/42], [-1, 1, 4/42], [0, 1, 8/42], [1, 1, 4/42], [2, 1, 2/42],
+            [-2, 2, 1/42], [-1, 2, 2/42], [0, 2, 4/42], [1, 2, 2/42], [2, 2, 1/42]
+          ];
+          break;
+        case 'burkes':
+          distribution = [
+            [1, 0, 8/32], [2, 0, 4/32],
+            [-2, 1, 2/32], [-1, 1, 4/32], [0, 1, 8/32], [1, 1, 4/32], [2, 1, 2/32]
+          ];
+          break;
+        case 'sierra_lite':
+          distribution = [
+            [1, 0, 2/4],
+            [-1, 1, 1/4], [0, 1, 1/4]
+          ];
+          break;
+        case 'jarvis':
+          distribution = [
+            [1, 0, 7/48], [2, 0, 5/48],
+            [-2, 1, 3/48], [-1, 1, 5/48], [0, 1, 7/48], [1, 1, 5/48], [2, 1, 3/48],
+            [-2, 2, 1/48], [-1, 2, 3/48], [0, 2, 5/48], [1, 2, 3/48], [2, 2, 1/48]
+          ];
+          break;
+        case 'floyd':
+        default:
+          distribution = [
+            [1, 0, 7/16],
+            [-1, 1, 3/16], [0, 1, 5/16], [1, 1, 1/16]
+          ];
+          break;
+      }
+
+      // 执行主遍历
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const bufIdx = (y * w + x) * 3;
+          const r = errBuffer[bufIdx];
+          const g = errBuffer[bufIdx + 1];
+          const b = errBuffer[bufIdx + 2];
+
+          // 匹配最临近颜色
+          const match = findNearestColor(r, g, b, palette);
+          
+          // 回填输出
+          const outIdx = (y * w + x) * 4;
+          d[outIdx]     = match.r;
+          d[outIdx + 1] = match.g;
+          d[outIdx + 2] = match.b;
+
+          // 计算误差差值
+          const errR = (r - match.r) * strength;
+          const errG = (g - match.g) * strength;
+          const errB = (b - match.b) * strength;
+
+          // 扩散误差到邻居像素
+          for (let k = 0; k < distribution.length; k++) {
+            const [dx, dy, weight] = distribution[k];
+            const nx = x + dx;
+            const ny = y + dy;
+
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+              const targetIdx = (ny * w + nx) * 3;
+              errBuffer[targetIdx]     += errR * weight;
+              errBuffer[targetIdx + 1] += errG * weight;
+              errBuffer[targetIdx + 2] += errB * weight;
+            }
+          }
+        }
+      }
+
+      return out;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  快捷预设一键应用
+    // ═══════════════════════════════════════════════════════════════
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.preset;
+        
+        switch (type) {
+          case 'gameboy':
+            applyPresetConfig('gameboy', 'bayer4', 160, 90, 1.15, 1.1);
+            break;
+          case 'eink':
+            applyPresetConfig('monochrome', 'floyd', 320, 75, 1.4, 0.0);
+            break;
+          case 'nes':
+            applyPresetConfig('nes', 'none', 256, 0, 1.1, 1.2);
+            break;
+          case 'pico8':
+            applyPresetConfig('pico8', 'bayer2', 128, 60, 1.1, 1.3);
+            break;
+          case 'popart':
+            applyPresetConfig('monochrome', 'halftone', 160, 100, 1.6, 0.0);
+            break;
+          case 'monochrome':
+            applyPresetConfig('monochrome', 'atkinson', 256, 80, 1.3, 0.0);
+            break;
+        }
+      });
+    });
+
+    function applyPresetConfig(paletteId, algorithm, downscaleWidth, strength, contrast, saturation) {
+      // 1. 调色板侧边栏高亮
+      State.paletteId = paletteId;
+      document.querySelectorAll('.palette-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === paletteId);
+      });
+      $('custom-palette-hex').value = '';
+      State.customColors = [];
+
+      // 2. 算法下拉框
+      State.algorithm = algorithm;
+      $('select-algorithm').value = algorithm;
+
+      // 3. 分辨率
+      State.downscaleWidth = downscaleWidth;
+      $('slider-downscale').value = downscaleWidth;
+      $('val-downscale').textContent = downscaleWidth + ' px';
+
+      // 4. 强度
+      State.strength = strength;
+      $('slider-strength').value = strength;
+      $('val-strength').textContent = strength + '%';
+
+      // 5. 对比度
+      State.contrast = contrast;
+      $('slider-contrast').value = contrast;
+      $('val-contrast').textContent = contrast.toFixed(2);
+
+      // 6. 饱和度
+      State.saturation = saturation;
+      $('slider-saturation').value = saturation;
+      $('val-saturation').textContent = saturation.toFixed(2);
+
+      // 重绘
+      processImage();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  导出为无损像素大图 PNG
+    // ═══════════════════════════════════════════════════════════════
+    function downloadOutput() {
+      const procCanvas = $('canvas-processed');
+      if (!procCanvas) return;
+
+      // 创建一个临时的大画布，用于输出放大后的像素图，防止模糊
+      const exportCanvas = document.createElement('canvas');
+      const w = procCanvas.width;
+      const h = procCanvas.height;
+
+      // 我们无损放大 8 倍作为成品导出
+      const upscaleFactor = 8; 
+      exportCanvas.width = w * upscaleFactor;
+      exportCanvas.height = h * upscaleFactor;
+      const ctx = exportCanvas.getContext('2d');
+
+      // 关键：禁用平滑插值，保持完美的锯齿像素边缘 (Pixelated)
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(procCanvas, 0, 0, w, h, 0, 0, w * upscaleFactor, h * upscaleFactor);
+
+      // 下载
+      const link = document.createElement('a');
+      link.download = `dither_studio_export_${w}x${h}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>
