@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -4281,44 +4281,60 @@ function selectFilter(id) {
   // Update chip
   const f = FILTERS.find(f => f.id === id);
   $('chip-filter').textContent = f.name;
-  // \u81ea\u52a8\u95ed\u5408/\u5f00\u542f\u6781\u7aef\u6548\u679c\u6ed1\u5757\uff0c\u907f\u514d\u4e0a\u4e00\u6b3e\u6ee4\u95e1\u7684\u526f\u4f5c\u7528\u6b8b\u7559\u5230\u65b0\u6ee4\u95e1\u4e2d
-  const extremeParams = {
+
+  // 1. 设置默认的信号参数基础配置（50% 代表使用预设默认强度，0% 代表关闭）
+  const targetParams = {
+    intensity: 80,
+    grain:     50,
+    chroma:    50,
+    vignette:  50,
+    bloom:     50,
+    artifacts: 30,
+    lightleak: 50,
+    imperfections: 30,
     scanlines: 0,
     crtlines:  0,
-    halftone:  0
+    halftone:  0,
+    warmth:    50
   };
 
+  // 根据当前滤镜预设特殊按需配置
   if (id === 'cmyk_print') {
-    extremeParams.halftone = 50;
+    targetParams.halftone = 50;
     State.patch('halftoneMode', 'cmyk');
     document.querySelectorAll('#ht-mode-pills .ts-pill').forEach(p => {
       p.classList.toggle('active', p.dataset.htmode === 'cmyk');
       p.setAttribute('aria-pressed', p.dataset.htmode === 'cmyk' ? 'true' : 'false');
     });
   } else if (id === 'vhs') {
-    extremeParams.crtlines = 30; // VHS \u9ed9\u8ba4\u5e26\u6709 30% CRT \u626b\u63cf\u7ebf
+    targetParams.crtlines = 30; // VHS 默认自带 30% CRT 扫描线
   }
 
-  // \u540c\u6b65\u5230 State \u5e76\u66f4\u65b0\u6ed1\u5757 UI
-  Object.assign(State.get().params, extremeParams);
-  Object.entries(extremeParams).forEach(([k, v]) => {
-    const sl = $('slider-' + k), vl = $('val-' + k);
-    if (sl && vl) { sl.value = v; vl.textContent = v + '%'; updateSliderTrack(sl); }
-    const ms = $('m-slider-' + k), mv = $('m-val-' + k);
-    if (ms && mv) { ms.value = v; mv.textContent = v + '%'; updateSliderTrack(ms); }
-  });
-
-  // RAW \u7eaf\u51c0\u6a21\u5f0f\uff1a\u989d\u5916\u5c06\u5176\u4ed6\u6240\u6709\u53c2\u6570\u5f52\u96f6
+  // 如果是 RAW 纯净模式，则所有特效与噪点均归零
   if (id === 'raw_pure') {
     const rawZero = { grain:0, chroma:0, vignette:0, bloom:0, artifacts:0, lightleak:0, imperfections:0, scanlines:0, crtlines:0, halftone:0, warmth:50 };
-    Object.assign(State.get().params, rawZero);
-    Object.entries(rawZero).forEach(([k, v]) => {
-      const sl = $('slider-'+k), vl = $('val-'+k);
-      if (sl && vl) { sl.value=v; vl.textContent = k==='warmth'?'\u00b10 (\u81ea\u52a8)':v+'%'; updateSliderTrack(sl); }
-      const ms = $('m-slider-'+k), mv = $('m-val-'+k);
-      if (ms && mv) { ms.value=v; mv.textContent = k==='warmth'?'\u00b10 (\u81ea\u52a8)':v+'%'; updateSliderTrack(ms); }
-    });
+    Object.assign(targetParams, rawZero);
   }
+
+  // 2. 将计算完成的配置同步到全局 State
+  Object.assign(State.get().params, targetParams);
+
+  // 3. 将对应数值完全同步更新到滑块 UI
+  Object.entries(targetParams).forEach(([k, v]) => {
+    const sl = $('slider-' + k), vl = $('val-' + k);
+    if (sl && vl) {
+      sl.value = v;
+      vl.textContent = k === 'warmth' ? '±0 (自动)' : v + '%';
+      updateSliderTrack(sl);
+    }
+    const ms = $('m-slider-' + k), mv = $('m-val-' + k);
+    if (ms && mv) {
+      ms.value = v;
+      mv.textContent = k === 'warmth' ? '±0 (自动)' : v + '%';
+      updateSliderTrack(ms);
+    }
+  });
+
   if (State.get().srcImageData) scheduleProcess();
 }
 
