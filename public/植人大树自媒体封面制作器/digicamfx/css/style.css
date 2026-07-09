@@ -733,6 +733,16 @@ input, select { font: inherit; }
 }
 .gallery-info { display: flex; flex-direction: column; gap: 2px; }
 .gallery-cam-name { font-size: 0.95rem; font-weight: 700; color: #fff; }
+.gallery-cam-desc {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.75);
+  margin: 3px 0;
+  display: block;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .gallery-cam-date { font-family: var(--mono); font-size: 0.6rem; color: rgba(255,255,255,0.5); }
 .gallery-stamp {
   position: absolute; bottom: var(--s3); right: var(--s3);
@@ -901,6 +911,62 @@ input, select { font: inherit; }
   .steps-row { grid-template-columns: 1fr; }
   .ccd-box   { grid-template-columns: 1fr; }
   .stats-grid { flex-wrap: wrap; gap: var(--s6); }
+}
+
+/* 移动端紧凑型滤镜库列表（缩短页面高度） */
+@media (max-width: 600px) {
+  .gallery-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--s2) !important;
+    margin-top: var(--s4) !important;
+  }
+  .gallery-card {
+    aspect-ratio: auto !important;
+    height: auto !important;
+    padding: var(--s3) !important;
+    border-radius: var(--r) !important;
+    background: var(--bg-3) !important;
+  }
+  .gallery-card img {
+    display: none !important;
+  }
+  .gallery-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+  .gallery-tag-chip {
+    font-size: 0.52rem !important;
+    padding: 1px 5px !important;
+    margin-bottom: 2px !important;
+  }
+  .gallery-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: 100% !important;
+  }
+  .gallery-cam-name {
+    font-size: 0.88rem !important;
+  }
+  .gallery-cam-desc {
+    font-size: 0.72rem !important;
+    color: var(--text-2) !important;
+    white-space: normal !important; /* 允许换行 */
+    line-height: 1.4 !important;
+  }
+  .gallery-cam-date {
+    font-size: 0.58rem !important;
+    color: var(--text-3) !important;
+  }
+  .gallery-stamp {
+    display: none !important;
+  }
 }
 
 /* 移动端相机选择条（默认隐藏，小屏显示） */

@@ -226,6 +226,7 @@ function renderGallery() {
     const info = el('div', { class: 'gallery-info' });
     info.append(
       el('span', { class: 'gallery-cam-name' }, [f.name]),
+      el('span', { class: 'gallery-cam-desc' }, [f.description]),
       el('span', { class: 'gallery-cam-date' }, [`20${f.year.slice(-2)}.10.24`])
     );
     const stamp = el('div', { class: 'gallery-stamp' }, [`'${f.year.slice(-2)} 10 24`]);
@@ -897,17 +898,112 @@ async function exportAll() {
 }
 
 function downloadCanvas(canvas, name, fmt) {
-  const a = document.createElement('a');
-  a.download = name;
   if (fmt === 'png') {
     canvas.toBlob(blob => {
-      a.href = URL.createObjectURL(blob);
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      triggerMobileSave(blob, name);
     }, 'image/png');
   } else {
-    a.href = canvas.toDataURL('image/jpeg', 0.92);
-    a.click();
+    triggerMobileSave(canvas.toDataURL('image/jpeg', 0.92), name);
+  }
+}
+
+async function triggerMobileSave(blobOrDataUrl, defaultFileName) {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let blob = blobOrDataUrl;
+  if (typeof blobOrDataUrl === 'string') {
+    if (blobOrDataUrl.startsWith('data:')) {
+      const res = await fetch(blobOrDataUrl);
+      blob = await res.blob();
+    } else {
+      try {
+        const res = await fetch(blobOrDataUrl);
+        blob = await res.blob();
+      } catch (e) {}
+    }
+  }
+  const objectUrl = blob instanceof Blob ? URL.createObjectURL(blob) : blobOrUrl;
+  const finalUrl = typeof blobOrDataUrl === 'string' && !blobOrDataUrl.startsWith('data:') ? blobOrDataUrl : objectUrl;
+
+  if (isMobile) {
+    const existing = document.getElementById('mobile-save-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mobile-save-overlay';
+    overlay.className = 'mobile-save-overlay';
+    
+    const style = document.createElement('style');
+    style.textContent = `
+      .mobile-save-overlay {
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(9, 9, 14, 0.96); backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 20px; animation: fadeInSave 0.3s ease;
+      }
+      .mobile-save-card {
+        background: rgba(15, 15, 22, 0.98); border: 1px solid rgba(201, 162, 39, 0.3);
+        border-radius: 20px; padding: 20px; max-width: 90%; max-height: 85vh;
+        display: flex; flex-direction: column; align-items: center; gap: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6); animation: slideUpSave 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .mobile-save-img {
+        max-width: 100%; max-height: 50vh; border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1); object-fit: contain;
+        -webkit-touch-callout: default; pointer-events: auto;
+      }
+      .mobile-save-title {
+        font-size: 1.1rem; font-weight: 700; color: var(--gold-light); text-align: center;
+        letter-spacing: 0.05em;
+      }
+      .mobile-save-tip {
+        font-size: 0.82rem; color: #a0a0b0; text-align: center; line-height: 1.5; padding: 0 10px;
+      }
+      .mobile-save-btn {
+        background: linear-gradient(135deg, #a07e1a, var(--gold)); border: none; color: #0a0800;
+        padding: 10px 28px; border-radius: 100px; font-size: 0.88rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(201, 162, 39, 0.25);
+      }
+      .mobile-save-btn:active { transform: scale(0.95); }
+      @keyframes fadeInSave { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUpSave { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+
+    overlay.innerHTML = `
+      <div class="mobile-save-card">
+        <div class="mobile-save-title">保存图片到相册</div>
+        <img class="mobile-save-img" src="${finalUrl}" alt="Generated Image" />
+        <div class="mobile-save-tip">💡 提示：请<b>长按上方图片</b>选择“保存到相册”或“存储图像”即可存入手机相册。</div>
+        <button class="mobile-save-btn">我知道了</button>
+      </div>
+    `;
+
+    overlay.querySelector('.mobile-save-btn').onclick = () => {
+      overlay.remove();
+      if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+    };
+    
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        if (blob instanceof Blob && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+      }
+    };
+
+    document.body.appendChild(overlay);
+    return;
+  }
+
+  const a = document.createElement('a');
+  a.href = finalUrl;
+  a.download = defaultFileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  if (blob instanceof Blob && objectUrl.startsWith('blob:')) {
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   }
 }
 
