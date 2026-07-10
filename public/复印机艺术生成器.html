@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -565,6 +565,15 @@
         <input type="range" class="ctrl-slider" id="slider-contrast" min="0.8" max="2.5" step="0.05" value="1.40" />
       </div>
 
+      <!-- 半调网点 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>半调网点大小/强度</span>
+          <span class="ctrl-label-val" id="val-halftone">无网点</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-halftone" min="0" max="100" value="0" />
+      </div>
+
       <div class="section-header">
         <span>📠 静电复印机特征</span>
       </div>
@@ -688,6 +697,7 @@
       image: null,
       threshold: 128,      // 曝光二值化阈值 (30-220)
       contrast: 1.40,      // 墨水黑度/对比度
+      halftone: 0,         // 半调波普网点大小 (0=无网点, 1-100)
       smear: 60,           // 墨水外溢拉丝强度
       smearDir: 'right',   // 涂抹拉丝方向 (left, right, both)
       banding: 45,         // 鼓芯断墨横纹强度
@@ -787,6 +797,14 @@
       ctSlider.addEventListener('input', () => {
         State.contrast = parseFloat(ctSlider.value);
         ctVal.textContent = State.contrast.toFixed(2);
+        processImage();
+      });
+
+      // 半调网点滑块
+      const htSlider = $('slider-halftone'), htVal = $('val-halftone');
+      htSlider.addEventListener('input', () => {
+        State.halftone = parseInt(htSlider.value, 10);
+        htVal.textContent = State.halftone === 0 ? "无网点" : State.halftone + "%";
         processImage();
       });
 
@@ -1001,8 +1019,12 @@
         applyWindSmear(data, w, h, threshold, strength, decay, State.smearDir);
       }
 
-      // B. 经过拉丝后的二值化最终压实
-      applyThreshold(data, State.threshold);
+      // B. 经过拉丝后的二值化最终压实 (或者应用半调网点)
+      if (State.halftone > 0) {
+        applyHalftoneScreen(data, w, h, State.halftone);
+      } else {
+        applyThreshold(data, State.threshold);
+      }
 
       // C. 应用一维纵向噪点生成的：鼓芯断墨横纹与微观扫描线
       if (State.banding > 0 || State.scanline > 0) {
@@ -1062,6 +1084,37 @@
         data[i]     = val;
         data[i + 1] = val;
         data[i + 2] = val;
+      }
+    }
+
+    // 半调网点印前加网算法 (Pop Art Halftone Screen)
+    function applyHalftoneScreen(data, w, h, halftoneVal) {
+      // 将 1-100 网点强度映射为网格单元的物理像素尺寸 (大小在 3px 到 18px 之间)
+      const cellSize = 3 + (halftoneVal / 100) * 15;
+      const angle = Math.PI / 4; // 经典 45° 半调网点挂网角
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const scale = Math.PI / cellSize;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          const gray = data[idx];
+
+          // 旋转坐标系，产生经典的 45° 倾斜网网点分布，更加耐看
+          const rotX = x * cosA - y * sinA;
+          const rotY = x * sinA + y * cosA;
+
+          // 计算正弦波与余弦波混合的 2D 网格能量图，值域在 [0, 1]
+          const pattern = (Math.sin(rotX * scale) * Math.cos(rotY * scale) + 1) / 2;
+
+          // 半调加网阈值比较：原灰度值越亮，保留为白色的圆点面积越大
+          const val = (gray / 255) > pattern ? 255 : 0;
+
+          data[idx]     = val;
+          data[idx + 1] = val;
+          data[idx + 2] = val;
+        }
       }
     }
 
