@@ -599,6 +599,19 @@
         </div>
       </div>
 
+      <!-- 渐变溶解蒙版 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>拉丝渐变溶解 (蒙版)</span>
+        </div>
+        <select class="ts-select" id="select-smear-mask">
+          <option value="none" selected>无渐变 (全局均匀)</option>
+          <option value="l2r">左清右糊 (向右渐变溶解)</option>
+          <option value="r2l">右清左糊 (向左渐变溶解)</option>
+          <option value="radial">中清边糊 (中心向外扩散)</option>
+        </select>
+      </div>
+
       <!-- 鼓芯断墨条纹 (Toner Banding) -->
       <div class="ctrl-group">
         <div class="ctrl-label">
@@ -665,7 +678,7 @@
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
           </svg>
-          导出 $8\times$ 无损印刷大图
+          导出 8倍 无损印刷大图
         </button>
       </footer>
     </main>
@@ -700,6 +713,7 @@
       halftone: 0,         // 半调波普网点大小 (0=无网点, 1-100)
       smear: 60,           // 墨水外溢拉丝强度
       smearDir: 'right',   // 涂抹拉丝方向 (left, right, both)
+      smearMask: 'none',   // 拉丝渐变溶解蒙版 (none, l2r, r2l, radial)
       banding: 45,         // 鼓芯断墨横纹强度
       scanline: 30,        // 微米扫描条纹
       dust: 25,            // 碳粉微尘点密度
@@ -848,6 +862,12 @@
           State.smearDir = btn.dataset.dir;
           processImage();
         });
+      });
+
+      // 渐变溶解蒙版下拉切换
+      $('select-smear-mask').addEventListener('change', (e) => {
+        State.smearMask = e.target.value;
+        processImage();
       });
 
       // 9. 人像测试图生成
@@ -1016,7 +1036,7 @@
         const threshold = State.threshold;
         const strength  = State.smear / 100 * 0.9;
         const decay     = 0.96 - (State.smear / 100 * 0.08); // 强度越高衰减越慢，拉丝越长
-        applyWindSmear(data, w, h, threshold, strength, decay, State.smearDir);
+        applyWindSmear(data, w, h, threshold, strength, decay, State.smearDir, State.smearMask);
       }
 
       // B. 经过拉丝后的二值化最终压实 (或者应用半调网点)
@@ -1118,8 +1138,8 @@
       }
     }
 
-    // 🌪️ 核心：横向风力墨迹拉丝 (Wind Smear) 算法
-    function applyWindSmear(data, w, h, threshold, strength, decay, direction) {
+    // 🌪️ 核心：横向风力墨迹拉丝 (Wind Smear) 算法 (支持渐变溶解蒙版)
+    function applyWindSmear(data, w, h, threshold, strength, decay, direction, mask) {
       const smearBuf = new Float32Array(w * h * 3);
       for (let i = 0; i < w * h; i++) {
         smearBuf[i * 3]     = data[i * 4];
@@ -1143,11 +1163,21 @@
             let gray = 0.299 * r + 0.587 * g + 0.114 * b;
             let darkness = 255 - gray;
 
+            // 根据蒙版类型计算当前 x 轴坐标下的拉丝强度因子 [0.0, 1.0]
+            let maskFactor = 1.0;
+            if (mask === 'l2r') {
+              maskFactor = x / w;
+            } else if (mask === 'r2l') {
+              maskFactor = 1.0 - (x / w);
+            } else if (mask === 'radial') {
+              maskFactor = Math.abs(x - w / 2) / (w / 2);
+            }
+
             if (darkness > threshold) {
-              // 只有当超过曝光阈值时，开始让暗色外溢拖拽，拖拽色泽基于原墨色
-              bleedR = (255 - r) * strength;
-              bleedG = (255 - g) * strength;
-              bleedB = (255 - b) * strength;
+              // 只有当超过曝光阈值时，开始让暗色外溢拖拽，乘以渐变因子
+              bleedR = (255 - r) * strength * maskFactor;
+              bleedG = (255 - g) * strength * maskFactor;
+              bleedB = (255 - b) * strength * maskFactor;
             } else {
               // 指数级物理衰减，产生由黑到丝缕的渐消条纹
               bleedR *= decay;
