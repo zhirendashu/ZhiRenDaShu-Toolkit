@@ -401,6 +401,31 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
+      transition: opacity 0.15s ease-in-out;
+    }
+
+    .compare-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(9, 11, 16, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.68rem;
+      color: var(--text-2);
+      pointer-events: none;
+      z-index: 20;
+      user-select: none;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .comparison-wrapper:hover .compare-badge {
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 8px var(--accent-glow);
     }
 
     /* 左右分屏滑块 */
@@ -655,16 +680,13 @@
     <!-- 右边：工作区 -->
     <main id="workspace" role="main">
       <div id="preview-container">
-        <div class="comparison-wrapper" id="comparison-box">
+        <div class="comparison-wrapper" id="comparison-box" style="cursor: pointer;">
+          <!-- 提示徽章 -->
+          <div class="compare-badge" id="compare-indicator">💡 点击/长按对比原图</div>
           <!-- 原图/灰度 Canvas -->
           <canvas id="canvas-original" class="preview-canvas"></canvas>
           <!-- 渲染效果 Canvas (覆在右侧) -->
           <canvas id="canvas-processed" class="preview-canvas"></canvas>
-          
-          <!-- 分屏拖拽条 -->
-          <div class="slider-divider" id="divider-slider">
-            <div class="slider-handle">↔</div>
-          </div>
         </div>
       </div>
 
@@ -876,35 +898,29 @@
       // 10. 下载按钮
       $('btn-download').addEventListener('click', downloadOutput);
 
-      // 11. 分屏拉动机制
+      // 11. 点击/长按对比原图机制
       const box = $('comparison-box');
-      const divider = $('divider-slider');
       const processed = $('canvas-processed');
-      let isDragging = false;
+      const indicator = $('compare-indicator');
 
-      divider.addEventListener('mousedown', () => { isDragging = true; });
-      window.addEventListener('mouseup', () => { isDragging = false; });
-      window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        updateDivider(e.clientX);
-      });
+      const showOriginal = () => {
+        processed.style.opacity = '0';
+        indicator.textContent = '👁️ 显示原图中...';
+        indicator.style.borderColor = 'var(--accent)';
+      };
+      
+      const showProcessed = () => {
+        processed.style.opacity = '1';
+        indicator.textContent = '💡 点击/长按对比原图';
+        indicator.style.borderColor = 'var(--border)';
+      };
 
-      divider.addEventListener('touchstart', () => { isDragging = true; });
-      window.addEventListener('touchend', () => { isDragging = false; });
-      window.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        updateDivider(e.touches[0].clientX);
-      });
-
-      function updateDivider(clientX) {
-        const rect = box.getBoundingClientRect();
-        let ratio = (clientX - rect.left) / rect.width;
-        ratio = Math.max(0, Math.min(1, ratio));
-        State.splitRatio = ratio;
-        
-        divider.style.left = (ratio * 100) + '%';
-        processed.style.clipPath = `polygon(${ratio * 100}% 0, 100% 0, 100% 100%, ${ratio * 100}% 100%)`;
-      }
+      box.addEventListener('mousedown', (e) => { e.preventDefault(); showOriginal(); });
+      box.addEventListener('touchstart', (e) => { e.preventDefault(); showOriginal(); }, { passive: false });
+      
+      window.addEventListener('mouseup', showProcessed);
+      window.addEventListener('touchend', showProcessed);
+      box.addEventListener('mouseleave', showProcessed);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1067,9 +1083,7 @@
       $('info-res').textContent = `${w} × ${h} px`;
       $('info-color').textContent = activePalette.name;
 
-      // 同步分割线裁切
-      const ratio = State.splitRatio;
-      procCanvas.style.clipPath = `polygon(${ratio * 100}% 0, 100% 0, 100% 100%, ${ratio * 100}% 100%)`;
+
     }
 
     // ═══════════════════════════════════════════════════════════════
