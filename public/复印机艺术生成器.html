@@ -1047,19 +1047,20 @@
       const procImgData = origCtx.getImageData(0, 0, w, h);
       const data = procImgData.data;
 
-      // A. 应用核心：横向风力墨迹外溢拉丝 (Wind Smear)
-      if (State.smear > 0) {
-        const threshold = State.threshold;
-        const strength  = State.smear / 100 * 0.9;
-        const decay     = 0.96 - (State.smear / 100 * 0.08); // 强度越高衰减越慢，拉丝越长
-        applyWindSmear(data, w, h, threshold, strength, decay, State.smearDir, State.smearMask);
-      }
-
-      // B. 经过拉丝后的二值化最终压实 (或者应用半调网点)
+      // A. 先进行二值化最终压实 (或者应用半调网点)，让底图呈现纯粹的高对比黑白或半调网格
       if (State.halftone > 0) {
         applyHalftoneScreen(data, w, h, State.halftone);
       } else {
         applyThreshold(data, State.threshold);
+      }
+
+      // B. 应用核心：基于已二值化的底图进行横向风力墨迹外溢拉丝 (Wind Smear)
+      // 此时的拉丝不会被二次强行阈值化，从而保留了极细致、带平滑灰度衰减的“逐渐溶解”墨迹扩散质感
+      if (State.smear > 0) {
+        const threshold = 128; // 二值化之后黑白分明，阈值固定设为 128 即可
+        const strength  = State.smear / 100 * 0.95;
+        const decay     = 0.97 - (State.smear / 100 * 0.1); // 微调衰减公式以获得更悠长的过渡线条
+        applyWindSmear(data, w, h, threshold, strength, decay, State.smearDir, State.smearMask);
       }
 
       // C. 应用一维纵向噪点生成的：鼓芯断墨横纹与微观扫描线
