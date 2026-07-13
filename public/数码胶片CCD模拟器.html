@@ -1797,6 +1797,26 @@ input, select { font: inherit; }
         <!-- 品牌附加文字（原有，始终显示） -->
         <input type="text" id="ts-brand-input" class="ctrl-text-input" placeholder="附加文字 (如: CYBER-SHOT, ©2025)" value="" style="margin-top: 6px; width: 100%;" />
 
+        <!-- 水印大小 -->
+        <div class="ctrl-label" style="margin-bottom:6px;margin-top:12px">
+          <span>水印大小</span>
+          <span class="ctrl-label-val" id="val-ts-scale">100%</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-ts-scale" min="30" max="250" value="100" style="width:100%" />
+
+        <!-- 日期格式 -->
+        <div class="ctrl-label" style="margin-bottom:6px;margin-top:12px">
+          <span>日期格式</span>
+        </div>
+        <select class="ts-select" id="ts-date-format" style="width:100%; background:var(--bg-3); border:1px solid var(--border-2); color:var(--text); font-size:0.75rem; padding:6px; border-radius:var(--r-sm);">
+          <option value="yy_q_mm_dd">两位年 ' 月 日 (如 26 ' 07 13)</option>
+          <option value="yyyy_q_mm_dd" selected>四位年 ' 月 日 (如 2026 ' 07 13)</option>
+          <option value="yy_d_mm_dd">两位年 . 月 . 日 (如 26.07.13)</option>
+          <option value="yyyy_d_mm_dd">四位年 . 月 . 日 (如 2026.07.13)</option>
+          <option value="mm_dd_yy">月 日 ' 两位年 (如 07 13 ' 26)</option>
+          <option value="dd_mm_yy">日 月 ' 两位年 (如 13 07 ' 26)</option>
+        </select>
+
         <!-- 时间戳样式 -->
         <div class="ctrl-label" style="margin-bottom:6px;margin-top:12px">
           <span>发光样式</span>
@@ -2045,6 +2065,26 @@ input, select { font: inherit; }
 
   <input type="date" id="m-date-input" class="ctrl-date-input" value="2005-10-24" style="margin-top:10px;margin-bottom:12px" />
   <input type="text" id="m-ts-brand-input" class="ctrl-text-input" placeholder="水印文字 (如: COOLPIX, CYBER-SHOT)" value="" style="margin-top:-6px;margin-bottom:12px;width:100%" />
+
+  <!-- 移动端水印大小 -->
+  <div class="ctrl-label" style="margin-bottom:6px;margin-top:8px">
+    <span>水印大小</span>
+    <span class="ctrl-label-val" id="m-val-ts-scale">100%</span>
+  </div>
+  <input type="range" class="ctrl-slider" id="m-slider-ts-scale" min="30" max="250" value="100" style="width:100%" />
+
+  <!-- 移动端日期格式 -->
+  <div class="ctrl-label" style="margin-bottom:6px;margin-top:10px">
+    <span>日期格式</span>
+  </div>
+  <select class="ts-select" id="m-ts-date-format" style="width:100%; background:var(--bg-3); border:1px solid var(--border-2); color:var(--text); font-size:0.75rem; padding:6px; border-radius:var(--r-sm); margin-bottom:10px;">
+    <option value="yy_q_mm_dd">两位年 ' 月 日 (如 26 ' 07 13)</option>
+    <option value="yyyy_q_mm_dd" selected>四位年 ' 月 日 (如 2026 ' 07 13)</option>
+    <option value="yy_d_mm_dd">两位年 . 月 . 日 (如 26.07.13)</option>
+    <option value="yyyy_d_mm_dd">四位年 . 月 . 日 (如 2026.07.13)</option>
+    <option value="mm_dd_yy">月 日 ' 两位年 (如 07 13 ' 26)</option>
+    <option value="dd_mm_yy">日 月 ' 两位年 (如 13 07 ' 26)</option>
+  </select>
 </div><!-- ══════════════════════════════════════════════════════════════
      内容区（营销页）
 ══════════════════════════════════════════════════════════════ -->
@@ -3021,7 +3061,8 @@ class DigiCamProcessor {
         ctx, w, h, stampParams.text,
         stampParams.mode || 'classic',
         stampParams.color || '#f97316',
-        stampParams.pos || 'bot-right'
+        stampParams.pos || 'bot-right',
+        stampParams.scale || 100
       );
     }
 
@@ -3175,21 +3216,21 @@ class DigiCamProcessor {
     return { x, y, align, baseline };
   }
 
-  static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316', pos = 'bot-right') {
+  static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316', pos = 'bot-right', tsScale = 100) {
     switch (mode) {
-      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos);
-      case 'lcd_blue':   return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos);
-      case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color, pos);
-      case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color, pos);
-      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color, pos);
-      case 'red_led':    return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos);
-      case 'gold':       return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, true, pos);
-      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos);
+      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'lcd_blue':   return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'red_led':    return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos, tsScale);
+      case 'gold':       return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, true, pos, tsScale);
+      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos, tsScale);
     }
   }
 
-  static _timestampClassic(ctx, w, h, dateStr, color, isGold = false, pos = 'bot-right') {
-    const scale = (w / 800);
+  static _timestampClassic(ctx, w, h, dateStr, color, isGold = false, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(14, Math.round(30 * scale));
     const pad   = Math.max(12, Math.round(22 * scale));
     // 中文签名用系统中文字体，纯ASCII用等宽字体
@@ -3213,8 +3254,8 @@ class DigiCamProcessor {
     ctx.shadowBlur = 0;
   }
 
-  static _timestampLCD(ctx, w, h, dateStr, color, pos = 'bot-right') {
-    const scale = (w / 800);
+  static _timestampLCD(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
@@ -3235,7 +3276,7 @@ class DigiCamProcessor {
     ctx.shadowBlur = 0;
   }
 
-    static _timestampDotMatrix(ctx, w, h, dateStr, color) {
+    static _timestampDotMatrix(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const DOT_FONT = {
       '0': [0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110],
       '1': [0b00100,0b01100,0b00100,0b00100,0b00100,0b00100,0b01110],
@@ -3278,8 +3319,7 @@ class DigiCamProcessor {
       'Y': [0b10001,0b10001,0b01010,0b00100,0b00100,0b00100,0b00100],
       'Z': [0b11111,0b00001,0b00010,0b00100,0b01000,0b10000,0b11111],
     };
-    const upperStr = dateStr.toUpperCase();
-    const scale = (w / 800);
+    const upperStr = dateStr.toUpperCase(); const scale = (w / 800) * (tsScale / 100);
     const dot   = Math.max(2, Math.round(4 * scale));   // dot radius
     const gap   = Math.max(1, Math.round(1.5 * scale)); // gap between dots
     const step  = dot + gap;
@@ -3344,8 +3384,8 @@ class DigiCamProcessor {
     ctx.restore();
   }
 
-  static _timestampEightBit(ctx, w, h, dateStr, color) {
-    const scale   = (w / 800);
+  static _timestampEightBit(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
     const fSizeSmall = 8;  // render tiny, then scale up
     const upScale    = Math.max(2, Math.round(4 * scale));
     const pad        = Math.max(10, Math.round(18 * scale));
@@ -3398,8 +3438,8 @@ class DigiCamProcessor {
     ctx.restore();
   }
 
-  static _timestampWhite(ctx, w, h, dateStr, color) {
-    const scale = (w / 800);
+  static _timestampWhite(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(13, Math.round(26 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     ctx.font = `300 ${fSize}px "Helvetica Neue", Arial, sans-serif`;
@@ -4029,6 +4069,8 @@ const State = (() => {
     tsColor:       '#f97316',
     tsPos:         'bot-right', // 九宫格位置
     halftoneMode:  'cmyk',
+    tsScale:       100,         // 水印缩放大小 (30% - 250%)
+    tsDateFormat:  'yyyy_q_mm_dd', // 水印日期排版格式,
 
     // 胶片效果
     filmBorder: 'none',   // 'none' | 'thin' | 'sprocket'
@@ -4648,6 +4690,7 @@ async function processAndRender() {
       mode:    s.tsMode,
       color:   s.tsColor || '#f97316',
       pos:     s.tsPos || 'bot-right',
+      scale:   s.tsScale || 100,
     };
     const effectParams = {
       filmBorder: s.filmBorder,
@@ -5217,11 +5260,54 @@ function bindTimestamp() {
   }
 }
 
+  // 水印大小缩放绑定
+  const sScale = $('slider-ts-scale');
+  const vScale = $('val-ts-scale');
+  const msScale = $('m-slider-ts-scale');
+  const mvScale = $('m-val-ts-scale');
+
+  function syncScale(val) {
+    State.set({ tsScale: parseInt(val, 10) });
+    [sScale, msScale].forEach(el => { if (el) el.value = val; });
+    [vScale, mvScale].forEach(el => { if (el) el.textContent = val + '%'; });
+    if (State.get().srcImageData) scheduleProcess();
+  }
+
+  if (sScale) sScale.addEventListener('input', () => syncScale(sScale.value));
+  if (msScale) msScale.addEventListener('input', () => syncScale(msScale.value));
+
+  // 日期格式选择绑定
+  const sFormat = $('ts-date-format');
+  const msFormat = $('m-ts-date-format');
+
+  function syncFormat(val) {
+    State.set({ tsDateFormat: val });
+    [sFormat, msFormat].forEach(el => { if (el) el.value = val; });
+    if (State.get().srcImageData) scheduleProcess();
+  }
+
+  if (sFormat) sFormat.addEventListener('change', () => syncFormat(sFormat.value));
+  if (msFormat) msFormat.addEventListener('change', () => syncFormat(msFormat.value));
+
 function formatDate(str) {
   if (!str || typeof str !== 'string') return '';
   const p = str.split('-');
   if (p.length !== 3) return str;
-  return `'${p[0].slice(-2)} ${p[1]} ${p[2]}`;
+  const fmt = State.get().tsDateFormat || 'yyyy_q_mm_dd';
+  const y4 = p[0];
+  const y2 = p[0].slice(-2);
+  const m = p[1];
+  const d = p[2];
+  
+  switch (fmt) {
+    case 'yy_q_mm_dd':   return `${y2} ' ${m} ${d}`;
+    case 'yyyy_q_mm_dd': return `${y4} ' ${m} ${d}`;
+    case 'yy_d_mm_dd':   return `${y2}.${m}.${d}`;
+    case 'yyyy_d_mm_dd': return `${y4}.${m}.${d}`;
+    case 'mm_dd_yy':     return `${m} ${d} ' ${y2}`;
+    case 'dd_mm_yy':     return `${d} ${m} ' ${y2}`;
+    default:             return `${y4} ' ${m} ${d}`;
+  }
 }
 
 // ── EXIF 提取器 & 日期处理 ──
