@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -989,6 +989,22 @@
 
         <!-- 极简头部 -->
         <header class="main-header" id="hero-header">
+        }</style>
+</head>
+<body>
+    <!-- 噪声纹理和流体背景 -->
+    <div class="noise-overlay"></div>
+    <div class="aurora-bg">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2"></div>
+        <div class="aurora-blob blob-3"></div>
+        <div class="aurora-blob blob-4"></div>
+    </div>
+
+    <div class="app">
+
+        <!-- 极简头部 -->
+        <header class="main-header" id="hero-header">
             <div class="logo-area">
                 <span class="logo-dot"></span>
                 <span>植人大树. 工作室</span>
@@ -996,7 +1012,7 @@
             <div class="brand-hero">
                 <div class="badge-container">
                     <span class="pulse-dot"></span>
-                    <span class="badge-text">15 个专业工具已就绪</span>
+                    <span class="badge-text">16 个专业工具已就绪</span>
                 </div>
                 <h1 class="hero-title">让每一张封面都成为艺术</h1>
                 <p class="hero-subtitle">专为小红书、抖音与朋友圈定制的拼图、套壳、CCD滤镜与排版工作站</p>
@@ -1285,10 +1301,66 @@
                         </div>
                     </a>
 
+                    <!-- 微信聊天梗图生成器 -->
+                    <a href="./微信聊天梗图生成器.html" class="glass-card theme-green">
+                        <span class="card-step">NEW</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>微信聊天梗图生成器</h2>
+                            <p>一键生成高仿微信聊天截图。支持自定义头像、昵称、聊天内容与常用梗图结局（拉黑拒收、开启验证、红色感叹号），秒变社交玩梗达人。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">微信梗图</span>
+                                <span class="tag">舔狗模拟器</span>
+                                <span class="tag">一键导出</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 胶片边框合成工具 -->
+                    <a href="./胶片边框合成工具.html" class="glass-card theme-amber">
+                        <span class="card-step">NEW</span>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <path d="M2 8h20M2 16h20M6 4v4M18 4v4M6 16v4M18 16v4"/>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <h2>胶片边框合成工具</h2>
+                            <p>将照片套入真实 35mm 胶片边框模板。Canvas 实时合成，支持拖拽定位、色调调整与高清导出，完全离线。</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="tags">
+                                <span class="tag">胶片边框</span>
+                                <span class="tag">Canvas合成</span>
+                            </div>
+                            <div class="go-btn">
+                                进入
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
                 </div>
             </div>
 
-            <!-- Tab 2: AI 工作站 (2个) -->
+            <!-- Tab 2: AI 工作站 -->
             <div class="tab-pane" id="tab-ai">
                 <div class="bento-grid">
                     
@@ -1350,7 +1422,7 @@
                 </div>
             </div>
 
-            <!-- Tab 3: 色彩实验室 (5个) -->
+            <!-- Tab 3: 色彩实验室 -->
             <div class="tab-pane" id="tab-color">
                 <div class="bento-grid">
                     
@@ -1560,14 +1632,6 @@
                                 </svg>
                             </div>
                         </div>
-                    </a>
-
-                </div>
-            </div>
-
-        </div>
-
-        <!-- 打赏与支持 -->
         <div class="donate-section">
             <div class="donate-card">
                 <div class="donate-left">
