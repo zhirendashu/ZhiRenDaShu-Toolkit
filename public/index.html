@@ -367,6 +367,7 @@
         /* ===== Tab 内容区 ===== */
         .tab-contents {
             width: 100%;
+            align-self: stretch;
             position: relative;
             z-index: 5;
         }
@@ -376,6 +377,7 @@
         }
         .tab-pane.active {
             display: block;
+            width: 100%;
         }
 
         /* ===== Bento Grid 格局 ===== */
@@ -663,6 +665,8 @@
         /* ===== 打赏创作者卡片 ===== */
         .donate-section {
             width: 100%;
+            align-self: stretch;
+            grid-column: 1 / -1;
             margin-top: var(--sp-3);
         }
         .donate-card {
@@ -781,6 +785,7 @@
         /* ===== 页脚 ===== */
         footer {
             width: 100%;
+            align-self: stretch;
             padding: var(--sp-5) 0 var(--sp-3);
             text-align: center;
             border-top: 1px solid var(--border-glass);
@@ -1632,6 +1637,17 @@
                                 </svg>
                             </div>
                         </div>
+                    </a>
+
+                    <!-- 占位：填满最后一行第三格，防止尾页内容被吸入网格 -->
+                    <div style="display:block;visibility:hidden;pointer-events:none;" aria-hidden="true"></div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 打赏与支持 -->
         <div class="donate-section">
             <div class="donate-card">
                 <div class="donate-left">
