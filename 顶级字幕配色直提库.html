@@ -1,0 +1,916 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自媒体顶级字幕配色直提库 · 植人大树</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    /* 全局设计系统 */
+    .bg-blobs{position:fixed;inset:0;z-index:0;overflow:hidden;filter:blur(100px);opacity:0.2;pointer-events:none}
+    .blob{position:absolute;border-radius:50%;animation:bmv 28s infinite alternate}
+    .blob-1{width:55vw;height:55vw;background:radial-gradient(circle,#ff4757,transparent 70%);top:-15%;right:-10%}
+    .blob-2{width:40vw;height:40vw;background:radial-gradient(circle,#ff7e5f,transparent 70%);bottom:-10%;left:-10%;animation-delay:-11s}
+    .blob-3{width:25vw;height:25vw;background:radial-gradient(circle,#a855f7,transparent 70%);top:38%;left:32%;animation-delay:-20s;opacity:.5}
+    @keyframes bmv{from{transform:translate(0,0)scale(1)}to{transform:translate(55px,38px)scale(1.1)}}
+
+    /* 统一 Header */
+    .site-header {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 100;
+      background: rgba(11,12,16,0.82); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    }
+    .header-back {
+      display: flex; align-items: center; gap: 6px; color: #828a9f;
+      text-decoration: none; font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0.02em;
+      padding: 6px 14px; border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.04);
+      transition: all .25s ease; white-space: nowrap;
+    }
+    .header-back:hover { color: #fff; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.09); }
+    .header-back svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .header-logo {
+      font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem;
+      letter-spacing: -0.04em;
+      background: linear-gradient(90deg, #ff4757, #ff9f43);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* 按钮系统 - 极客科技风 */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px; font-family: 'Outfit', sans-serif;
+      font-weight: 600; font-size: 0.82rem; letter-spacing: 0.04em;
+      cursor: pointer; transition: all .2s ease; border: none; position: relative; overflow: hidden;
+    }
+    .btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,.12),transparent); opacity: 0; transition: opacity .2s; }
+    .btn:hover::after { opacity: 1; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #ff4757 0%, #ff6b35 100%);
+      color: #fff; box-shadow: 0 4px 20px rgba(255,71,87,0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 28px rgba(255,71,87,0.55); transform: translateY(-1px); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      color: #9aa5b8;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); color: #fff; }
+    .copy-btn {
+      flex: 1; padding: 11px 8px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+      color: var(--text); cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 5px; transition: all .2s ease;
+      font-family: 'Outfit', sans-serif; position: relative; overflow: hidden;
+    }
+    .copy-btn::before { content: ''; position: absolute; inset:0; background: linear-gradient(135deg,rgba(255,255,255,.06),transparent); opacity:0; transition: opacity .2s; }
+    .copy-btn:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.09); }
+    .copy-btn:hover::before { opacity:1; }
+    .copy-btn span.label { font-size: 0.7rem; color: var(--sub, #8b92a5); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+    .copy-btn span.hex { font-family: 'Outfit', monospace; font-size: 0.95rem; font-weight: 700; letter-spacing: 1px; }
+
+    :root {
+      --bg: #0b0c10;
+      --card-bg: #1c1e26;
+      --border: #2a2e39;
+      --text: #ffffff;
+      --sub: #8b92a5;
+      --accent: #ff4757;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Outfit', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 100px 40px 40px;
+      min-height: 100vh;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 30px 30px;
+      position: relative;
+    }
+
+    .header {
+      margin-bottom: 50px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+      background: linear-gradient(90deg, #ff4757, #ff9f43);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+      word-break: keep-all;
+    }
+
+    .header p {
+      color: var(--sub);
+      font-size: 0.95rem;
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    .group-title {
+      font-size: 1.3rem;
+      color: var(--text);
+      margin: 40px 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 30px;
+    }
+
+    /* 影视级卡片设计 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border-color: #4a5263;
+    }
+
+    /* 高级演示画幅：模拟 21:9 电影宽画幅感觉 */
+    .demo-zone {
+      height: 180px;
+      background: #14151a; /* 极深的中性灰底色，最高级 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      /* 上下电影黑边隐喻 */
+      border-top: 3px solid #050505;
+      border-bottom: 3px solid #050505;
+    }
+
+    /* =========================================
+       极其真实的向外扩展字幕渲染层 
+       ========================================= */
+    .text-wrapper {
+      position: relative;
+      /* 给所有字幕加一个真实的影视级坠落阴影 */
+      filter: drop-shadow(0px 12px 15px rgba(0,0,0,0.85));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .demo-text {
+      position: relative;
+      font-size: 3.2rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-family: "PingFang SC", "Microsoft YaHei", "Impact", sans-serif;
+      text-align: center;
+      white-space: nowrap;
+      
+      /* 底色其实是描边色，用来被向外拓宽，这样就不伤原始字重 */
+      color: var(--stroke-color);
+      -webkit-text-stroke: var(--stroke-width) var(--stroke-color);
+      
+      /* 可以外接弥散发光 */
+      text-shadow: var(--custom-glow, none);
+    }
+
+    /* 这是真正最上层的彩色肉身，没有描边，完美骑合在底层上方 */
+    .demo-text::before {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      color: var(--fill-color);
+      -webkit-text-stroke: 0; /* 这是精髓：芯子不描边 */
+      z-index: 2;
+      pointer-events: none;
+    }
+    /* ========================================= */
+
+    .action-zone {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #e2e8f0;
+      letter-spacing: 1px;
+    }
+
+    .copy-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .copy-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #242730;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #2d313c;
+      border-color: #5a647a;
+    }
+
+    .copy-btn span.label {
+      font-size: 0.75rem;
+      color: var(--sub);
+      font-weight: 600;
+    }
+
+    .copy-btn span.hex {
+      font-family: "Monaco", "Consolas", monospace;
+      font-size: 1.05rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* 小圆点颜色预览提示 */
+    .color-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-left: 6px;
+      vertical-align: middle;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+    }
+
+    /* 弹出提示框 */
+    #toast {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #32ff7e;
+      color: #000;
+      padding: 12px 30px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      box-shadow: 0 10px 25px rgba(50, 255, 126, 0.4);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ===== 移动端适配 (<768px) ===== */
+    @media (max-width: 768px) {
+      body { padding: 80px 16px 40px; }
+      .header h1 { font-size: 1.4rem; white-space: normal; letter-spacing: 0; }
+      .grid { grid-template-columns: 1fr; gap: 16px; }
+      .demo-text { font-size: 2rem; }
+      .site-header { padding: 0 16px; }
+    }
+  
+      /* ── 封面比例暗房 2.0 视觉覆盖样式 ── */
+      :root {
+        --bg: #050505 !important;
+        --bg-color: #050505 !important;
+        --surface: #111111 !important;
+        --surface-glass: rgba(17, 17, 17, 0.85) !important;
+        --card: #161616 !important;
+        --border: #222222 !important;
+        --border-focus: #444444 !important;
+        --accent: #FF2442 !important; /* 品牌红 */
+        --accent-primary: #FF2442 !important;
+        --accent2: #F6D365 !important; /* 胶片黄 */
+        --text: #F4F1E8 !important;
+        --text-dim: #8A8A8A !important;
+        --sub: #8A8A8A !important;
+      }
+      body {
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
+        font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .panel-card, .ctrl-group, .settings-panel, .control-panel, .step-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      .btn-primary, #export-btn, .btn-brand, .download-btn, #download-btn {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover, #export-btn:hover, .btn-brand:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(255, 36, 66, 0.5) !important;
+      }
+      .btn-secondary, .btn-dark, .btn-outline {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+      }
+      .btn-secondary:hover, .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--border-focus) !important;
+      }
+      .preview-area, #main-preview-box, .canvas-container-wrap, .canvas-container, #compare-container {
+        position: relative !important;
+        background-color: #020202 !important;
+        background-image: radial-gradient(circle at center, rgba(255, 36, 66, 0.03) 0%, transparent 75%) !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.9) !important;
+        border: 1px solid var(--border) !important;
+      }
+      .preview-area::before, #main-preview-box::before, .canvas-container-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .preview-area::after, #main-preview-box::after, .canvas-container-wrap::after {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 2;
+      }
+      input[type="range"] {
+        accent-color: var(--accent) !important;
+      }
+      header {
+        background: rgba(5, 5, 5, 0.85) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .header-back {
+        border: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+      }
+      .header-back:hover {
+        border-color: var(--border-focus) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }
+/* ═══ 全局品牌导航条 ═══════════════════════════════════════════ */
+.zt-global-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 9998;
+  pointer-events: none;
+}
+.zt-nav-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, #FF2442 0%, #F6D365 50%, #FF2442 100%);
+  background-size: 200% 100%;
+  animation: zt-stripe-move 4s linear infinite;
+}
+@keyframes zt-stripe-move {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+.zt-nav-body {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  height: 0; overflow: hidden; opacity: 0;
+  background: rgba(5,5,5,0.97);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid #1a1a1a;
+  transition: height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+  pointer-events: auto;
+}
+.zt-global-nav:hover .zt-nav-body { height: 44px; opacity: 1; }
+.zt-nav-home {
+  display: flex; align-items: center; gap: 5px;
+  color: #8a8a8a; text-decoration: none;
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-size: 0.75rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 100px;
+  border: 1px solid #1e1e1e;
+  background: rgba(255,255,255,0.02);
+  white-space: nowrap; flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.zt-nav-home:hover { color: #fff; border-color: #333; background: rgba(255,255,255,0.06); }
+.zt-nav-home svg { stroke: currentColor; flex-shrink: 0; }
+.zt-nav-sep { width: 1px; height: 20px; background: #1e1e1e; flex-shrink: 0; }
+.zt-nav-links {
+  display: flex; align-items: center; gap: 2px;
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+}
+.zt-nav-links::-webkit-scrollbar { display: none; }
+.zt-nav-link {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 100px;
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-size: 0.7rem; font-weight: 500;
+  color: #555; text-decoration: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+.zt-nav-link:hover { color: #ccc; border-color: #2a2a2a; background: rgba(255,255,255,0.04); }
+.zt-nav-current {
+  color: #FF2442 !important; border-color: rgba(255,36,66,0.25) !important;
+  background: rgba(255,36,66,0.06) !important;
+}
+.zt-nav-brand {
+  font-family: 'Outfit', sans-serif; font-size: 0.62rem; font-weight: 700;
+  color: #2a2a2a; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0;
+  text-transform: uppercase;
+}
+/* ═══ 统一工具 Shell 样式 ═══════════════════════════════════════════ */
+.site-header {
+    height: 56px !important;
+    padding: 0 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: rgba(5,5,5,0.94) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    position: sticky !important;
+    top: 3px !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+    gap: 16px !important;
+}
+.header-back {
+    display: flex !important; align-items: center !important; gap: 6px !important;
+    color: #888 !important; text-decoration: none !important;
+    font-size: 0.78rem !important; font-weight: 600 !important;
+    padding: 5px 12px !important; border-radius: 100px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    background: rgba(255,255,255,0.02) !important;
+    transition: all 0.2s ease !important;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+.header-back:hover { color: #fff !important; border-color: rgba(255,255,255,0.18) !important; background: rgba(255,255,255,0.06) !important; }
+.header-back svg { width: 13px; height: 13px; stroke: currentColor; flex-shrink: 0; }
+.header-title {
+    flex: 1 !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #f4f1e8 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+}
+/* 旧版标题兼容 */
+.header-logo {
+    display: none !important;
+}
+.tool-badge {
+    font-size: 0.58rem !important; font-weight: 700 !important;
+    padding: 3px 10px !important; border-radius: 100px !important;
+    border: 1px solid !important;
+    letter-spacing: 0.08em !important;
+    font-family: 'Outfit', monospace !important;
+    white-space: nowrap !important; flex-shrink: 0 !important;
+}
+/* 收藏夹按钮 */
+.btn-favorites {
+    display: flex !important; align-items: center !important; gap: 5px !important;
+    padding: 5px 12px !important; border-radius: 100px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    background: rgba(255,255,255,0.02) !important;
+    color: #888 !important; font-size: 0.75rem !important; font-weight: 600 !important;
+    cursor: pointer !important; transition: all 0.2s ease !important;
+    font-family: 'Outfit', sans-serif !important;
+    white-space: nowrap !important; flex-shrink: 0 !important;
+}
+.btn-favorites:hover { color: #F6D365 !important; border-color: rgba(246,211,101,0.3) !important; background: rgba(246,211,101,0.05) !important; }
+.btn-favorites.has-favs { color: #F6D365 !important; }
+
+/* 统一 Footer */
+.zt-footer {
+    display: flex !important; align-items: center !important;
+    justify-content: center !important; gap: 12px !important;
+    padding: 14px 24px !important;
+    border-top: 1px solid rgba(255,255,255,0.04) !important;
+    font-size: 0.68rem !important; color: #2a2a2a !important;
+    font-family: 'Outfit', sans-serif !important;
+    flex-shrink: 0 !important;
+}
+.zt-footer a { color: #3a3a3a !important; text-decoration: none !important; }
+.zt-footer a:hover { color: #777 !important; }
+
+/* 收藏夹抽屉 */
+.fav-drawer {
+    position: fixed;
+    top: 59px; right: 16px;
+    width: 320px;
+    max-height: 60vh;
+    background: rgba(10,10,14,0.98);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+}
+.fav-drawer.open { display: flex; }
+.fav-drawer-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.8rem; font-weight: 700; color: #f4f1e8;
+}
+.fav-drawer-count { font-size: 0.68rem; color: #555; font-weight: 400; }
+.btn-fav-clear {
+    font-size: 0.68rem; color: #555;
+    background: none; border: none; cursor: pointer;
+    padding: 2px 8px; border-radius: 6px;
+    transition: color 0.18s;
+}
+.btn-fav-clear:hover { color: #f87171; }
+.fav-drawer-body {
+    flex: 1; overflow-y: auto; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+.fav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.fav-item:hover { background: rgba(255,255,255,0.07); }
+.fav-swatch {
+    width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.fav-info { flex: 1; min-width: 0; }
+.fav-name { font-size: 0.8rem; font-weight: 500; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fav-hex { font-size: 0.68rem; color: #555; font-family: monospace; }
+.fav-actions { display: flex; gap: 4px; }
+.btn-fav-copy {
+    padding: 2px 8px; border-radius: 6px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    color: #888; font-size: 0.65rem; cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-fav-copy:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.btn-fav-del {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: #3a3a3a;
+    font-size: 13px; cursor: pointer; border-radius: 4px;
+    transition: all 0.15s; line-height: 1;
+}
+.btn-fav-del:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+.fav-empty { text-align: center; padding: 24px 16px; font-size: 0.75rem; color: #444; }
+</style>
+</head>
+<body>
+<!-- 全局品牌导航条 -->
+<nav class="zt-global-nav" aria-label="工具导航">
+  <div class="zt-nav-stripe"></div>
+  <div class="zt-nav-body">
+    <a href="index.html" class="zt-nav-home" title="返回工具箱首页">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>工具箱</span>
+    </a>
+    <div class="zt-nav-sep"></div>
+    <div class="zt-nav-links">
+      <a href="封面比例转换工具.html" class="zt-nav-link">比例转换</a>
+      <a href="小红书拼图工具.html" class="zt-nav-link">拼图大师</a>
+      <a href="封面精修大师.html" class="zt-nav-link">精修大师</a>
+      <a href="数码胶片CCD模拟器.html" class="zt-nav-link">CCD滤镜</a>
+      <a href="批量水印工坊.html" class="zt-nav-link">水印工坊</a>
+    </div>
+    <div class="zt-nav-brand">植人大树 Studio</div>
+  </div>
+</nav>
+
+  <!-- 动态背景光斑 -->
+  <div class="bg-blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- 统一导航 Header -->
+  <header class="site-header">
+    <a href="index.html" class="header-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      返回首页
+    </a>
+    <span class="header-logo">字幕配色直提库</span>
+  </header>
+
+  <!-- 防盗水印及版本说明 -->
+  <script>
+    /**
+     * 作者：植人大树
+     * 个人主页：https://link3.cc/zhirendashu
+     * 版本：v2.1.0 (极客科技风升级版)
+     * 开源协议：CC BY-NC-SA 4.0
+     */
+    const __AUTH_SIGNATURE = "179689535&0814";
+  </script>
+
+  <div class="header">
+    <h1>自媒体顶级字幕配色直提库</h1>
+    <p>专为剪映、PR、FCPX 字幕排版定制！本次完全重构底层渲染引擎：<br>采用独立解耦的**「向外扩张真实描边」**算法，确保字幕中心饱满不走形；配合**电影级光学坠落阴影 (Drop-Shadow)**底色，让你 1:1 沉浸式预览它的影视级高级感。</p>
+  </div>
+
+  <div id="app"></div>
+  <div id="toast">✅ 提取成功</div>
+
+  <script>
+    // == 顶级配色提取库数据词典 ==
+    const palettes = [
+      {
+        group: "⚓ 个人IP专属：植人海蓝主视觉",
+        items: [
+          { name: "经典航海白", text: "海军白夜", fill: "#FFFFFF", stroke: "#2c50ab", width: 6 },
+          { name: "黄金舰长", text: "黄金舰队", fill: "#fbbf24", stroke: "#2c50ab", width: 6 },
+          { name: "冰川冷夜", text: "冰川冷夜", fill: "#e0f2fe", stroke: "#1e3a8a", width: 6 },
+          { name: "深潜极境", text: "深潜极蓝", fill: "#2c50ab", stroke: "#ffffff", width: 4, glow: "0 0 20px rgba(44,80,171,0.6)" }
+        ]
+      },
+      {
+        group: "👑 大师绝赞色系 (高反差视觉)",
+        items: [
+          { name: "柯达复古潮", text: "柯达胶卷", fill: "#FAB617", stroke: "#E30613", width: 4 },
+          { name: "酸性质感", text: "酸性质感", fill: "#E5FF00", stroke: "#1A1A1A", width: 5 },
+          { name: "赛博霓虹警告", text: "霓虹警告", fill: "#FF00FF", stroke: "#FFFFFF", width: 3, glow: "0 0 25px rgba(255,0,255,0.8)" },
+          { name: "合成器电音蓝", text: "浪潮之音", fill: "#00FFFF", stroke: "#210B4B", width: 5 },
+          { name: "白质黑边百搭", text: "极简百搭", fill: "#FFFFFF", stroke: "#000000", width: 5 },
+          { name: "封锁高亮荧黄", text: "警报封锁", fill: "#FFF800", stroke: "#FF00FF", width: 4 }
+        ]
+      },
+      {
+        group: " Gruvbox 相纸系列 (高级温润/复古影院)",
+        items: [
+          // 把字重放大一些，能看到更厚重的复古味道
+          { name: "胶片路灯黄", text: "老旧黄铜", fill: "#fabd2f", stroke: "#d79921", width: 4 },
+          { name: "相纸过曝红", text: "暗室冲洗", fill: "#fb4934", stroke: "#cc241d", width: 4 },
+          { name: "胶片褪色青", text: "薄荷胶片", fill: "#8ec07c", stroke: "#689d6a", width: 4 },
+          { name: "黄昏旧相册", text: "夕阳光晕", fill: "#fe8019", stroke: "#d65d0e", width: 4 },
+          { name: "泛黄古籍文本", text: "羊皮厚卷", fill: "#ebdbb2", stroke: "#504945", width: 5 }
+        ]
+      },
+      {
+        group: "☕ Catppuccin 极简清冷 (适合生活Vlog/冷峻暗调)",
+        items: [
+          { name: "火狐清冷粉", text: "清粉微光", fill: "#f2cdcd", stroke: "#11111b", width: 5 },
+          { name: "赛博情绪紫", text: "低落情绪风", fill: "#f5c2e7", stroke: "#11111b", width: 5 },
+          { name: "透彻冰蓝", text: "透彻深海", fill: "#74c7ec", stroke: "#11111b", width: 5 },
+          { name: "高级抹茶绿", text: "清晨抹茶", fill: "#a6e3a1", stroke: "#1e1e2e", width: 5 }
+        ]
+      },
+      {
+        group: " Vlog 胶片感·IG 高级审美 (生活/摄影纪实)",
+        items: [
+          { name: "主标题强调色", text: "电影感标题", fill: "#d4cdc4", stroke: "#1c1c1a", width: 5 },
+          { name: "欧美褪色红(常规)", text: "褪色暗红", fill: "#e8e3dc", stroke: "#bc4f4a", width: 4 },
+          { name: "暗调墨绿(封面)", text: "胶片森绿", fill: "#c5ccb4", stroke: "#1a241b", width: 5 },
+          { name: "暖调生活(副标题)", text: "温暖纪实", fill: "#f8f3e6", stroke: "#9e866e", width: 4 }
+        ]
+      },
+      {
+        group: " 数码开箱·高级灰卡器材风 (评测/科技)",
+        items: [
+          { name: "徕卡信仰红(主导)", text: "极致开箱", fill: "#e30613", stroke: "#111111", width: 5 },
+          { name: "18%灰卡(字幕)", text: "灰卡基准", fill: "#bfbfbf", stroke: "#0a0a0a", width: 4 },
+          { name: "科技冷银(副题)", text: "冷峻质感", fill: "#eef2f5", stroke: "#33383d", width: 4 },
+          { name: "暗调黑胶金(封面)", text: "质感黑金", fill: "#d4af37", stroke: "#111111", width: 5, glow: "0 0 15px rgba(212,175,55,0.4)" }
+        ]
+      },
+      {
+        group: "📻 宝丽来漏光感 (复古/情绪向)",
+        items: [
+          { name: "相纸本白(字幕)", text: "拍立得相纸", fill: "#f5f5f0", stroke: "#4a453f", width: 4 },
+          { name: "漏光暖橘(封面)", text: "情绪漏光橘", fill: "#f27935", stroke: "#2e1913", width: 5, glow: "0 0 20px rgba(242,121,53,0.5)" },
+          { name: "青橙胶片蓝(正文)", text: "情绪低光蓝", fill: "#3d7c80", stroke: "#09171a", width: 4 },
+          { name: "褪色芥末黄(副题)", text: "复古芥末", fill: "#cbd2b4", stroke: "#3a4a28", width: 4 }
+        ]
+      }
+    ];
+
+    const app = document.getElementById('app');
+
+    palettes.forEach(groupData => {
+      const title = document.createElement('h2');
+      title.className = 'group-title';
+      title.innerText = groupData.group;
+      app.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      groupData.items.forEach(color => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // 计算物理描边（向外扩由于视觉是对半减的，所以乘2左右能获得最佳的饱满外显粗度）
+        const outStrokeWidth = color.width * 2;
+        const textGlow = color.glow ? color.glow : 'none';
+
+        card.innerHTML = `
+          <div class="demo-zone">
+            <div class="text-wrapper" style="
+              --fill-color: ${color.fill}; 
+              --stroke-color: ${color.stroke}; 
+              --stroke-width: ${outStrokeWidth}px;
+              --custom-glow: ${textGlow};
+            ">
+              <div class="demo-text" data-text="${color.text}">${color.text}</div>
+            </div>
+          </div>
+          <div class="action-zone">
+            <div class="card-title">${color.name}</div>
+            <div class="copy-group">
+              <button class="copy-btn" onclick="execCopy('${color.fill}', '字色[填充]')">
+                <span class="label">字色 (填充)</span>
+                <div>
+                  <span class="hex" style="color: ${['#000000', '#11111b', '#1a1a1a', '#1e1e2e'].includes(color.fill.toLowerCase()) ? '#fff' : color.fill}">${color.fill}</span>
+                </div>
+              </button>
+              <button class="copy-btn" onclick="execCopy('${color.stroke}', '描边[边框]')">
+                <span class="label">边框 (描边)</span>
+                <div>
+                  <span class="hex" style="color: ${['#000000', '#11111b', '#1a1a1a', '#1e1e2e'].includes(color.stroke.toLowerCase()) ? '#fff' : color.stroke}">${color.stroke}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      app.appendChild(grid);
+    });
+
+    let toastTimeout;
+    window.execCopy = function(hex, typeName) {
+      const cleanHex = hex.replace(/^#/, '');
+      navigator.clipboard.writeText(cleanHex).then(() => {
+        const toast = document.getElementById('toast');
+        toast.innerHTML = `成功提取 ${typeName}：<span style="font-family:monospace; margin-left:8px; font-size: 1.1rem;">${cleanHex}</span>`;
+        toast.classList.add('show');
+        
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2000);
+      }).catch(err => {
+        alert("复制失败，请手动选择复制。");
+      });
+    };
+  </script>
+<script>
+// ── 颜色收藏夹系统 ───────────────────────────────────────────────────
+(function() {
+  var FAV_KEY = 'zt_color_favorites_v1';
+  function loadFavs() { try{return JSON.parse(localStorage.getItem(FAV_KEY)||'[]');}catch(e){return[];} }
+  function saveFavs(f){ localStorage.setItem(FAV_KEY, JSON.stringify(f)); }
+
+  // 检查某颜色是否已收藏
+  window.ztIsFav = function(hex) {
+    return loadFavs().some(function(f){ return f.hex.toLowerCase()===hex.toLowerCase(); });
+  };
+
+  // 切换收藏状态
+  window.ztToggleFav = function(hex, name, source) {
+    var favs = loadFavs();
+    var idx = favs.findIndex(function(f){ return f.hex.toLowerCase()===hex.toLowerCase(); });
+    if (idx >= 0) { favs.splice(idx, 1); }
+    else { favs.unshift({hex:hex, name:name||hex, source:source||'', savedAt:Date.now()}); }
+    saveFavs(favs);
+    updateFavBtn();
+    return idx < 0; // true = 新增, false = 已删除
+  };
+
+  function updateFavBtn() {
+    var btn = document.getElementById('btn-favorites');
+    if (!btn) return;
+    var count = loadFavs().length;
+    var star = btn.querySelector('.fav-star');
+    var cnt = btn.querySelector('.fav-count');
+    if (star) star.textContent = count > 0 ? '★' : '☆';
+    if (cnt) cnt.textContent = count > 0 ? ' ('+count+')' : '';
+    btn.classList.toggle('has-favs', count > 0);
+  }
+
+  function renderFavDrawer() {
+    var body = document.getElementById('fav-drawer-body');
+    if (!body) return;
+    var favs = loadFavs();
+    var countEl = document.getElementById('fav-drawer-count');
+    if (countEl) countEl.textContent = favs.length + ' 个颜色';
+    if (!favs.length) {
+      body.innerHTML = '<div class="fav-empty">还没有收藏的颜色<br>点击色块旁的 ☆ 收藏</div>';
+      return;
+    }
+    body.innerHTML = '';
+    favs.forEach(function(f, i) {
+      var item = document.createElement('div'); item.className = 'fav-item';
+      var sw = document.createElement('div'); sw.className = 'fav-swatch'; sw.style.background = f.hex;
+      var info = document.createElement('div'); info.className = 'fav-info';
+      var nm = document.createElement('div'); nm.className = 'fav-name'; nm.textContent = f.name;
+      var hx = document.createElement('div'); hx.className = 'fav-hex'; hx.textContent = f.hex.toUpperCase() + (f.source?' · '+f.source:'');
+      info.append(nm, hx);
+      var acts = document.createElement('div'); acts.className = 'fav-actions';
+      var bC = document.createElement('button'); bC.className = 'btn-fav-copy'; bC.textContent = '复制';
+      bC.onclick = function(e) { e.stopPropagation(); navigator.clipboard.writeText(f.hex).then(function(){bC.textContent='✓';setTimeout(function(){bC.textContent='复制';},1000);}); };
+      var bD = document.createElement('button'); bD.className = 'btn-fav-del'; bD.innerHTML = '&times;';
+      bD.onclick = function(e) { e.stopPropagation(); var fs=loadFavs(); fs.splice(i,1); saveFavs(fs); renderFavDrawer(); updateFavBtn(); };
+      acts.append(bC, bD);
+      item.onclick = function() { navigator.clipboard.writeText(f.hex); nm.style.color='#F6D365'; setTimeout(function(){nm.style.color='';},800); };
+      item.append(sw, info, acts);
+      body.appendChild(item);
+    });
+  }
+
+  function initFavDrawer() {
+    var btn = document.getElementById('btn-favorites');
+    var drawer = document.getElementById('fav-drawer');
+    var clearBtn = document.getElementById('btn-fav-clear');
+    if (!btn || !drawer) return;
+
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      var isOpen = drawer.classList.toggle('open');
+      if (isOpen) renderFavDrawer();
+    };
+    document.addEventListener('click', function(e) {
+      if (!drawer.contains(e.target) && e.target !== btn) drawer.classList.remove('open');
+    });
+    if (clearBtn) {
+      clearBtn.onclick = function() {
+        if (!confirm('清空所有收藏颜色？')) return;
+        saveFavs([]); renderFavDrawer(); updateFavBtn();
+      };
+    }
+    updateFavBtn();
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initFavDrawer); }
+  else { setTimeout(initFavDrawer, 100); }
+})();
+</script>
+</body>
+</html>

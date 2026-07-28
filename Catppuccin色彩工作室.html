@@ -1,0 +1,573 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catppuccin 色彩工作室 · 植人大树</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    /* 动态背景光斑 */
+    .bg-blobs{position:fixed;inset:0;z-index:0;overflow:hidden;filter:blur(100px);opacity:0.15;pointer-events:none}
+    .blob{position:absolute;border-radius:50%;animation:bmv 28s infinite alternate}
+    .blob-1{width:45vw;height:45vw;background:radial-gradient(circle,#cba6f7,transparent 70%);top:-10%;right:-5%}
+    .blob-2{width:35vw;height:35vw;background:radial-gradient(circle,#89b4fa,transparent 70%);bottom:-10%;left:-5%;animation-delay:-11s}
+    .blob-3{width:20vw;height:20vw;background:radial-gradient(circle,#f38ba8,transparent 70%);top:40%;left:30%;animation-delay:-20s}
+    @keyframes bmv{from{transform:translate(0,0)scale(1)}to{transform:translate(45px,30px)scale(1.1)}}
+
+    /* 统一 Header */
+    .site-header {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 200;
+      background: rgba(11,13,18,0.88); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; padding: 0 20px; gap: 14px;
+    }
+    .header-back {
+      display: flex; align-items: center; gap: 6px; color: #7f849c;
+      text-decoration: none; font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem; font-weight: 500;
+      padding: 6px 14px; border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.04);
+      transition: all .25s ease; white-space: nowrap;
+    }
+    .header-back:hover { color: #cdd6f4; border-color: rgba(203,166,247,0.4); background: rgba(203,166,247,0.08); }
+    .header-back svg { width: 14px; height: 14px; }
+    .header-logo {
+      font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1rem;
+      letter-spacing: -0.04em; color: var(--accent, #cba6f7);
+    }
+
+    /* 按钮系统 - 极客科技风 */
+    .tab-btn {
+      padding: 8px 18px; border-radius: 8px; font-family: 'Outfit', sans-serif;
+      font-weight: 600; font-size: 0.82rem; letter-spacing: 0.04em;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); color: var(--subtext);
+      cursor: pointer; transition: all .2s ease; position: relative; overflow: hidden;
+    }
+    .tab-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.1),transparent); opacity:0; transition:opacity .2s; }
+    .tab-btn:hover::after { opacity:1; }
+    .tab-btn:hover { border-color: rgba(203,166,247,0.3); color: var(--text); }
+    .tab-btn:active { transform: scale(0.97); }
+    .tab-btn.active {
+      background: var(--accent); color: #11111b; border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(203,166,247,0.35);
+    }
+    .copy-btn {
+      flex: 1; padding: 10px 8px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+      color: var(--text); cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 5px; transition: all .2s ease;
+      font-family: 'Outfit', sans-serif; position: relative; overflow: hidden;
+    }
+    .copy-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.06),transparent); opacity:0; transition:opacity .2s; }
+    .copy-btn:hover { border-color: rgba(203,166,247,0.35); background: rgba(203,166,247,0.06); }
+    .copy-btn:hover::before { opacity:1; }
+    .copy-btn span.label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--subtext); }
+    .copy-btn span.hex { font-family: 'Outfit', monospace; font-size: 0.92rem; font-weight: 700; letter-spacing: 0.5px; }
+    :root {
+      --bg: #1e1e2e; --panel: #181825; --text: #cdd6f4;
+      --subtext: #a6adc8; --border: #313244; --accent: #cba6f7;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { font-family: 'Outfit', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; transition: background 0.3s; padding-top: 56px; }
+    .sidebar { width: 320px; background: var(--panel); border-right: 1px solid var(--border); padding: 30px 20px; display: flex; flex-direction: column; gap: 20px; transition: 0.3s; box-shadow: 4px 0 15px rgba(0,0,0,0.3); z-index: 10; }
+    .project-title { font-size: 1.5rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; transition: color 0.3s; white-space: nowrap; word-break: keep-all; }
+    .project-desc { font-size: 0.85rem; line-height: 1.6; color: var(--subtext); background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+
+    .main-content { flex: 1; padding: 40px; overflow-y: auto; height: 100vh; }
+    .flavor-tabs { display: flex; gap: 12px; margin-bottom: 30px; }
+    .tab-btn { padding: 10px 20px; background: transparent; border: 1px solid var(--border); color: var(--subtext); border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .tab-btn.active { background: var(--accent); color: #11111b; border-color: var(--accent); }
+
+    .section-title { font-size: 1.3rem; margin-top: 20px; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+    .combos-area { margin-bottom: 40px; }
+    
+    /* 组合排版 (直观演示区) */
+    .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    .combo-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+    .combo-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-color: var(--accent); }
+    
+    .demo-zone { height: 160px; background: #0b0b0b; border-top: 3px solid #000; border-bottom: 3px solid #000; display: flex; align-items: center; justify-content: center; position: relative; }
+    .text-wrapper { position: relative; filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.8)); display: flex; align-items: center; justify-content: center; }
+    .demo-text { position: relative; font-size: 2.8rem; font-weight: 900; letter-spacing: 2px; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; text-align: center; color: var(--stroke-color); -webkit-text-stroke: var(--stroke-width) var(--stroke-color); }
+    .demo-text::before { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; color: var(--fill-color); -webkit-text-stroke: 0; z-index: 2; pointer-events: none; }
+
+    .action-zone { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .card-title { font-size: 1.05rem; font-weight: bold; color: var(--text); }
+    .copy-group { display: flex; gap: 8px; }
+    .copy-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: var(--text); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s; }
+    .copy-btn:hover { background: rgba(255,255,255,0.05); }
+    .copy-btn span.label { font-size: 0.7rem; color: var(--subtext); }
+    .copy-btn span.hex { font-family: monospace; font-size: 0.95rem; font-weight: bold; }
+
+    /* 单色网格区 (完全直观独立色彩) */
+    .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; margin-bottom: 50px; }
+    .color-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.2s; position: relative; }
+    .color-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); border-color: var(--accent); z-index: 2; }
+    
+    /* 直接显示背景色，并修复文字 */
+    .color-preview { height: 100px; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; transition: 0.2s; font-weight: bold; color: transparent; }
+    .color-card:hover .color-preview { color: rgba(255,255,255,0.95); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    
+    .color-info { padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border-top: 3px solid transparent; background: var(--panel); }
+    .c-name { font-weight: bold; font-size: 0.95rem; color: var(--text); }
+    .c-hex { font-family: monospace; font-size: 0.8rem; color: var(--subtext); text-transform: uppercase; }
+
+    #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #32ff7e; color: #000; padding: 12px 30px; border-radius: 30px; font-weight: 800; transition: 0.4s; opacity: 0; pointer-events: none; z-index: 1000; box-shadow: 0 10px 25px rgba(50, 255, 126, 0.4); }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      body { flex-direction: column; height: auto; padding-top: 56px; }
+      .sidebar { width: 100%; height: auto; box-shadow: none; border-right: none; border-bottom: 1px solid var(--border); padding: 16px; }
+      .project-title { font-size: 1.2rem; white-space: normal; }
+      .main-content { height: auto; overflow-y: visible; padding: 16px; }
+      .flavor-tabs { flex-wrap: wrap; }
+      .combo-grid { grid-template-columns: 1fr; }
+    }
+  
+
+/* ═══ 全局品牌导航条 ═══════════════════════════════════════════ */
+.zt-global-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9998; pointer-events: none; }
+.zt-nav-stripe { height: 3px; background: linear-gradient(90deg, #FF2442 0%, #F6D365 50%, #FF2442 100%); background-size: 200% 100%; animation: zt-stripe-move 4s linear infinite; }
+@keyframes zt-stripe-move { 0% { background-position: 0% 0; } 100% { background-position: 200% 0; } }
+.zt-nav-body { display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 0; overflow: hidden; opacity: 0; background: rgba(5,5,5,0.97); backdrop-filter: blur(24px); border-bottom: 1px solid #1a1a1a; transition: height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; pointer-events: auto; }
+.zt-global-nav:hover .zt-nav-body { height: 44px; opacity: 1; }
+.zt-nav-home { display: flex; align-items: center; gap: 5px; color: #8a8a8a; text-decoration: none; font-family: 'Outfit','Noto Sans SC',sans-serif; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 100px; border: 1px solid #1e1e1e; background: rgba(255,255,255,0.02); white-space: nowrap; flex-shrink: 0; transition: all 0.2s ease; }
+.zt-nav-home:hover { color: #fff; border-color: #333; background: rgba(255,255,255,0.06); }
+.zt-nav-home svg { stroke: currentColor; flex-shrink: 0; }
+.zt-nav-sep { width: 1px; height: 20px; background: #1e1e1e; flex-shrink: 0; }
+.zt-nav-links { display: flex; align-items: center; gap: 2px; flex: 1; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.zt-nav-links::-webkit-scrollbar { display: none; }
+.zt-nav-link { display: inline-block; padding: 3px 10px; border-radius: 100px; font-family: 'Outfit','Noto Sans SC',sans-serif; font-size: 0.7rem; font-weight: 500; color: #555; text-decoration: none; border: 1px solid transparent; white-space: nowrap; transition: all 0.18s ease; }
+.zt-nav-link:hover { color: #ccc; border-color: #2a2a2a; background: rgba(255,255,255,0.04); }
+.zt-nav-current { color: #FF2442 !important; border-color: rgba(255,36,66,0.25) !important; background: rgba(255,36,66,0.06) !important; }
+.zt-nav-brand { font-family: 'Outfit',sans-serif; font-size: 0.62rem; font-weight: 700; color: #2a2a2a; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0; text-transform: uppercase; }    
+/* ═══ 统一工具 Shell 样式 ═══════════════════════════════════════════ */
+.site-header {
+    height: 56px !important;
+    padding: 0 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: rgba(5,5,5,0.94) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    position: sticky !important;
+    top: 3px !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+    gap: 16px !important;
+}
+.header-back {
+    display: flex !important; align-items: center !important; gap: 6px !important;
+    color: #888 !important; text-decoration: none !important;
+    font-size: 0.78rem !important; font-weight: 600 !important;
+    padding: 5px 12px !important; border-radius: 100px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    background: rgba(255,255,255,0.02) !important;
+    transition: all 0.2s ease !important;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+.header-back:hover { color: #fff !important; border-color: rgba(255,255,255,0.18) !important; background: rgba(255,255,255,0.06) !important; }
+.header-back svg { width: 13px; height: 13px; stroke: currentColor; flex-shrink: 0; }
+.header-title {
+    flex: 1 !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #f4f1e8 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif !important;
+}
+/* 旧版标题兼容 */
+.header-logo {
+    display: none !important;
+}
+.tool-badge {
+    font-size: 0.58rem !important; font-weight: 700 !important;
+    padding: 3px 10px !important; border-radius: 100px !important;
+    border: 1px solid !important;
+    letter-spacing: 0.08em !important;
+    font-family: 'Outfit', monospace !important;
+    white-space: nowrap !important; flex-shrink: 0 !important;
+}
+/* 收藏夹按钮 */
+.btn-favorites {
+    display: flex !important; align-items: center !important; gap: 5px !important;
+    padding: 5px 12px !important; border-radius: 100px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    background: rgba(255,255,255,0.02) !important;
+    color: #888 !important; font-size: 0.75rem !important; font-weight: 600 !important;
+    cursor: pointer !important; transition: all 0.2s ease !important;
+    font-family: 'Outfit', sans-serif !important;
+    white-space: nowrap !important; flex-shrink: 0 !important;
+}
+.btn-favorites:hover { color: #F6D365 !important; border-color: rgba(246,211,101,0.3) !important; background: rgba(246,211,101,0.05) !important; }
+.btn-favorites.has-favs { color: #F6D365 !important; }
+
+/* 统一 Footer */
+.zt-footer {
+    display: flex !important; align-items: center !important;
+    justify-content: center !important; gap: 12px !important;
+    padding: 14px 24px !important;
+    border-top: 1px solid rgba(255,255,255,0.04) !important;
+    font-size: 0.68rem !important; color: #2a2a2a !important;
+    font-family: 'Outfit', sans-serif !important;
+    flex-shrink: 0 !important;
+}
+.zt-footer a { color: #3a3a3a !important; text-decoration: none !important; }
+.zt-footer a:hover { color: #777 !important; }
+
+/* 收藏夹抽屉 */
+.fav-drawer {
+    position: fixed;
+    top: 59px; right: 16px;
+    width: 320px;
+    max-height: 60vh;
+    background: rgba(10,10,14,0.98);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+}
+.fav-drawer.open { display: flex; }
+.fav-drawer-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.8rem; font-weight: 700; color: #f4f1e8;
+}
+.fav-drawer-count { font-size: 0.68rem; color: #555; font-weight: 400; }
+.btn-fav-clear {
+    font-size: 0.68rem; color: #555;
+    background: none; border: none; cursor: pointer;
+    padding: 2px 8px; border-radius: 6px;
+    transition: color 0.18s;
+}
+.btn-fav-clear:hover { color: #f87171; }
+.fav-drawer-body {
+    flex: 1; overflow-y: auto; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+.fav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.fav-item:hover { background: rgba(255,255,255,0.07); }
+.fav-swatch {
+    width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.fav-info { flex: 1; min-width: 0; }
+.fav-name { font-size: 0.8rem; font-weight: 500; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fav-hex { font-size: 0.68rem; color: #555; font-family: monospace; }
+.fav-actions { display: flex; gap: 4px; }
+.btn-fav-copy {
+    padding: 2px 8px; border-radius: 6px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    color: #888; font-size: 0.65rem; cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-fav-copy:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.btn-fav-del {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: #3a3a3a;
+    font-size: 13px; cursor: pointer; border-radius: 4px;
+    transition: all 0.15s; line-height: 1;
+}
+.btn-fav-del:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+.fav-empty { text-align: center; padding: 24px 16px; font-size: 0.75rem; color: #444; }
+</style>
+</head>
+<body>
+<!-- 全局品牌导航条 -->
+<nav class="zt-global-nav" aria-label="工具导航">
+  <div class="zt-nav-stripe"></div>
+  <div class="zt-nav-body">
+    <a href="index.html" class="zt-nav-home" title="返回工具箱首页">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>工具箱</span>
+    </a>
+    <div class="zt-nav-sep"></div>
+    <div class="zt-nav-links">
+      <a href="封面比例转换工具.html" class="zt-nav-link">比例转换</a>
+      <a href="小红书拼图工具.html" class="zt-nav-link">拼图大师</a>
+      <a href="封面精修大师.html" class="zt-nav-link">精修大师</a>
+      <a href="数码胶片CCD模拟器.html" class="zt-nav-link">CCD滤镜</a>
+      <a href="批量水印工坊.html" class="zt-nav-link">水印工坊</a>
+    </div>
+    <div class="zt-nav-brand">植人大树 Studio</div>
+  </div>
+</nav>
+
+  <!-- 动态背景光斑 -->
+  <div class="bg-blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- 统一导航 Header -->
+  <header class="site-header">
+    <a href="index.html" class="header-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      返回首页
+    </a>
+    <span class="header-logo">Catppuccin 色彩工作室</span>
+  </header>
+  <!-- 引入提取自本地的真实 Catppuccin 色块数据变量 catppuccinData -->
+  <script src="catppuccin-data.js"></script>
+
+  <script>const __AUTH_SIGNATURE = "179689535&0814";</script>
+
+  <div class="sidebar">
+    <!-- 侧边栏保留相应内容，移除旧返回链接 -->
+    <div class="project-title">☕ Catppuccin 色彩库</div>
+    <div class="project-desc">
+      <h3>【极致护眼·直接直观版】</h3><br>
+      主打极度柔和的粉彩风（Soothing pastel theme），极客与审美高级化人群的最爱。<br><br>
+      全系四套主流明暗风格全部内置！<br>系统已全自动提炼出王牌的**「五大双色字幕组合」**以及直观无隐藏的全色板！
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div id="workspace">
+      <div class="flavor-tabs" id="tabs-container"></div>
+      
+      <div class="section-title">🎬 极客精选·当前风格直观配色组合</div>
+      <div class="combo-grid combos-area" id="combo-grid"></div>
+
+      <div class="section-title" style="margin-top: 40px;">🗂️ 全系直观色彩卡阵</div>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+  </div>
+
+  <div id="toast">✅ 已获取成功</div>
+
+  <script>
+    let globalPalette = null;
+
+    // 当页面加载完成时直接从之前注入的 catppuccinData 加载数据
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof catppuccinData !== 'undefined') {
+        globalPalette = {
+          latte: catppuccinData.latte,
+          frappe: catppuccinData.frappe,
+          macchiato: catppuccinData.macchiato,
+          mocha: catppuccinData.mocha
+        };
+        initWorkspace();
+      } else {
+        alert("无法找到预渲染的数据 (catppuccin-data.js)。");
+      }
+    });
+
+    function initWorkspace() {
+      const tabs = document.getElementById('tabs-container');
+      tabs.innerHTML = '';
+      Object.keys(globalPalette).forEach(flavorKey => {
+        const flavor = globalPalette[flavorKey];
+        if (!flavor) return;
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.innerText = `${flavor.emoji} ${flavor.name}`;
+        btn.onclick = () => renderFlavor(flavorKey);
+        tabs.appendChild(btn);
+      });
+      // 优先展示经典的星冰乐或摩卡
+      renderFlavor(globalPalette.mocha ? 'mocha' : Object.keys(globalPalette)[0]);
+    }
+
+    function renderFlavor(key) {
+      const flavor = globalPalette[key];
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.innerText.includes(flavor.name)) b.classList.add('active'); else b.classList.remove('active');
+      });
+
+      const root = document.documentElement;
+      root.style.setProperty('--bg', flavor.colors['base'].hex);
+      root.style.setProperty('--panel', flavor.colors['mantle'].hex);
+      root.style.setProperty('--border', flavor.colors['surface0'].hex);
+      root.style.setProperty('--text', flavor.colors['text'].hex);
+      root.style.setProperty('--subtext', flavor.colors['subtext0'].hex);
+      root.style.setProperty('--accent', flavor.colors['mauve'].hex);
+
+      // --- 渲染直观的双色组合影视区 ---
+      const comboGrid = document.getElementById('combo-grid');
+      comboGrid.innerHTML = '';
+      
+      const isDark = flavor.dark;
+      const strokeBg = isDark ? flavor.colors['crust'].hex : flavor.colors['text'].hex;
+      
+      const mashups = [
+        { name: "清冷薄暮红", text: "暮色微光", fill: flavor.colors.flamingo.hex, stroke: strokeBg, width: 4 },
+        { name: "极境之渊蓝", text: "深海暗涌", fill: flavor.colors.sapphire.hex, stroke: strokeBg, width: 4 },
+        { name: "冷清氛围紫", text: "情绪低光", fill: flavor.colors.mauve.hex, stroke: flavor.colors.mantle.hex, width: 4 },
+        { name: "灰暗林间绿", text: "迷雾森林", fill: flavor.colors.green.hex, stroke: flavor.colors.crust.hex, width: 4 },
+        { name: "绝对禁区绯红", text: "警告重区", fill: flavor.colors.red.hex, stroke: strokeBg, width: 4 },
+        { name: "午后阳光黄", text: "温暖余晖", fill: flavor.colors.yellow.hex, stroke: flavor.colors.crust.hex, width: 4 }
+      ];
+
+      mashups.forEach(color => {
+        const card = document.createElement('div');
+        card.className = 'combo-card';
+        card.innerHTML = `
+          <div class="demo-zone">
+            <div class="text-wrapper" style="--fill-color: ${color.fill}; --stroke-color: ${color.stroke}; --stroke-width: ${color.width*2}px;">
+              <div class="demo-text" data-text="${color.text}">${color.text}</div>
+            </div>
+          </div>
+          <div class="action-zone">
+            <div class="card-title">${color.name}</div>
+            <div class="copy-group">
+              <button class="copy-btn" onclick="execCopy('${color.fill}', '填充色芯')"><span class="label">字色(填充)</span><span class="hex" style="color: ${color.fill}">${color.fill}</span></button>
+              <button class="copy-btn" onclick="execCopy('${color.stroke}', '外围描边')"><span class="label">边框(描边)</span><span class="hex" style="color: ${color.stroke}">${color.stroke}</span></button>
+            </div>
+          </div>
+        `;
+        comboGrid.appendChild(card);
+      });
+
+      // --- 渲染完全直观可视化的基础色块区 ---
+      const colorGrid = document.getElementById('color-grid');
+      colorGrid.innerHTML = '';
+      Object.values(flavor.colors).forEach(colorObj => {
+        const card = document.createElement('div');
+        card.className = 'color-card';
+        card.innerHTML = `
+          <!-- 直接把背景色显露出来，不再悬停显示 -->
+          <div class="color-preview" style="background: ${colorObj.hex};">复制色号</div>
+          <div class="color-info" style="border-top-color: ${colorObj.hex}">
+            <span class="c-name">${colorObj.name}</span><span class="c-hex">${colorObj.hex}</span>
+          </div>
+        `;
+        card.onclick = () => execCopy(colorObj.hex, colorObj.name);
+        colorGrid.appendChild(card);
+      });
+    }
+
+    let toastTimeout;
+    window.execCopy = function(hex, actionName) {
+      const cleanHex = hex.replace(/^#/, '');
+      navigator.clipboard.writeText(cleanHex).then(() => {
+        const toast = document.getElementById('toast');
+        toast.innerHTML = `✅ 提取完美：${actionName} <span style="monospace">${cleanHex}</span>`;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    };
+  </script>
+<script>
+// ── 颜色收藏夹系统 ───────────────────────────────────────────────────
+(function() {
+  var FAV_KEY = 'zt_color_favorites_v1';
+  function loadFavs() { try{return JSON.parse(localStorage.getItem(FAV_KEY)||'[]');}catch(e){return[];} }
+  function saveFavs(f){ localStorage.setItem(FAV_KEY, JSON.stringify(f)); }
+
+  // 检查某颜色是否已收藏
+  window.ztIsFav = function(hex) {
+    return loadFavs().some(function(f){ return f.hex.toLowerCase()===hex.toLowerCase(); });
+  };
+
+  // 切换收藏状态
+  window.ztToggleFav = function(hex, name, source) {
+    var favs = loadFavs();
+    var idx = favs.findIndex(function(f){ return f.hex.toLowerCase()===hex.toLowerCase(); });
+    if (idx >= 0) { favs.splice(idx, 1); }
+    else { favs.unshift({hex:hex, name:name||hex, source:source||'', savedAt:Date.now()}); }
+    saveFavs(favs);
+    updateFavBtn();
+    return idx < 0; // true = 新增, false = 已删除
+  };
+
+  function updateFavBtn() {
+    var btn = document.getElementById('btn-favorites');
+    if (!btn) return;
+    var count = loadFavs().length;
+    var star = btn.querySelector('.fav-star');
+    var cnt = btn.querySelector('.fav-count');
+    if (star) star.textContent = count > 0 ? '★' : '☆';
+    if (cnt) cnt.textContent = count > 0 ? ' ('+count+')' : '';
+    btn.classList.toggle('has-favs', count > 0);
+  }
+
+  function renderFavDrawer() {
+    var body = document.getElementById('fav-drawer-body');
+    if (!body) return;
+    var favs = loadFavs();
+    var countEl = document.getElementById('fav-drawer-count');
+    if (countEl) countEl.textContent = favs.length + ' 个颜色';
+    if (!favs.length) {
+      body.innerHTML = '<div class="fav-empty">还没有收藏的颜色<br>点击色块旁的 ☆ 收藏</div>';
+      return;
+    }
+    body.innerHTML = '';
+    favs.forEach(function(f, i) {
+      var item = document.createElement('div'); item.className = 'fav-item';
+      var sw = document.createElement('div'); sw.className = 'fav-swatch'; sw.style.background = f.hex;
+      var info = document.createElement('div'); info.className = 'fav-info';
+      var nm = document.createElement('div'); nm.className = 'fav-name'; nm.textContent = f.name;
+      var hx = document.createElement('div'); hx.className = 'fav-hex'; hx.textContent = f.hex.toUpperCase() + (f.source?' · '+f.source:'');
+      info.append(nm, hx);
+      var acts = document.createElement('div'); acts.className = 'fav-actions';
+      var bC = document.createElement('button'); bC.className = 'btn-fav-copy'; bC.textContent = '复制';
+      bC.onclick = function(e) { e.stopPropagation(); navigator.clipboard.writeText(f.hex).then(function(){bC.textContent='✓';setTimeout(function(){bC.textContent='复制';},1000);}); };
+      var bD = document.createElement('button'); bD.className = 'btn-fav-del'; bD.innerHTML = '&times;';
+      bD.onclick = function(e) { e.stopPropagation(); var fs=loadFavs(); fs.splice(i,1); saveFavs(fs); renderFavDrawer(); updateFavBtn(); };
+      acts.append(bC, bD);
+      item.onclick = function() { navigator.clipboard.writeText(f.hex); nm.style.color='#F6D365'; setTimeout(function(){nm.style.color='';},800); };
+      item.append(sw, info, acts);
+      body.appendChild(item);
+    });
+  }
+
+  function initFavDrawer() {
+    var btn = document.getElementById('btn-favorites');
+    var drawer = document.getElementById('fav-drawer');
+    var clearBtn = document.getElementById('btn-fav-clear');
+    if (!btn || !drawer) return;
+
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      var isOpen = drawer.classList.toggle('open');
+      if (isOpen) renderFavDrawer();
+    };
+    document.addEventListener('click', function(e) {
+      if (!drawer.contains(e.target) && e.target !== btn) drawer.classList.remove('open');
+    });
+    if (clearBtn) {
+      clearBtn.onclick = function() {
+        if (!confirm('清空所有收藏颜色？')) return;
+        saveFavs([]); renderFavDrawer(); updateFavBtn();
+      };
+    }
+    updateFavBtn();
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initFavDrawer); }
+  else { setTimeout(initFavDrawer, 100); }
+})();
+</script>
+</body>
+</html>

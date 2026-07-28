@@ -1,0 +1,1380 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>复古复印机艺术生成器 | Xerox Photocopy Studio</title>
+  <!-- Google Fonts Outfit & Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ── 核心设计系统与色彩 (Lucidbloom Dark Mode) ────────────────── */
+    :root {
+      --bg: #090b10;
+      --bg-2: #0f131a;
+      --bg-3: #161c27;
+      --border: #222a3a;
+      --border-2: #2d384d;
+      
+      --text: #f3f4f6;
+      --text-2: #9ca3af;
+      --text-3: #6b7280;
+      
+      --accent: #a855f7;       /* 紫色 - 与复印机紫外扫描光线契合 */
+      --accent-glow: rgba(168, 85, 247, 0.15);
+      --pink: #f43f5e;
+      --cyan: #22d3ee;
+      --gold: #f59e0b;
+      
+      --r: 12px;
+      --r-sm: 6px;
+      --dur: 0.25s;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ── 滚动条样式 ────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-2);
+    }
+
+    /* ── 顶栏 ─────────────────────────────────────────────────────── */
+    #topbar {
+      height: 56px;
+      background: rgba(9, 11, 16, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.4));
+    }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--text-3);
+      border-left: 1px solid var(--border);
+      padding-left: 8px;
+      margin-left: 4px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ts-btn {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border-2);
+      background: var(--bg-2);
+      color: var(--text-2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--dur) var(--ease);
+    }
+    .ts-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* ── 主体布局 ──────────────────────────────────────────────────── */
+    #app-container {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 56px);
+      position: relative;
+    }
+
+    /* ── 左侧控制面板 ──────────────────────────────────────────────── */
+    #control-sidebar {
+      width: 320px;
+      background: var(--bg-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .section-header {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      padding: 18px 16px 8px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ctrl-group {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .ctrl-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .ctrl-label-val {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+
+    /* 上传区域 */
+    .upload-box {
+      border: 2px dashed var(--border-2);
+      border-radius: var(--r);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg-3);
+      transition: all var(--dur) var(--ease);
+    }
+    .upload-box:hover {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.02);
+    }
+    .upload-box svg {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 6px;
+      color: var(--text-3);
+    }
+    .upload-box p {
+      font-size: 0.72rem;
+      color: var(--text-2);
+    }
+    .upload-box span {
+      font-size: 0.62rem;
+      color: var(--text-3);
+      display: block;
+      margin-top: 4px;
+    }
+
+    /* 下拉选择框 */
+    .ts-select {
+      width: 100%;
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-size: 0.78rem;
+      padding: 8px 10px;
+      outline: none;
+      cursor: pointer;
+      transition: all var(--dur) var(--ease);
+    }
+    .ts-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* 滑块控件 */
+    .ctrl-slider {
+      width: 100%;
+      height: 4px;
+      background: var(--border-2);
+      border-radius: 10px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    .ctrl-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      transition: transform 0.1s;
+    }
+    .ctrl-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* 快捷方向按钮 */
+    .pill-group {
+      display: flex;
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      overflow: hidden;
+      background: var(--bg-3);
+    }
+    .pill-btn {
+      flex: 1;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-2);
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--dur) var(--ease);
+      border-right: 1px solid var(--border-2);
+    }
+    .pill-btn:last-child {
+      border-right: none;
+    }
+    .pill-btn.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* 调色板预览列表 */
+    .palette-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    
+    .palette-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: all var(--dur) var(--ease);
+    }
+    .palette-item.active {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.05);
+    }
+    
+    .palette-meta {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .palette-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .palette-colors {
+      display: flex;
+      gap: 4px;
+    }
+
+    .color-block {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* ── 右侧工作区 ────────────────────────────────────────────────── */
+    #workspace {
+      flex: 1;
+      background: #06070a;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 分屏对比预览区 */
+    #preview-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+    }
+
+    /* 对比包装器 */
+    .comparison-wrapper {
+      position: relative;
+      max-width: 100%;
+      max-height: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: repeating-conic-gradient(#111 0% 25%, #181818 0% 50%) 50% / 20px 20px;
+    }
+
+    .preview-canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+    }
+
+    #canvas-processed {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transition: opacity 0.15s ease-in-out;
+    }
+
+    .compare-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(9, 11, 16, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.68rem;
+      color: var(--text-2);
+      pointer-events: none;
+      z-index: 20;
+      user-select: none;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .comparison-wrapper:hover .compare-badge {
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* 左右分屏滑块 */
+    .slider-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      cursor: ew-resize;
+      z-index: 10;
+    }
+    
+    .slider-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-2);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 8px var(--accent-glow);
+      pointer-events: none;
+    }
+
+    /* 底部操作条 */
+    #export-bar {
+      height: 58px;
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .export-info {
+      font-size: 0.72rem;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .info-item span {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .btn-export {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #000;
+      background: var(--accent);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 100px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 12px var(--accent-glow);
+      transition: all var(--dur) var(--ease);
+    }
+    .btn-export:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px var(--accent);
+    }
+    .btn-export:active {
+      transform: translateY(0);
+    }
+
+    /* ── 隐藏文件输入框 ────────────────────────────────────────────── */
+    #file-input {
+      display: none;
+    }
+
+    /* ── 响应式适配 ────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      #app-container {
+        flex-direction: column;
+        height: auto;
+      }
+      #control-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      #preview-container {
+        min-height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ① 顶栏 -->
+  <header id="topbar" role="banner">
+    <div class="topbar-brand">
+      <a href="index.html" style="display: flex; align-items: center; gap: 10px;">
+        <span class="brand-icon">📠</span>
+        <div>
+          <span class="brand-name">复古复印机艺术生成器</span>
+          <span class="brand-sub">Xerox Photocopy Studio</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="ts-btn" id="btn-demo-portrait" title="生成高对比人像测试图">👩‍💼 载入测试人像</button>
+      <button class="ts-btn" id="btn-how" onclick="alert('【复古复印机艺术使用指南】\n1. 点击左侧上传您的图片，或者点击【载入测试人像】快速体验。\n2. 调节【曝光阈值】和【墨迹对比度】，实现高对比的黑白画面。\n3. 核心机制：调节【墨水外溢拉丝】控制黑色部分往一侧拉伸染开的效果（经典的风力拉丝风格）。\n4. 调节【鼓芯断墨横纹】和【微观扫描线】，完美复刻复印机碳粉即将耗尽时的横向刮擦痕迹。\n5. 在【孔版套印着色板】选择黑白复印、工程蓝图或流行的 Riso 理想客荧光油墨双色调配色。\n6. 拖动右侧的对比摇杆实时感受低保真印刷美感！')">❓ 帮助</button>
+    </div>
+  </header>
+
+  <!-- ② 主体 -->
+  <div id="app-container">
+    
+    <!-- 左边：控制面板 -->
+    <aside id="control-sidebar">
+      
+      <div class="section-header">
+        <span>图片与预处理</span>
+      </div>
+      
+      <!-- 导入 -->
+      <div class="ctrl-group">
+        <div class="upload-box" onclick="$('file-input').click()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p>拖拽或点击上传图片</p>
+          <span>支持常见图像格式，本地处理不传服务器</span>
+        </div>
+        <input type="file" id="file-input" accept="image/*" />
+      </div>
+
+      <!-- 曝光阈值 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>曝光二值化阈值</span>
+          <span class="ctrl-label-val" id="val-threshold">128</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-threshold" min="30" max="220" value="128" />
+      </div>
+
+      <!-- 墨迹对比度 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>墨水黑度/对比度</span>
+          <span class="ctrl-label-val" id="val-contrast">1.40</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-contrast" min="0.8" max="2.5" step="0.05" value="1.40" />
+      </div>
+
+      <!-- 半调网点 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>半调网点大小/强度</span>
+          <span class="ctrl-label-val" id="val-halftone">无网点</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-halftone" min="0" max="100" value="0" />
+      </div>
+
+      <div class="section-header">
+        <span>📠 静电复印机特征</span>
+      </div>
+
+      <!-- 墨迹外溢拉丝 (Wind Smear) -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>墨水外溢拉丝强度</span>
+          <span class="ctrl-label-val" id="val-smear">60%</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-smear" min="0" max="100" value="60" />
+      </div>
+
+      <!-- 涂抹方向 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>墨水拉丝溢出方向</span>
+        </div>
+        <div class="pill-group" id="smear-dir-group">
+          <button class="pill-btn" data-dir="left">◀ 向左</button>
+          <button class="pill-btn active" data-dir="right">向右 ▶</button>
+          <button class="pill-btn" data-dir="both">◀ 双向 ▶</button>
+        </div>
+      </div>
+
+      <!-- 渐变溶解蒙版 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>拉丝渐变溶解 (蒙版)</span>
+        </div>
+        <select class="ts-select" id="select-smear-mask">
+          <option value="none" selected>无渐变 (全局均匀)</option>
+          <option value="l2r">左清右糊 (向右渐变溶解)</option>
+          <option value="r2l">右清左糊 (向左渐变溶解)</option>
+          <option value="radial">中清边糊 (中心向外扩散)</option>
+        </select>
+      </div>
+
+      <!-- 鼓芯断墨条纹 (Toner Banding) -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>鼓芯断墨横纹强度</span>
+          <span class="ctrl-label-val" id="val-banding">45%</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-banding" min="0" max="100" value="45" />
+      </div>
+
+      <!-- 微观扫描线 (Scanlines) -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>微米扫描条纹线</span>
+          <span class="ctrl-label-val" id="val-scanline">30%</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-scanline" min="0" max="100" value="30" />
+      </div>
+
+      <!-- 碳粉尘点杂质 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>碳粉微尘点污染</span>
+          <span class="ctrl-label-val" id="val-dust">25%</span>
+        </div>
+        <input type="range" class="ctrl-slider" id="slider-dust" min="0" max="100" value="25" />
+      </div>
+
+      <div class="section-header">
+        <span>🎨 孔版套印着色板</span>
+      </div>
+
+      <!-- Riso/Xerox 双色调着色 -->
+      <div class="ctrl-group">
+        <div class="palette-list" id="palette-container">
+          <!-- 动态渲染 -->
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 右边：工作区 -->
+    <main id="workspace" role="main">
+      <div id="preview-container">
+        <div class="comparison-wrapper" id="comparison-box" style="cursor: pointer;">
+          <!-- 提示徽章 -->
+          <div class="compare-badge" id="compare-indicator">💡 点击/长按对比原图</div>
+          <!-- 原图/灰度 Canvas -->
+          <canvas id="canvas-original" class="preview-canvas"></canvas>
+          <!-- 渲染效果 Canvas (覆在右侧) -->
+          <canvas id="canvas-processed" class="preview-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- 底部状态与导出 -->
+      <footer id="export-bar" role="contentinfo">
+        <div class="export-info">
+          <div class="info-item">图像像素: <span id="info-res">0 × 0 px</span></div>
+          <div class="info-item">工艺色彩: <span id="info-color">经典碳黑复印</span></div>
+        </div>
+        <button class="btn-export" id="btn-download">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          导出 8倍 无损印刷大图
+        </button>
+      </footer>
+    </main>
+
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    //  DOM 节点选择器助手
+    // ═══════════════════════════════════════════════════════════════
+    const $ = id => document.getElementById(id);
+
+    // ═══════════════════════════════════════════════════════════════
+    //  双色调 (Duotone) 印墨着色板数据
+    // ═══════════════════════════════════════════════════════════════
+    const PALETTES = [
+      { id: 'carbon',    name: '经典碳黑复印', ink: '#080808', bg: '#fbfbf7' },
+      { id: 'blueprint', name: '工程图纸晒蓝', ink: '#ffffff', bg: '#0b2a75' },
+      { id: 'risored',   name: '理想客·荧光红', ink: '#ff3b57', bg: '#fefbf5' },
+      { id: 'risogreen', name: '理想客·森林绿', ink: '#009e5b', bg: '#f9f9ee' },
+      { id: 'cyanblack', name: '酸性霓虹青黄', ink: '#00ffe0', bg: '#100c17' },
+      { id: 'sepiaprint',name: '独立杂志复古褐', ink: '#321f0b', bg: '#e5d7c3' }
+    ];
+
+    // ═══════════════════════════════════════════════════════════════
+    //  应用状态管理
+    // ═══════════════════════════════════════════════════════════════
+    const State = {
+      image: null,
+      threshold: 128,      // 曝光二值化阈值 (30-220)
+      contrast: 1.40,      // 墨水黑度/对比度
+      halftone: 0,         // 半调波普网点大小 (0=无网点, 1-100)
+      smear: 60,           // 墨水外溢拉丝强度
+      smearDir: 'right',   // 涂抹拉丝方向 (left, right, both)
+      smearMask: 'none',   // 拉丝渐变溶解蒙版 (none, l2r, r2l, radial)
+      banding: 45,         // 鼓芯断墨横纹强度
+      scanline: 30,        // 微米扫描条纹
+      dust: 25,            // 碳粉微尘点密度
+      paletteId: 'carbon', // 当前选中的着色板
+      splitRatio: 0.5      // 对比拉杆比例
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    //  初始化启动
+    // ═══════════════════════════════════════════════════════════════
+    window.addEventListener('DOMContentLoaded', () => {
+      buildPaletteList();
+      initEventListeners();
+      loadDefaultPortrait(); // 启动时自动载入测试人像
+    });
+
+    // 生成调色板列表 UI
+    function buildPaletteList() {
+      const container = $('palette-container');
+      container.innerHTML = '';
+
+      PALETTES.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'palette-item' + (p.id === State.paletteId ? ' active' : '');
+        item.dataset.id = p.id;
+
+        const meta = document.createElement('div');
+        meta.className = 'palette-meta';
+        const name = document.createElement('span');
+        name.className = 'palette-name';
+        name.textContent = p.name;
+        meta.appendChild(name);
+        item.appendChild(meta);
+
+        // 颜色方块预览
+        const colorBox = document.createElement('div');
+        colorBox.className = 'palette-colors';
+        
+        // 纸张底色
+        const bgBlock = document.createElement('div');
+        bgBlock.className = 'color-block';
+        bgBlock.style.backgroundColor = p.bg;
+        colorBox.appendChild(bgBlock);
+
+        // 油墨印色
+        const inkBlock = document.createElement('div');
+        inkBlock.className = 'color-block';
+        inkBlock.style.backgroundColor = p.ink;
+        colorBox.appendChild(inkBlock);
+
+        item.appendChild(colorBox);
+
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          State.paletteId = p.id;
+          processImage();
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  事件监听绑定
+    // ═══════════════════════════════════════════════════════════════
+    function initEventListeners() {
+      // 1. 文件上传
+      $('file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              State.image = img;
+              processImage();
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // 2. 曝光阈值滑块
+      const thSlider = $('slider-threshold'), thVal = $('val-threshold');
+      thSlider.addEventListener('input', () => {
+        State.threshold = parseInt(thSlider.value, 10);
+        thVal.textContent = State.threshold;
+        processImage();
+      });
+
+      // 3. 对比度滑块
+      const ctSlider = $('slider-contrast'), ctVal = $('val-contrast');
+      ctSlider.addEventListener('input', () => {
+        State.contrast = parseFloat(ctSlider.value);
+        ctVal.textContent = State.contrast.toFixed(2);
+        processImage();
+      });
+
+      // 半调网点滑块
+      const htSlider = $('slider-halftone'), htVal = $('val-halftone');
+      htSlider.addEventListener('input', () => {
+        State.halftone = parseInt(htSlider.value, 10);
+        htVal.textContent = State.halftone === 0 ? "无网点" : State.halftone + "%";
+        processImage();
+      });
+
+      // 4. 拉丝拉伸强度
+      const smSlider = $('slider-smear'), smVal = $('val-smear');
+      smSlider.addEventListener('input', () => {
+        State.smear = parseInt(smSlider.value, 10);
+        smVal.textContent = State.smear + '%';
+        processImage();
+      });
+
+      // 5. 扫描线
+      const scSlider = $('slider-scanline'), scVal = $('val-scanline');
+      scSlider.addEventListener('input', () => {
+        State.scanline = parseInt(scSlider.value, 10);
+        scVal.textContent = State.scanline + '%';
+        processImage();
+      });
+
+      // 6. 断墨横纹
+      const bdSlider = $('slider-banding'), bdVal = $('val-banding');
+      bdSlider.addEventListener('input', () => {
+        State.banding = parseInt(bdSlider.value, 10);
+        bdVal.textContent = State.banding + '%';
+        processImage();
+      });
+
+      // 7. 碳粉微尘
+      const dsSlider = $('slider-dust'), dsVal = $('val-dust');
+      dsSlider.addEventListener('input', () => {
+        State.dust = parseInt(dsSlider.value, 10);
+        dsVal.textContent = State.dust + '%';
+        processImage();
+      });
+
+      // 8. 涂抹方向选项按钮切换
+      document.querySelectorAll('#smear-dir-group .pill-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#smear-dir-group .pill-btn').forEach(el => el.classList.remove('active'));
+          btn.classList.add('active');
+          State.smearDir = btn.dataset.dir;
+          processImage();
+        });
+      });
+
+      // 渐变溶解蒙版下拉切换
+      $('select-smear-mask').addEventListener('change', (e) => {
+        State.smearMask = e.target.value;
+        processImage();
+      });
+
+      // 9. 人像测试图生成
+      $('btn-demo-portrait').addEventListener('click', loadDefaultPortrait);
+
+      // 10. 下载按钮
+      $('btn-download').addEventListener('click', downloadOutput);
+
+      // 11. 点击/长按对比原图机制
+      const box = $('comparison-box');
+      const processed = $('canvas-processed');
+      const indicator = $('compare-indicator');
+
+      const showOriginal = () => {
+        processed.style.opacity = '0';
+        indicator.textContent = '👁️ 显示原图中...';
+        indicator.style.borderColor = 'var(--accent)';
+      };
+      
+      const showProcessed = () => {
+        processed.style.opacity = '1';
+        indicator.textContent = '💡 点击/长按对比原图';
+        indicator.style.borderColor = 'var(--border)';
+      };
+
+      box.addEventListener('mousedown', (e) => { e.preventDefault(); showOriginal(); });
+      box.addEventListener('touchstart', (e) => { e.preventDefault(); showOriginal(); }, { passive: false });
+      
+      window.addEventListener('mouseup', showProcessed);
+      window.addEventListener('touchend', showProcessed);
+      box.addEventListener('mouseleave', showProcessed);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  生成极具艺术感、高对比度的女性剪影测试图
+    //  - 边缘带有柔和渐变与高反差，最适合展现复印机墨水溢出与断墨拉丝效果
+    // ═══════════════════════════════════════════════════════════════
+    function loadDefaultPortrait() {
+      const cvs = document.createElement('canvas');
+      cvs.width = 600;
+      cvs.height = 800;
+      const ctx = cvs.getContext('2d');
+
+      // 1. 背景：柔和渐变
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 800);
+      bgGrad.addColorStop(0, '#f9f9f5');
+      bgGrad.addColorStop(1, '#e5e2d9');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 600, 800);
+
+      // 2. 绘制抽象现代女性肖像剪影
+      ctx.save();
+      // 头部圆
+      ctx.fillStyle = '#08080c';
+      ctx.beginPath();
+      ctx.arc(300, 240, 120, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 头发蓬松感
+      ctx.beginPath();
+      ctx.arc(220, 210, 80, 0, Math.PI * 2);
+      ctx.arc(380, 210, 80, 0, Math.PI * 2);
+      ctx.arc(300, 140, 100, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 脸部与下巴（画出柔和白皮肤遮罩）
+      ctx.fillStyle = '#f9f9f5';
+      ctx.beginPath();
+      ctx.moveTo(220, 240);
+      ctx.quadraticCurveTo(240, 380, 300, 380);
+      ctx.quadraticCurveTo(360, 380, 380, 240);
+      ctx.closePath();
+      ctx.fill();
+
+      // 脖颈与肩膀阴影
+      ctx.fillStyle = '#08080c';
+      ctx.beginPath();
+      ctx.moveTo(270, 360);
+      ctx.lineTo(240, 520);
+      ctx.lineTo(120, 580);
+      ctx.lineTo(100, 800);
+      ctx.lineTo(500, 800);
+      ctx.lineTo(480, 580);
+      ctx.lineTo(360, 520);
+      ctx.lineTo(330, 360);
+      ctx.closePath();
+      ctx.fill();
+
+      // 3. 制造微米级的柔和渐变阴影（五官光影过渡）
+      const faceGlow = ctx.createRadialGradient(280, 300, 10, 260, 300, 160);
+      faceGlow.addColorStop(0, 'rgba(249,249,245,0.9)');
+      faceGlow.addColorStop(0.5, 'rgba(100,100,110,0.5)');
+      faceGlow.addColorStop(1, 'rgba(8,8,12,0.95)');
+      ctx.fillStyle = faceGlow;
+      ctx.beginPath();
+      ctx.arc(300, 300, 120, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. 左半脸高反差亮斑
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.ellipse(250, 290, 40, 80, Math.PI/12, 0, Math.PI*2);
+      ctx.fill();
+
+      // 5. 底部制造烟雾状的不规则碳粉晕染背景
+      const smoke = ctx.createLinearGradient(0, 500, 0, 800);
+      smoke.addColorStop(0, 'rgba(8,8,12,0)');
+      smoke.addColorStop(0.5, 'rgba(8,8,12,0.4)');
+      smoke.addColorStop(1, 'rgba(8,8,12,1)');
+      ctx.fillStyle = smoke;
+      ctx.fillRect(0, 500, 600, 300);
+
+      ctx.restore();
+
+      const img = new Image();
+      img.onload = () => {
+        State.image = img;
+        processImage();
+      };
+      img.src = cvs.toDataURL('image/png');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  核心处理管线
+    // ═══════════════════════════════════════════════════════════════
+    function processImage() {
+      if (!State.image) return;
+
+      const img = State.image;
+      const origCanvas = $('canvas-original');
+      const procCanvas = $('canvas-processed');
+      
+      const aspect = img.height / img.width;
+      // 复印机大图宽度固定在一个适中的尺寸（800px），保证拉丝细节细腻
+      const w = 800;
+      const h = Math.round(w * aspect);
+
+      origCanvas.width  = w;
+      origCanvas.height = h;
+      procCanvas.width  = w;
+      procCanvas.height = h;
+
+      const origCtx = origCanvas.getContext('2d');
+      const procCtx = procCanvas.getContext('2d');
+
+      // 1. 将原图绘制到原图画布上
+      origCtx.drawImage(img, 0, 0, w, h);
+
+      // 2. 图像转为高对比度灰度图（作为对比左侧）
+      const origImgData = origCtx.getImageData(0, 0, w, h);
+      toHighContrastGrayscale(origImgData.data, State.contrast);
+      origCtx.putImageData(origImgData, 0, 0);
+
+      // 3. 克隆数据，用于效果画布的高级复印机工艺模拟
+      const procImgData = origCtx.getImageData(0, 0, w, h);
+      const data = procImgData.data;
+
+      // A. 先进行二值化最终压实 (或者应用半调网点)，让底图呈现纯粹的高对比黑白或半调网格
+      if (State.halftone > 0) {
+        applyHalftoneScreen(data, w, h, State.halftone);
+      } else {
+        applyThreshold(data, State.threshold);
+      }
+
+      // B. 应用核心：基于已二值化的底图进行横向风力墨迹外溢拉丝 (Wind Smear)
+      // 此时的拉丝不会被二次强行阈值化，从而保留了极细致、带平滑灰度衰减的“逐渐溶解”墨迹扩散质感
+      if (State.smear > 0) {
+        const threshold = 128; // 二值化之后黑白分明，阈值固定设为 128 即可
+        const strength  = State.smear / 100 * 0.95;
+        const decay     = 0.97 - (State.smear / 100 * 0.1); // 微调衰减公式以获得更悠长的过渡线条
+        applyWindSmear(data, w, h, threshold, strength, decay, State.smearDir, State.smearMask);
+      }
+
+      // C. 应用一维纵向噪点生成的：鼓芯断墨横纹与微观扫描线
+      if (State.banding > 0 || State.scanline > 0) {
+        applyTonerBanding(data, w, h, State.banding / 100, State.scanline / 100, 12345);
+      }
+
+      // D. 物理覆盖：碳粉微尘尘点 (Toner Dust) 与刮擦划痕
+      if (State.dust > 0) {
+        applyTonerDustAndScratches(data, w, h, State.dust / 100);
+      }
+
+      // E. 应用双色调孔版套印着色
+      const activePalette = PALETTES.find(x => x.id === State.paletteId) || PALETTES[0];
+      applyDuotone(data, activePalette.ink, activePalette.bg);
+
+      // 4. 将成品写入处理画布中
+      procCtx.putImageData(procImgData, 0, 0);
+
+      // 更新状态状态栏
+      $('info-res').textContent = `${w} × ${h} px`;
+      $('info-color').textContent = activePalette.name;
+
+
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  算法细节实现
+    // ═══════════════════════════════════════════════════════════════
+
+    // 灰度预处理与对比度调节
+    function toHighContrastGrayscale(data, contrast) {
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+
+        // 灰度
+        let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // 对比度
+        gray = ((gray - 128) * contrast) + 128;
+        gray = Math.min(255, Math.max(0, gray));
+
+        data[i]     = gray;
+        data[i + 1] = gray;
+        data[i + 2] = gray;
+      }
+    }
+
+    // 二值化阈值化
+    function applyThreshold(data, threshold) {
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = data[i];
+        const val = gray >= threshold ? 255 : 0;
+        data[i]     = val;
+        data[i + 1] = val;
+        data[i + 2] = val;
+      }
+    }
+
+    // 半调网点印前加网算法 (Pop Art Halftone Screen)
+    function applyHalftoneScreen(data, w, h, halftoneVal) {
+      // 将 1-100 网点强度映射为网格单元的物理像素尺寸 (大小在 3px 到 18px 之间)
+      const cellSize = 3 + (halftoneVal / 100) * 15;
+      const angle = Math.PI / 4; // 经典 45° 半调网点挂网角
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const scale = Math.PI / cellSize;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          const gray = data[idx];
+
+          // 旋转坐标系，产生经典的 45° 倾斜网网点分布，更加耐看
+          const rotX = x * cosA - y * sinA;
+          const rotY = x * sinA + y * cosA;
+
+          // 计算正弦波与余弦波混合的 2D 网格能量图，值域在 [0, 1]
+          const pattern = (Math.sin(rotX * scale) * Math.cos(rotY * scale) + 1) / 2;
+
+          // 半调加网阈值比较：原灰度值越亮，保留为白色的圆点面积越大
+          const val = (gray / 255) > pattern ? 255 : 0;
+
+          data[idx]     = val;
+          data[idx + 1] = val;
+          data[idx + 2] = val;
+        }
+      }
+    }
+
+    // 🌪️ 核心：横向风力墨迹拉丝 (Wind Smear) 算法 (支持渐变溶解蒙版)
+    function applyWindSmear(data, w, h, threshold, strength, decay, direction, mask) {
+      const smearBuf = new Float32Array(w * h * 3);
+      for (let i = 0; i < w * h; i++) {
+        smearBuf[i * 3]     = data[i * 4];
+        smearBuf[i * 3 + 1] = data[i * 4 + 1];
+        smearBuf[i * 3 + 2] = data[i * 4 + 2];
+      }
+
+      const runPass = (scanRight) => {
+        for (let y = 0; y < h; y++) {
+          let bleedR = 0, bleedG = 0, bleedB = 0;
+          const xStart = scanRight ? 0 : w - 1;
+          const xEnd = scanRight ? w : -1;
+          const step = scanRight ? 1 : -1;
+
+          for (let x = xStart; x !== xEnd; x += step) {
+            const idx = (y * w + x) * 3;
+            let r = smearBuf[idx];
+            let g = smearBuf[idx + 1];
+            let b = smearBuf[idx + 2];
+            
+            let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            let darkness = 255 - gray;
+
+            // 根据蒙版类型计算当前 x 轴坐标下的拉丝强度因子 [0.0, 1.0]
+            let maskFactor = 1.0;
+            if (mask === 'l2r') {
+              maskFactor = x / w;
+            } else if (mask === 'r2l') {
+              maskFactor = 1.0 - (x / w);
+            } else if (mask === 'radial') {
+              maskFactor = Math.abs(x - w / 2) / (w / 2);
+            }
+
+            if (darkness > threshold) {
+              // 只有当超过曝光阈值时，开始让暗色外溢拖拽，乘以渐变因子
+              bleedR = (255 - r) * strength * maskFactor;
+              bleedG = (255 - g) * strength * maskFactor;
+              bleedB = (255 - b) * strength * maskFactor;
+            } else {
+              // 指数级物理衰减，产生由黑到丝缕的渐消条纹
+              bleedR *= decay;
+              bleedG *= decay;
+              bleedB *= decay;
+            }
+
+            // 将拉丝墨色反向写入
+            smearBuf[idx]     = Math.max(0, smearBuf[idx] - bleedR);
+            smearBuf[idx + 1] = Math.max(0, smearBuf[idx + 1] - bleedG);
+            smearBuf[idx + 2] = Math.max(0, smearBuf[idx + 2] - bleedB);
+          }
+        }
+      };
+
+      if (direction === 'right' || direction === 'both') {
+        runPass(true);
+      }
+      if (direction === 'left' || direction === 'both') {
+        runPass(false);
+      }
+
+      // 回填输出到像素字节数组
+      for (let i = 0; i < w * h; i++) {
+        data[i * 4]     = smearBuf[i * 3];
+        data[i * 4 + 1] = smearBuf[i * 3 + 1];
+        data[i * 4 + 2] = smearBuf[i * 3 + 2];
+      }
+    }
+
+    // 📠 核心：鼓芯断墨横纹 (Toner Banding) 与 微观扫描线
+    function applyTonerBanding(data, w, h, bandingStrength, scanlineStrength, seed) {
+      // 1. 生成 1D 行随机乘数
+      const bands = new Float32Array(h);
+      let localSeed = seed;
+      function seededRandom() {
+        let x = Math.sin(localSeed++) * 10000;
+        return x - Math.floor(x);
+      }
+
+      for (let y = 0; y < h; y++) {
+        bands[y] = 0.4 + seededRandom() * 1.2; // 宽泛震荡
+      }
+
+      // 对随机值执行均值模糊，生成平滑连贯的不规则断墨光条状横带
+      const smoothedBands = new Float32Array(h);
+      const radius = 8; 
+      for (let y = 0; y < h; y++) {
+        let sum = 0, count = 0;
+        for (let dy = -radius; dy <= radius; dy++) {
+          const ny = y + dy;
+          if (ny >= 0 && ny < h) {
+            sum += bands[ny];
+            count++;
+          }
+        }
+        smoothedBands[y] = sum / count;
+      }
+
+      // 2. 混合应用断墨带与扫描线
+      for (let y = 0; y < h; y++) {
+        // 断墨比率
+        const bandVal = 1.0 + (smoothedBands[y] - 1.0) * bandingStrength;
+        
+        // 微观交替扫描线
+        const isScanline = (y % 2 === 0);
+        const scanVal = isScanline ? 1.0 - 0.3 * scanlineStrength : 1.0;
+
+        const rowMult = bandVal * scanVal;
+
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          data[idx]     = Math.min(255, Math.max(0, data[idx] * rowMult));
+          data[idx + 1] = Math.min(255, Math.max(0, data[idx + 1] * rowMult));
+          data[idx + 2] = Math.min(255, Math.max(0, data[idx + 2] * rowMult));
+        }
+      }
+    }
+
+    // 🌪️ 核心：碳粉微尘点污染 (Toner Dust) 与划痕
+    function applyTonerDustAndScratches(data, w, h, density) {
+      // 1. 尘点生成
+      const dustCount = Math.round(w * h * 0.001 * density);
+      for (let k = 0; k < dustCount; k++) {
+        const rx = Math.floor(Math.random() * w);
+        const ry = Math.floor(Math.random() * h);
+        
+        // 随机产生一个 1-3 像素大小的碳粉团
+        const dotSize = Math.floor(Math.random() * 2) + 1;
+        for (let dy = 0; dy < dotSize; dy++) {
+          for (let dx = 0; dx < dotSize; dx++) {
+            const nx = rx + dx;
+            const ny = ry + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+              const idx = (ny * w + nx) * 4;
+              // 碳粉点为纯黑
+              data[idx]     = 0;
+              data[idx + 1] = 0;
+              data[idx + 2] = 0;
+            }
+          }
+        }
+      }
+
+      // 2. 刮擦长线条生成
+      const scratchCount = Math.round(5 * density);
+      for (let k = 0; k < scratchCount; k++) {
+        const startY = Math.floor(Math.random() * h);
+        const startX = Math.floor(Math.random() * (w - 100));
+        const len = Math.floor(Math.random() * 120) + 30; // 划痕长度
+
+        for (let x = startX; x < startX + len; x++) {
+          const y = startY + Math.round((x - startX) * (Math.random() * 0.1 - 0.05)); // 微微偏斜的横向细道划痕
+          if (x >= 0 && x < w && y >= 0 && y < h) {
+            const idx = (y * w + x) * 4;
+            // 墨白线 (复印机玻璃板污垢导致)
+            const colorVal = Math.random() > 0.4 ? 0 : 255;
+            data[idx]     = colorVal;
+            data[idx + 1] = colorVal;
+            data[idx + 2] = colorVal;
+          }
+        }
+      }
+    }
+
+    // 🎨 核心：双色调 (Duotone) 印墨着色映射
+    function applyDuotone(data, inkHex, bgHex) {
+      const ink = hexToRgb(inkHex);
+      const bg  = hexToRgb(bgHex);
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // 灰度百分比 (0=纯黑，1=纯白)
+        const gray = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+        // 油墨印色与底色纸张的线性插值
+        data[i]     = bg.r * gray + ink.r * (1 - gray);
+        data[i + 1] = bg.g * gray + ink.g * (1 - gray);
+        data[i + 2] = bg.b * gray + ink.b * (1 - gray);
+      }
+    }
+
+    // Hex 转换 RGB
+    function hexToRgb(hex) {
+      const c = hex.replace('#', '');
+      return {
+        r: parseInt(c.substring(0, 2), 16),
+        g: parseInt(c.substring(2, 4), 16),
+        b: parseInt(c.substring(4, 6), 16)
+      };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  导出为无损超采样 $8\times$ 艺术大图
+    // ═══════════════════════════════════════════════════════════════
+    function downloadOutput() {
+      const procCanvas = $('canvas-processed');
+      if (!procCanvas) return;
+
+      const w = procCanvas.width;
+      const h = procCanvas.height;
+
+      // 物理拉大 8 倍无损输出，保留像素颗粒及纸张刮划的清晰美感
+      const upscaleFactor = 8;
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = w * upscaleFactor;
+      exportCanvas.height = h * upscaleFactor;
+      const ctx = exportCanvas.getContext('2d');
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(procCanvas, 0, 0, w, h, 0, 0, w * upscaleFactor, h * upscaleFactor);
+
+      const activePalette = PALETTES.find(x => x.id === State.paletteId) || PALETTES[0];
+
+      const link = document.createElement('a');
+      link.download = `xerox_photocopy_${activePalette.id}_${w * upscaleFactor}x${h * upscaleFactor}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>

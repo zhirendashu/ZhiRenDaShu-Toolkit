@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>胶片边框合成工具 · Film Frame Composer</title>
+  <meta name="description" content="将你的照片套入真实胶片边框模板，Canvas 实时合成，一键导出高清 PNG。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== 设计系统 ===== */
+    :root {
+      --bg: #050505;
+      --surface: rgba(17, 17, 17, 0.92);
+      --surface-2: rgba(28, 28, 28, 0.95);
+      --border: #222;
+      --border-light: #2e2e2e;
+      --accent: #FF2442;
+      --accent-dim: rgba(255, 36, 66, 0.15);
+      --accent-glow: rgba(255, 36, 66, 0.3);
+      --gold: #F6D365;
+      --gold-dim: rgba(246, 211, 101, 0.12);
+      --text: #F4F1E8;
+      --text-dim: #8A8A8A;
+      --text-muted: #444;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+      --sidebar-w: 220px;
+      --panel-w: 280px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background: var(--bg); height: 100%; }
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 噪点纹理覆盖层 */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ===== 顶栏 ===== */
+    #topbar {
+      height: 56px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      position: relative;
+      z-index: 100;
+    }
+
+    .topbar-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .topbar-back:hover { color: var(--text); border-color: var(--border-light); background: rgba(255,255,255,0.04); }
+    .topbar-back svg { width: 14px; height: 14px; }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+    .brand-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), #ff6b35);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .brand-name { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand-sub { font-size: 0.72rem; color: var(--text-dim); display: block; margin-top: 1px; }
+
+    .topbar-status {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; color: var(--text-dim);
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      flex-shrink: 0;
+    }
+    .status-dot.processing { background: var(--gold); box-shadow: 0 0 6px var(--gold); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ===== 主体三栏 ===== */
+    #app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ===== 左侧：边框选择 ===== */
+    #frame-sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .frame-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .frame-list::-webkit-scrollbar { width: 4px; }
+    .frame-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+    .frame-item {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .frame-item:hover { border-color: var(--border-light); background: rgba(255,255,255,0.04); }
+    .frame-item.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 16px var(--accent-glow);
+    }
+
+    .frame-thumb {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: #0a0a0a;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .frame-thumb img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+    .frame-thumb-placeholder {
+      color: var(--text-muted);
+      font-size: 1.5rem;
+    }
+    .frame-item-label {
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-top: 1px solid var(--border);
+    }
+    .frame-item.active .frame-item-label { color: var(--accent); }
+
+    .frame-ratio-badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      background: rgba(0,0,0,0.7);
+      color: var(--gold);
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      backdrop-filter: blur(4px);
+    }
+
+    .frame-item.active .frame-ratio-badge { background: var(--accent); color: #fff; }
+
+    /* ===== 中央：画布区 ===== */
+    #canvas-area {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #080808;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #canvas-toolbar {
+      height: 48px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .toolbar-chip {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .toolbar-chip.gold { background: var(--gold-dim); border-color: rgba(246,211,101,0.3); color: var(--gold); }
+    .toolbar-chip.red { background: var(--accent-dim); border-color: rgba(255,36,66,0.3); color: var(--accent); }
+
+    .toolbar-spacer { flex: 1; }
+
+    .toolbar-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .toolbar-btn svg { width: 13px; height: 13px; }
+    .toolbar-btn:hover { color: var(--text); border-color: var(--border-light); background: rgba(255,255,255,0.04); }
+    .toolbar-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .toolbar-btn.primary:hover { background: #e01f3a; box-shadow: 0 4px 16px var(--accent-glow); }
+    .toolbar-btn.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* 上传区 */
+    #upload-zone {
+      position: absolute;
+      inset: 48px 0 0 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #upload-zone:hover { background: rgba(255,255,255,0.02); }
+    #upload-zone.drag-over { background: var(--accent-dim); }
+
+    .upload-icon {
+      width: 72px; height: 72px;
+      border-radius: 20px;
+      border: 2px dashed var(--border-light);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    #upload-zone:hover .upload-icon,
+    #upload-zone.drag-over .upload-icon {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .upload-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .upload-sub { font-size: 0.8rem; color: var(--text-dim); text-align: center; line-height: 1.6; }
+    .upload-sub span { color: var(--accent); cursor: pointer; text-decoration: underline; }
+    .upload-hint {
+      font-size: 0.72rem; color: var(--text-muted);
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+
+    /* 画布工作区 */
+    #canvas-workspace {
+      position: absolute;
+      inset: 48px 0 0 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    #output-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      cursor: grab;
+      border-radius: 4px;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+      display: block;
+    }
+    #output-canvas:active { cursor: grabbing; }
+    #output-canvas.no-image { cursor: default; }
+
+    /* ===== 右侧：控制面板 ===== */
+    #control-panel {
+      width: var(--panel-w);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+    /* 控制组 */
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ctrl-group-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ctrl-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ctrl-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ctrl-label span { color: var(--gold); font-weight: 700; font-size: 0.72rem; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--border-light);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px var(--accent-dim); }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.8rem;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
+    select option { background: #1a1a1a; }
+
+    .ctrl-btn-row {
+      display: flex;
+      gap: 8px;
+    }
+    .ctrl-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .ctrl-btn svg { width: 12px; height: 12px; }
+    .ctrl-btn:hover { color: var(--text); border-color: var(--border-light); background: rgba(255,255,255,0.08); }
+    .ctrl-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    /* 色调按钮组 */
+    .tone-btns {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .tone-btn {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tone-btn:hover { border-color: var(--border-light); color: var(--text); }
+    .tone-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
+    /* 导出按钮 */
+    .panel-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #btn-export {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), #ff6b35);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    #btn-export:hover { transform: translateY(-1px); box-shadow: 0 6px 28px var(--accent-glow); }
+    #btn-export:active { transform: translateY(0); }
+    #btn-export:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    #btn-export svg { width: 16px; height: 16px; }
+
+    .export-note { font-size: 0.68rem; color: var(--text-muted); text-align: center; }
+
+    /* ===== 提示 Toast ===== */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface-2);
+      border: 1px solid var(--border-light);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      z-index: 9998;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      backdrop-filter: blur(16px);
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: rgba(34,197,94,0.4); }
+    #toast.error { border-color: rgba(255,36,66,0.4); }
+
+    /* ===== 无帧提示 ===== */
+    .no-frame-hint {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 顶栏 ===== -->
+<header id="topbar">
+  <a href="./index.html" class="topbar-back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+    返回
+  </a>
+  <div class="topbar-brand">
+    <div class="brand-icon">🎞️</div>
+    <div>
+      <span class="brand-name">胶片边框合成工具</span>
+      <span class="brand-sub">Film Frame Composer · Canvas 实时合成</span>
+    </div>
+  </div>
+  <div class="topbar-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">就绪 · 选择边框后上传照片</span>
+  </div>
+</header>
+
+<!-- ===== 主体 ===== -->
+<div id="app-body">
+
+  <!-- ① 左侧：边框选择 -->
+  <aside id="frame-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">胶片边框</div>
+    </div>
+    <div class="frame-list" id="frame-list">
+      <div class="no-frame-hint">正在加载边框模板…</div>
+    </div>
+  </aside>
+
+  <!-- ② 中央：画布区 -->
+  <main id="canvas-area">
+
+    <!-- 工具栏 -->
+    <div id="canvas-toolbar">
+      <span class="toolbar-chip gold" id="chip-frame">未选择边框</span>
+      <span class="toolbar-chip" id="chip-size" style="display:none"></span>
+      <div class="toolbar-spacer"></div>
+      <button class="toolbar-btn" id="btn-load-photo" title="加载新照片">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        换照片
+      </button>
+      <button class="toolbar-btn" id="btn-fit" title="适应画布">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+        适应
+      </button>
+      <button class="toolbar-btn" id="btn-fill" title="填满画布">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        填满
+      </button>
+    </div>
+
+    <!-- 上传区 -->
+    <div id="upload-zone">
+      <div class="upload-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div>
+        <p class="upload-title">上传你的照片</p>
+      </div>
+      <p class="upload-sub">
+        将图片拖放到此处，或<br>
+        <span id="upload-trigger">点击选择文件</span>
+      </p>
+      <div class="upload-hint">JPG · PNG · WEBP · 最大 20MB</div>
+      <input type="file" id="file-input" accept="image/*" hidden />
+    </div>
+
+    <!-- 画布工作区 -->
+    <div id="canvas-workspace">
+      <canvas id="output-canvas"></canvas>
+    </div>
+
+  </main>
+
+  <!-- ③ 右侧：控制面板 -->
+  <aside id="control-panel">
+    <div class="panel-header">
+      <div class="panel-title">调整参数</div>
+    </div>
+    <div class="panel-body">
+
+      <!-- 照片位置 -->
+      <div class="ctrl-group">
+        <div class="ctrl-group-title">📐 照片位置</div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">缩放 <span id="val-scale">100%</span></div>
+          <input type="range" id="ctrl-scale" min="50" max="200" value="100" step="1" />
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">水平位移 <span id="val-offsetx">0</span></div>
+          <input type="range" id="ctrl-offsetx" min="-500" max="500" value="0" step="1" />
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">垂直位移 <span id="val-offsety">0</span></div>
+          <input type="range" id="ctrl-offsety" min="-500" max="500" value="0" step="1" />
+        </div>
+        <div class="ctrl-btn-row">
+          <button class="ctrl-btn" id="btn-center-fit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+            适应
+          </button>
+          <button class="ctrl-btn" id="btn-center-fill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            填满
+          </button>
+          <button class="ctrl-btn" id="btn-reset-pos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9M3 3v6h6"/></svg>
+            重置
+          </button>
+        </div>
+      </div>
+
+      <!-- 色调处理 -->
+      <div class="ctrl-group">
+        <div class="ctrl-group-title">🎨 照片色调</div>
+        <div class="tone-btns" id="tone-btns">
+          <button class="tone-btn active" data-tone="none">原色</button>
+          <button class="tone-btn" data-tone="warm">暖调</button>
+          <button class="tone-btn" data-tone="cool">冷调</button>
+          <button class="tone-btn" data-tone="fade">褪色</button>
+          <button class="tone-btn" data-tone="bw">黑白</button>
+          <button class="tone-btn" data-tone="vintage">复古</button>
+        </div>
+      </div>
+
+      <!-- 亮度/对比度 -->
+      <div class="ctrl-group">
+        <div class="ctrl-group-title">☀️ 影调</div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">亮度 <span id="val-brightness">0</span></div>
+          <input type="range" id="ctrl-brightness" min="-80" max="80" value="0" step="1" />
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">对比度 <span id="val-contrast">0</span></div>
+          <input type="range" id="ctrl-contrast" min="-80" max="80" value="0" step="1" />
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">饱和度 <span id="val-saturation">100%</span></div>
+          <input type="range" id="ctrl-saturation" min="0" max="200" value="100" step="1" />
+        </div>
+      </div>
+
+      <!-- 导出设置 -->
+      <div class="ctrl-group">
+        <div class="ctrl-group-title">📦 导出设置</div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">输出尺寸</div>
+          <select id="ctrl-export-size">
+            <option value="1x">1× 原始尺寸</option>
+            <option value="2x" selected>2× 高清输出</option>
+            <option value="3x">3× 超高清</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">图片质量</div>
+          <select id="ctrl-quality">
+            <option value="1.0" selected>最高质量 PNG</option>
+            <option value="0.95">高质量 JPEG 95%</option>
+            <option value="0.85">标准 JPEG 85%</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 导出 -->
+    <div class="panel-footer">
+      <button id="btn-export" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导出合成图片
+      </button>
+      <div class="export-note">输出为独立 PNG，完全离线处理</div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   胶片边框合成工具 · Film Frame Composer
+   作者：植人大树 · 纯前端 Canvas 实现
+   ============================================================ */
+
+// ── 边框配置（自动从 png/ 目录加载）──
+const FRAME_DEFS = [
+  { id: 'frame14', file: 'png/Film_frame_14.png', label: 'PORTA 400',  ratio: '3:4', aspect: 3/4 },
+  { id: 'frame3',  file: 'png/Film_frame_3.png',  label: '6608 FF',    ratio: '3:4', aspect: 3/4 },
+  { id: 'frame6',  file: 'png/Film_frame_6.png',  label: '1302 MF',    ratio: '4:5', aspect: 4/5 },
+  { id: 'frame7',  file: 'png/Film_frame_7.png',  label: '1392 漏光',  ratio: '3:4', aspect: 3/4 },
+  { id: 'frame8',  file: 'png/Film_frame_8.png',  label: '方片 6×6',   ratio: '1:1', aspect: 1   },
+];
+
+// ── 状态 ──
+const state = {
+  frameImg: null,      // 当前边框 Image 对象
+  frameDef: null,      // 当前边框定义
+  photoImg: null,      // 用户照片 Image 对象
+  // 照片变换
+  scale: 1.0,
+  offsetX: 0,
+  offsetY: 0,
+  // 色调
+  tone: 'none',
+  brightness: 0,
+  contrast: 0,
+  saturation: 100,
+  // 拖拽
+  dragging: false,
+  dragStartX: 0,
+  dragStartY: 0,
+  dragStartOffX: 0,
+  dragStartOffY: 0,
+};
+
+// ── DOM ──
+const els = {
+  frameList:     document.getElementById('frame-list'),
+  uploadZone:    document.getElementById('upload-zone'),
+  workspace:     document.getElementById('canvas-workspace'),
+  canvas:        document.getElementById('output-canvas'),
+  fileInput:     document.getElementById('file-input'),
+  chipFrame:     document.getElementById('chip-frame'),
+  chipSize:      document.getElementById('chip-size'),
+  statusDot:     document.getElementById('status-dot'),
+  statusText:    document.getElementById('status-text'),
+  btnExport:     document.getElementById('btn-export'),
+  btnLoadPhoto:  document.getElementById('btn-load-photo'),
+  btnFit:        document.getElementById('btn-fit'),
+  btnFill:       document.getElementById('btn-fill'),
+  btnCenterFit:  document.getElementById('btn-center-fit'),
+  btnCenterFill: document.getElementById('btn-center-fill'),
+  btnResetPos:   document.getElementById('btn-reset-pos'),
+  ctrlScale:     document.getElementById('ctrl-scale'),
+  ctrlOffsetX:   document.getElementById('ctrl-offsetx'),
+  ctrlOffsetY:   document.getElementById('ctrl-offsety'),
+  valScale:      document.getElementById('val-scale'),
+  valOffsetX:    document.getElementById('val-offsetx'),
+  valOffsetY:    document.getElementById('val-offsety'),
+  ctrlBrightness:document.getElementById('ctrl-brightness'),
+  ctrlContrast:  document.getElementById('ctrl-contrast'),
+  ctrlSaturation:document.getElementById('ctrl-saturation'),
+  valBrightness: document.getElementById('val-brightness'),
+  valContrast:   document.getElementById('val-contrast'),
+  valSaturation: document.getElementById('val-saturation'),
+  toneBtns:      document.getElementById('tone-btns'),
+  exportSize:    document.getElementById('ctrl-export-size'),
+  exportQuality: document.getElementById('ctrl-quality'),
+  toast:         document.getElementById('toast'),
+};
+
+const ctx = els.canvas.getContext('2d');
+
+/* ── 工具函数 ── */
+function setStatus(text, processing = false) {
+  els.statusText.textContent = text;
+  els.statusDot.className = 'status-dot' + (processing ? ' processing' : '');
+}
+
+let toastTimer;
+function showToast(msg, type = '') {
+  els.toast.textContent = msg;
+  els.toast.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { els.toast.className = ''; }, 2500);
+}
+
+/* ── 初始化边框列表 ── */
+function initFrameList() {
+  els.frameList.innerHTML = '';
+  FRAME_DEFS.forEach(def => {
+    const item = document.createElement('div');
+    item.className = 'frame-item';
+    item.dataset.id = def.id;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'frame-thumb';
+    thumb.style.aspectRatio = def.aspect >= 1
+      ? `${def.aspect * 10} / 10`
+      : `10 / ${(1/def.aspect * 10).toFixed(0)}`;
+
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.src = def.file;
+    img.alt = def.label;
+    img.loading = 'lazy';
+    thumb.appendChild(img);
+
+    const badge = document.createElement('div');
+    badge.className = 'frame-ratio-badge';
+    badge.textContent = def.ratio;
+    thumb.appendChild(badge);
+
+    const label = document.createElement('div');
+    label.className = 'frame-item-label';
+    label.textContent = def.label;
+
+    item.appendChild(thumb);
+    item.appendChild(label);
+    item.addEventListener('click', () => selectFrame(def));
+    els.frameList.appendChild(item);
+  });
+}
+
+/* ── 选择边框 ── */
+function selectFrame(def) {
+  // 高亮
+  document.querySelectorAll('.frame-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.frame-item[data-id="${def.id}"]`)?.classList.add('active');
+
+  setStatus('加载边框中…', true);
+  els.chipFrame.textContent = def.label;
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    state.frameImg = img;
+    state.frameDef = def;
+    setStatus(`边框: ${def.label} · ${def.ratio}`);
+    // 如果已有照片，直接重绘
+    if (state.photoImg) {
+      autoFitPhoto();
+      render();
+    }
+  };
+  img.onerror = () => {
+    setStatus('边框加载失败', false);
+    showToast('⚠️ 边框文件加载失败，请检查 png/ 目录', 'error');
+  };
+  img.src = def.file;
+}
+
+/* ── 文件上传处理 ── */
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    showToast('请上传图片文件', 'error');
+    return;
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    showToast('图片超过 20MB 限制', 'error');
+    return;
+  }
+
+  setStatus('加载照片中…', true);
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    if (state.photoImg) URL.revokeObjectURL(state.photoImg.src);
+    state.photoImg = img;
+    URL.revokeObjectURL(url);
+
+    // 显示工作区
+    els.uploadZone.style.display = 'none';
+    els.workspace.style.display = 'flex';
+    els.btnExport.disabled = false;
+
+    // 更新尺寸 chip
+    els.chipSize.textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+    els.chipSize.style.display = '';
+
+    if (!state.frameDef) {
+      // 自动选择第一个边框
+      selectFrame(FRAME_DEFS[0]);
+    }
+    autoFitPhoto();
+    render();
+    setStatus(`照片已加载 · ${img.naturalWidth}×${img.naturalHeight}`);
+  };
+  img.onerror = () => {
+    setStatus('图片加载失败', false);
+    showToast('图片加载失败，请重试', 'error');
+  };
+  img.src = url;
+}
+
+/* ── 自动适应/填满 ── */
+function autoFitPhoto(fill = false) {
+  if (!state.frameImg || !state.photoImg) return;
+  const fw = state.frameImg.naturalWidth;
+  const fh = state.frameImg.naturalHeight;
+  const pw = state.photoImg.naturalWidth;
+  const ph = state.photoImg.naturalHeight;
+
+  let scale;
+  if (fill) {
+    scale = Math.max(fw / pw, fh / ph);
+  } else {
+    scale = Math.min(fw / pw, fh / ph);
+  }
+
+  state.scale = parseFloat((scale * 100).toFixed(1));
+  state.offsetX = 0;
+  state.offsetY = 0;
+  syncSliders();
+}
+
+function syncSliders() {
+  els.ctrlScale.value = state.scale;
+  els.ctrlOffsetX.value = state.offsetX;
+  els.ctrlOffsetY.value = state.offsetY;
+  els.valScale.textContent = Math.round(state.scale) + '%';
+  els.valOffsetX.textContent = Math.round(state.offsetX);
+  els.valOffsetY.textContent = Math.round(state.offsetY);
+}
+
+/* ── 色调处理（像素级） ── */
+function applyToneFilter(imageData, tone, brightness, contrast, saturation) {
+  const data = imageData.data;
+  const len = data.length;
+
+  // 对比度系数
+  const cf = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  // 饱和度系数
+  const sat = saturation / 100;
+
+  for (let i = 0; i < len; i += 4) {
+    let r = data[i], g = data[i+1], b = data[i+2];
+
+    // 亮度
+    r += brightness; g += brightness; b += brightness;
+
+    // 对比度
+    r = cf * (r - 128) + 128;
+    g = cf * (g - 128) + 128;
+    b = cf * (b - 128) + 128;
+
+    // 饱和度
+    const gray = 0.299*r + 0.587*g + 0.114*b;
+    r = gray + sat * (r - gray);
+    g = gray + sat * (g - gray);
+    b = gray + sat * (b - gray);
+
+    // 色调预设
+    if (tone === 'warm') { r += 15; g += 5; b -= 10; }
+    else if (tone === 'cool') { r -= 10; g += 2; b += 20; }
+    else if (tone === 'fade') { r = r*0.85+20; g = g*0.85+20; b = b*0.85+20; }
+    else if (tone === 'bw') { const l = gray; r=g=b=l; }
+    else if (tone === 'vintage') {
+      r = r*1.1 + 10; g = g*0.9 + 5; b = b*0.7 + 30;
+    }
+
+    data[i]   = Math.max(0, Math.min(255, r));
+    data[i+1] = Math.max(0, Math.min(255, g));
+    data[i+2] = Math.max(0, Math.min(255, b));
+  }
+  return imageData;
+}
+
+/* ── 主渲染函数 ── */
+function render() {
+  if (!state.frameImg) return;
+
+  const fw = state.frameImg.naturalWidth;
+  const fh = state.frameImg.naturalHeight;
+
+  // 设置画布尺寸与边框一致
+  els.canvas.width = fw;
+  els.canvas.height = fh;
+
+  ctx.clearRect(0, 0, fw, fh);
+
+  // 1. 绘制照片（底层）
+  if (state.photoImg) {
+    const s = state.scale / 100;
+    const pw = state.photoImg.naturalWidth * s;
+    const ph = state.photoImg.naturalHeight * s;
+    const dx = (fw - pw) / 2 + state.offsetX;
+    const dy = (fh - ph) / 2 + state.offsetY;
+
+    // 先把照片画到临时 canvas 做色调处理
+    const tmp = document.createElement('canvas');
+    tmp.width = fw; tmp.height = fh;
+    const tc = tmp.getContext('2d');
+    tc.drawImage(state.photoImg, dx, dy, pw, ph);
+
+    // 色调处理
+    const needFilter = state.tone !== 'none' ||
+      state.brightness !== 0 || state.contrast !== 0 || state.saturation !== 100;
+
+    if (needFilter) {
+      const imageData = tc.getImageData(0, 0, fw, fh);
+      applyToneFilter(imageData, state.tone, state.brightness, state.contrast, state.saturation);
+      tc.putImageData(imageData, 0, 0);
+    }
+
+    ctx.drawImage(tmp, 0, 0);
+  }
+
+  // 2. 叠加胶片边框（PNG 透明通道完美叠加）
+  ctx.drawImage(state.frameImg, 0, 0, fw, fh);
+}
+
+/* ── 导出 ── */
+function exportImage() {
+  if (!state.frameImg) { showToast('请先选择胶片边框', 'error'); return; }
+  if (!state.photoImg) { showToast('请先上传照片', 'error'); return; }
+
+  setStatus('正在合成导出…', true);
+
+  const sizeMap = { '1x': 1, '2x': 2, '3x': 3 };
+  const scale = sizeMap[els.exportSize.value] || 2;
+  const qualityVal = parseFloat(els.exportQuality.value);
+  const isJpeg = qualityVal < 1.0;
+
+  const fw = state.frameImg.naturalWidth * scale;
+  const fh = state.frameImg.naturalHeight * scale;
+
+  const expCanvas = document.createElement('canvas');
+  expCanvas.width = fw;
+  expCanvas.height = fh;
+  const ec = expCanvas.getContext('2d');
+
+  // 绘制照片
+  if (state.photoImg) {
+    const s = (state.scale / 100) * scale;
+    const pw = state.photoImg.naturalWidth * s;
+    const ph = state.photoImg.naturalHeight * s;
+    const dx = (fw - pw) / 2 + state.offsetX * scale;
+    const dy = (fh - ph) / 2 + state.offsetY * scale;
+
+    const tmp = document.createElement('canvas');
+    tmp.width = fw; tmp.height = fh;
+    const tc = tmp.getContext('2d');
+    tc.drawImage(state.photoImg, dx, dy, pw, ph);
+
+    const needFilter = state.tone !== 'none' ||
+      state.brightness !== 0 || state.contrast !== 0 || state.saturation !== 100;
+    if (needFilter) {
+      const id = tc.getImageData(0, 0, fw, fh);
+      applyToneFilter(id, state.tone, state.brightness, state.contrast, state.saturation);
+      tc.putImageData(id, 0, 0);
+    }
+    ec.drawImage(tmp, 0, 0);
+  }
+
+  // 叠加边框
+  ec.drawImage(state.frameImg, 0, 0, fw, fh);
+
+  // 下载
+  const mimeType = isJpeg ? 'image/jpeg' : 'image/png';
+  const ext = isJpeg ? 'jpg' : 'png';
+  expCanvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const frameName = state.frameDef?.label || 'film';
+    a.href = url;
+    a.download = `胶片边框_${frameName}_${Date.now()}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('导出完成 ✓');
+    showToast('🎞️ 导出成功！', 'success');
+  }, mimeType, isJpeg ? qualityVal : undefined);
+}
+
+/* ── 拖拽照片位置 ── */
+els.canvas.addEventListener('mousedown', e => {
+  if (!state.photoImg) return;
+  state.dragging = true;
+  state.dragStartX = e.clientX;
+  state.dragStartY = e.clientY;
+  state.dragStartOffX = state.offsetX;
+  state.dragStartOffY = state.offsetY;
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', e => {
+  if (!state.dragging) return;
+  const dx = e.clientX - state.dragStartX;
+  const dy = e.clientY - state.dragStartY;
+  // 换算为画布坐标（根据显示缩放）
+  const displayScale = els.canvas.clientWidth / (state.frameImg?.naturalWidth || 1);
+  state.offsetX = state.dragStartOffX + dx / displayScale;
+  state.offsetY = state.dragStartOffY + dy / displayScale;
+  state.offsetX = Math.round(state.offsetX);
+  state.offsetY = Math.round(state.offsetY);
+  // 更新滑块
+  els.ctrlOffsetX.value = Math.max(-500, Math.min(500, state.offsetX));
+  els.ctrlOffsetY.value = Math.max(-500, Math.min(500, state.offsetY));
+  els.valOffsetX.textContent = state.offsetX;
+  els.valOffsetY.textContent = state.offsetY;
+  render();
+});
+
+window.addEventListener('mouseup', () => { state.dragging = false; });
+
+// 触控支持
+els.canvas.addEventListener('touchstart', e => {
+  if (!state.photoImg) return;
+  const t = e.touches[0];
+  state.dragging = true;
+  state.dragStartX = t.clientX;
+  state.dragStartY = t.clientY;
+  state.dragStartOffX = state.offsetX;
+  state.dragStartOffY = state.offsetY;
+  e.preventDefault();
+}, { passive: false });
+
+window.addEventListener('touchmove', e => {
+  if (!state.dragging) return;
+  const t = e.touches[0];
+  const dx = t.clientX - state.dragStartX;
+  const dy = t.clientY - state.dragStartY;
+  const displayScale = els.canvas.clientWidth / (state.frameImg?.naturalWidth || 1);
+  state.offsetX = Math.round(state.dragStartOffX + dx / displayScale);
+  state.offsetY = Math.round(state.dragStartOffY + dy / displayScale);
+  els.ctrlOffsetX.value = Math.max(-500, Math.min(500, state.offsetX));
+  els.ctrlOffsetY.value = Math.max(-500, Math.min(500, state.offsetY));
+  els.valOffsetX.textContent = state.offsetX;
+  els.valOffsetY.textContent = state.offsetY;
+  render();
+}, { passive: false });
+
+window.addEventListener('touchend', () => { state.dragging = false; });
+
+// 滚轮缩放
+els.canvas.addEventListener('wheel', e => {
+  if (!state.photoImg) return;
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -2 : 2;
+  state.scale = Math.max(20, Math.min(300, state.scale + delta));
+  els.ctrlScale.value = state.scale;
+  els.valScale.textContent = Math.round(state.scale) + '%';
+  render();
+}, { passive: false });
+
+/* ── 控制事件绑定 ── */
+// 滑块
+els.ctrlScale.addEventListener('input', () => {
+  state.scale = parseFloat(els.ctrlScale.value);
+  els.valScale.textContent = Math.round(state.scale) + '%';
+  render();
+});
+els.ctrlOffsetX.addEventListener('input', () => {
+  state.offsetX = parseInt(els.ctrlOffsetX.value);
+  els.valOffsetX.textContent = state.offsetX;
+  render();
+});
+els.ctrlOffsetY.addEventListener('input', () => {
+  state.offsetY = parseInt(els.ctrlOffsetY.value);
+  els.valOffsetY.textContent = state.offsetY;
+  render();
+});
+els.ctrlBrightness.addEventListener('input', () => {
+  state.brightness = parseInt(els.ctrlBrightness.value);
+  els.valBrightness.textContent = state.brightness;
+  render();
+});
+els.ctrlContrast.addEventListener('input', () => {
+  state.contrast = parseInt(els.ctrlContrast.value);
+  els.valContrast.textContent = state.contrast;
+  render();
+});
+els.ctrlSaturation.addEventListener('input', () => {
+  state.saturation = parseInt(els.ctrlSaturation.value);
+  els.valSaturation.textContent = state.saturation + '%';
+  render();
+});
+
+// 色调按钮
+els.toneBtns.addEventListener('click', e => {
+  const btn = e.target.closest('.tone-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.tone = btn.dataset.tone;
+  render();
+});
+
+// 适应/填满按钮
+[els.btnFit, els.btnCenterFit].forEach(b => b.addEventListener('click', () => {
+  autoFitPhoto(false); render();
+}));
+[els.btnFill, els.btnCenterFill].forEach(b => b.addEventListener('click', () => {
+  autoFitPhoto(true); render();
+}));
+
+// 重置位置
+els.btnResetPos.addEventListener('click', () => {
+  state.offsetX = 0; state.offsetY = 0;
+  els.ctrlOffsetX.value = 0; els.ctrlOffsetY.value = 0;
+  els.valOffsetX.textContent = 0; els.valOffsetY.textContent = 0;
+  render();
+});
+
+// 换照片
+els.btnLoadPhoto.addEventListener('click', () => els.fileInput.click());
+document.getElementById('upload-trigger').addEventListener('click', () => els.fileInput.click());
+els.fileInput.addEventListener('change', () => {
+  if (els.fileInput.files[0]) handleFile(els.fileInput.files[0]);
+  els.fileInput.value = '';
+});
+
+// 拖放
+els.uploadZone.addEventListener('dragover', e => { e.preventDefault(); els.uploadZone.classList.add('drag-over'); });
+els.uploadZone.addEventListener('dragleave', () => els.uploadZone.classList.remove('drag-over'));
+els.uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  els.uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+els.uploadZone.addEventListener('click', () => els.fileInput.click());
+
+// 全局拖放（工作区也支持）
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleFile(file);
+});
+
+// 导出
+els.btnExport.addEventListener('click', exportImage);
+
+// 键盘快捷键
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const idx = parseInt(e.key) - 1;
+  if (idx >= 0 && idx < FRAME_DEFS.length) selectFrame(FRAME_DEFS[idx]);
+  if (e.key === 'f') { autoFitPhoto(false); render(); }
+  if (e.key === 'g') { autoFitPhoto(true); render(); }
+  if (e.key === 'r') {
+    state.offsetX = 0; state.offsetY = 0;
+    syncSliders(); render();
+  }
+});
+
+/* ── 启动 ── */
+initFrameList();
+setStatus('就绪 · 选择边框后上传照片');
+</script>
+</body>
+</html>
