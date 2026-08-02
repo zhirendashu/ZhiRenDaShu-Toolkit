@@ -1822,14 +1822,14 @@ input, select { font: inherit; }
           <span>发光样式</span>
         </div>
         <div class="ts-mode-pills" id="ts-mode-pills" role="radiogroup" aria-label="时间戳样式">
-          <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">经典橙</button>
-          <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">LCD 绿</button>
-          <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">点阵</button>
-          <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">8-bit</button>
-          <button class="ts-pill" data-tsmode="white" aria-pressed="false">纯白</button>
-          <button class="ts-pill" data-tsmode="red_led" aria-pressed="false">赤红 LED</button>
-          <button class="ts-pill" data-tsmode="lcd_blue" aria-pressed="false">LCD 蓝</button>
-          <button class="ts-pill" data-tsmode="gold" aria-pressed="false">香槟金</button>
+          <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">📷 柯达橙</button>
+          <button class="ts-pill" data-tsmode="red_led" aria-pressed="false">🔴 LED管</button>
+          <button class="ts-pill" data-tsmode="gold" aria-pressed="false">✦ 徕卡刻字</button>
+          <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">🟢 LCD绿屏</button>
+          <button class="ts-pill" data-tsmode="lcd_blue" aria-pressed="false">🔵 LCD蓝屏</button>
+          <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">⠿ 点阵</button>
+          <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">▩ 像素</button>
+          <button class="ts-pill" data-tsmode="white" aria-pressed="false">🎞 胶片签名</button>
         </div>
 
         <!-- 九宫格位置选择器 -->
@@ -2053,14 +2053,14 @@ input, select { font: inherit; }
     <span>水印样式</span>
   </div>
   <div class="ts-mode-pills" id="m-ts-mode-pills" role="radiogroup" aria-label="时间戳样式">
-    <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">经典橙</button>
-    <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">LCD 绿</button>
-    <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">点阵</button>
-    <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">8-bit</button>
-    <button class="ts-pill" data-tsmode="white" aria-pressed="false">纯白</button>
-    <button class="ts-pill" data-tsmode="red_led" aria-pressed="false">赤红 LED</button>
-    <button class="ts-pill" data-tsmode="lcd_blue" aria-pressed="false">LCD 蓝</button>
-    <button class="ts-pill" data-tsmode="gold" aria-pressed="false">香槟金</button>
+    <button class="ts-pill active" data-tsmode="classic" aria-pressed="true">📷 柯达橙</button>
+    <button class="ts-pill" data-tsmode="red_led" aria-pressed="false">🔴 LED管</button>
+    <button class="ts-pill" data-tsmode="gold" aria-pressed="false">✦ 徕卡刻字</button>
+    <button class="ts-pill" data-tsmode="lcd" aria-pressed="false">🟢 LCD绿屏</button>
+    <button class="ts-pill" data-tsmode="lcd_blue" aria-pressed="false">🔵 LCD蓝屏</button>
+    <button class="ts-pill" data-tsmode="dotmatrix" aria-pressed="false">⠿ 点阵</button>
+    <button class="ts-pill" data-tsmode="eightbit" aria-pressed="false">▩ 像素</button>
+    <button class="ts-pill" data-tsmode="white" aria-pressed="false">🎞 胶片签名</button>
   </div>
 
   <input type="date" id="m-date-input" class="ctrl-date-input" value="2005-10-24" style="margin-top:10px;margin-bottom:12px" />
@@ -3218,62 +3218,426 @@ class DigiCamProcessor {
 
   static _timestamp(ctx, w, h, dateStr, mode, color = '#f97316', pos = 'bot-right', tsScale = 100) {
     switch (mode) {
-      case 'lcd':        return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos, tsScale);
-      case 'lcd_blue':   return DigiCamProcessor._timestampLCD(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'lcd':        return DigiCamProcessor._timestampLCDGreen(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'lcd_blue':   return DigiCamProcessor._timestampLCDBlue(ctx, w, h, dateStr, color, pos, tsScale);
       case 'dotmatrix':  return DigiCamProcessor._timestampDotMatrix(ctx, w, h, dateStr, color, pos, tsScale);
       case 'eightbit':   return DigiCamProcessor._timestampEightBit(ctx, w, h, dateStr, color, pos, tsScale);
-      case 'white':      return DigiCamProcessor._timestampWhite(ctx, w, h, dateStr, color, pos, tsScale);
-      case 'red_led':    return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos, tsScale);
-      case 'gold':       return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, true, pos, tsScale);
-      default:           return DigiCamProcessor._timestampClassic(ctx, w, h, dateStr, color, false, pos, tsScale);
+      case 'white':      return DigiCamProcessor._timestampFilmSig(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'red_led':    return DigiCamProcessor._timestampSevenSeg(ctx, w, h, dateStr, color, pos, tsScale);
+      case 'gold':       return DigiCamProcessor._timestampEmboss(ctx, w, h, dateStr, color, pos, tsScale);
+      default:           return DigiCamProcessor._timestampKodak(ctx, w, h, dateStr, color, pos, tsScale);
     }
   }
 
-  static _timestampClassic(ctx, w, h, dateStr, color, isGold = false, pos = 'bot-right', tsScale = 100) {
+  // ── CLASSIC / KODAK ── 黑底橙字背景块，模拟柯达 DC 系列
+  static _timestampKodak(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const scale = (w / 800) * (tsScale / 100);
-    const fSize = Math.max(14, Math.round(30 * scale));
-    const pad   = Math.max(12, Math.round(22 * scale));
-    // 中文签名用系统中文字体，纯ASCII用等宽字体
+    const fSize = Math.max(13, Math.round(28 * scale));
+    const pad   = Math.max(10, Math.round(16 * scale));
     const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
-    ctx.font = isGold
-      ? `bold ${fSize}px "Georgia", serif`
-      : hasCJK
-        ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif`
-        : `bold ${fSize}px "Courier New", Courier, monospace`;
-    
+    ctx.save();
+    ctx.font = hasCJK
+      ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", monospace`
+      : `bold ${fSize}px "Courier New", Courier, monospace`;
+    ctx.textBaseline = 'alphabetic';
+    const metrics = ctx.measureText(dateStr);
+    const tw = metrics.width;
+    const bPad = Math.round(fSize * 0.35);
+    const bw = tw + bPad * 2.2;
+    const bh = fSize + bPad * 1.4;
+
+    // Position
     const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
-    ctx.textAlign = align; ctx.textBaseline = baseline;
-    
-    ctx.shadowColor = color; ctx.shadowBlur = fSize * 0.9;
+    let bx, by;
+    if (align === 'right')       bx = x - bw;
+    else if (align === 'center') bx = x - bw / 2;
+    else                         bx = x;
+    if (baseline === 'bottom')      by = y - bh;
+    else if (baseline === 'middle') by = y - bh / 2;
+    else                            by = y;
+
+    // Black background block with subtle corner radius
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = '#0a0800';
+    const r = Math.max(2, fSize * 0.12);
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, r);
+    ctx.fill();
+
+    // Thin amber border line
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1, scale * 1.2);
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, r);
+    ctx.stroke();
+
+    // Orange text
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    // Soft glow
+    ctx.shadowColor = color;
+    ctx.shadowBlur = fSize * 0.55;
     ctx.fillStyle = color;
-    ctx.fillText(dateStr, x, y);
-    
-    ctx.shadowBlur = fSize * 0.25; 
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillText(dateStr, x, y);
+    ctx.fillText(dateStr, bx + bPad * 1.1, by + fSize + bPad * 0.35);
+    // Bright center highlight
+    ctx.shadowBlur = fSize * 0.12;
+    ctx.fillStyle = `rgba(255,245,200,0.82)`;
+    ctx.fillText(dateStr, bx + bPad * 1.1, by + fSize + bPad * 0.35);
     ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
-  static _timestampLCD(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+  // ── RED LED / 7-SEGMENT ── 真7段数码管，还原 80s 相机 LED 显示
+  static _timestampSevenSeg(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
+    // 7-segment digit definitions: [top,top-right,bot-right,bot,bot-left,top-left,mid]
+    const SEG7 = {
+      '0':[1,1,1,1,1,1,0], '1':[0,1,1,0,0,0,0], '2':[1,1,0,1,1,0,1],
+      '3':[1,1,1,1,0,0,1], '4':[0,1,1,0,0,1,1], '5':[1,0,1,1,0,1,1],
+      '6':[1,0,1,1,1,1,1], '7':[1,1,1,0,0,0,0], '8':[1,1,1,1,1,1,1],
+      '9':[1,1,1,1,0,1,1], '-':[0,0,0,0,0,0,1], ' ':[0,0,0,0,0,0,0],
+      "'":[0,0,0,0,0,1,0], ':':[0,0,0,0,0,0,0],
+    };
+    const digitW = Math.max(8, Math.round(22 * scale));
+    const digitH = Math.round(digitW * 1.9);
+    const segT   = Math.max(2, Math.round(digitW * 0.14)); // segment thickness
+    const gap    = Math.max(2, Math.round(digitW * 0.22)); // char gap
+    const pad    = Math.max(10, Math.round(18 * scale));
+
+    // Compute total width
+    const chars = dateStr.split('');
+    let totalW = 0;
+    const charWidths = chars.map(c => {
+      const isColon = (c === ':' || c === "'");
+      const cw = isColon ? Math.round(digitW * 0.45) : digitW;
+      totalW += cw + gap;
+      return cw;
+    });
+    totalW -= gap;
+
+    const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, digitH, pad);
+    let startX;
+    if (align === 'right')       startX = x - totalW;
+    else if (align === 'center') startX = x - totalW / 2;
+    else                         startX = x;
+    let startY;
+    if (baseline === 'bottom')      startY = y - digitH;
+    else if (baseline === 'middle') startY = y - digitH / 2;
+    else                            startY = y;
+
+    ctx.save();
+    // Background panel — dark with subtle transparency
+    const bPad = Math.round(digitH * 0.22);
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = '#100000';
+    DigiCamProcessor._roundRect(ctx, startX - bPad, startY - bPad * 0.7, totalW + bPad * 2, digitH + bPad * 1.4, Math.max(3, segT * 1.5));
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Draw dim inactive segments first (ghost effect)
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.07;
+    let cx = startX;
+    chars.forEach((c, i) => {
+      const cw = charWidths[i];
+      DigiCamProcessor._drawSevenSeg(ctx, cx, startY, cw, digitH, segT, [1,1,1,1,1,1,1]);
+      cx += cw + gap;
+    });
+    ctx.globalAlpha = 1;
+
+    // Glow pass
+    ctx.shadowColor = color;
+    ctx.shadowBlur = segT * 5;
+    ctx.fillStyle = color;
+    cx = startX;
+    chars.forEach((c, i) => {
+      const cw = charWidths[i];
+      const segs = SEG7[c] || SEG7[' '];
+      DigiCamProcessor._drawSevenSeg(ctx, cx, startY, cw, digitH, segT, segs);
+      cx += cw + gap;
+    });
+
+    // Bright core
+    ctx.shadowBlur = segT * 1.2;
+    ctx.fillStyle = 'rgba(255,200,180,0.92)';
+    cx = startX;
+    chars.forEach((c, i) => {
+      const cw = charWidths[i];
+      const segs = SEG7[c] || SEG7[' '];
+      DigiCamProcessor._drawSevenSeg(ctx, cx, startY, cw * 0.55, digitH, segT * 0.55, segs, cx + cw * 0.225, startY);
+      cx += cw + gap;
+    });
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // Helper: draw 7-segment digit segments as filled paths
+  static _drawSevenSeg(ctx, x, y, w, h, t, segs, ox, oy) {
+    const bx = (ox !== undefined) ? ox : x;
+    const by = (oy !== undefined) ? oy : y;
+    const hw = w; const hh = h;
+    const mid = by + hh * 0.5;
+    const e = t * 0.28; // end notch
+    // seg indices: 0=top,1=top-right,2=bot-right,3=bottom,4=bot-left,5=top-left,6=middle
+    const drawH = (px, py, len) => {
+      ctx.beginPath();
+      ctx.moveTo(px+e, py); ctx.lineTo(px+len-e, py);
+      ctx.lineTo(px+len, py+t/2); ctx.lineTo(px+len-e, py+t);
+      ctx.lineTo(px+e, py+t); ctx.lineTo(px, py+t/2);
+      ctx.closePath(); ctx.fill();
+    };
+    const drawV = (px, py, len) => {
+      ctx.beginPath();
+      ctx.moveTo(px, py+e); ctx.lineTo(px+t/2, py);
+      ctx.lineTo(px+t, py+e); ctx.lineTo(px+t, py+len-e);
+      ctx.lineTo(px+t/2, py+len); ctx.lineTo(px, py+len-e);
+      ctx.closePath(); ctx.fill();
+    };
+    if (segs[0]) drawH(bx+t+e, by,            hw-t*2-e*2);
+    if (segs[1]) drawV(bx+hw-t, by+t+e,       hh/2-t-e*2);
+    if (segs[2]) drawV(bx+hw-t, mid+e,        hh/2-t-e*2);
+    if (segs[3]) drawH(bx+t+e, by+hh-t,       hw-t*2-e*2);
+    if (segs[4]) drawV(bx,      mid+e,        hh/2-t-e*2);
+    if (segs[5]) drawV(bx,      by+t+e,       hh/2-t-e*2);
+    if (segs[6]) drawH(bx+t+e, mid-t/2,       hw-t*2-e*2);
+  }
+
+  // ── GOLD / EMBOSS ── 徕卡刻字压印风：描边+浮雕
+  static _timestampEmboss(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(13, Math.round(27 * scale));
     const pad   = Math.max(10, Math.round(18 * scale));
     const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
+    ctx.save();
+    // Elegant serif font for engraving feel
     ctx.font = hasCJK
-      ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif`
-      : `bold ${fSize}px "Courier New", Courier, monospace`;
-    
+      ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", serif`
+      : `bold ${fSize}px "Georgia", "Times New Roman", serif`;
     const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
-    ctx.textAlign = align; ctx.textBaseline = baseline;
-    
-    ctx.shadowColor = color; ctx.shadowBlur = fSize * 0.8;
-    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
+    const lw = Math.max(1.5, fSize * 0.07);
+
+    // Shadow layer (deep black inset shadow = emboss illusion)
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.shadowColor = 'transparent';
+    ctx.fillText(dateStr, x + lw * 1.5, y + lw * 1.5);
+
+    // Dark outline pass — gives engraved depth
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.lineWidth = lw * 2.8;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(dateStr, x, y);
+
+    // Gold fill
+    const grad = ctx.createLinearGradient(x, y - fSize, x, y + fSize * 0.2);
+    grad.addColorStop(0,   'rgba(255,248,200,0.98)');
+    grad.addColorStop(0.3, color);
+    grad.addColorStop(0.65, `rgba(180,130,20,0.95)`);
+    grad.addColorStop(1,   'rgba(255,235,130,0.9)');
+    ctx.fillStyle = grad;
+    ctx.shadowColor = 'rgba(0,0,0,0)';
     ctx.fillText(dateStr, x, y);
-    
-    ctx.shadowBlur = fSize * 0.22;
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.fillText(dateStr, x, y);
+
+    // Highlight specular — thin bright top edge
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = 'rgba(255,255,220,0.9)';
+    ctx.lineWidth = lw * 0.8;
+    ctx.strokeText(dateStr, x, y - lw * 0.4);
     ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── LCD GREEN ── Sony / Casio 绿色 LCD 背景屏风格
+  static _timestampLCDGreen(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
+    const fSize = Math.max(12, Math.round(24 * scale));
+    const pad   = Math.max(10, Math.round(16 * scale));
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
+    ctx.save();
+    ctx.font = hasCJK
+      ? `${fSize}px "PingFang SC", "Noto Sans SC", monospace`
+      : `${fSize}px "Courier New", Courier, monospace`;
+    ctx.textBaseline = 'alphabetic';
+    const tw = ctx.measureText(dateStr).width;
+    const bPadX = Math.round(fSize * 0.55);
+    const bPadY = Math.round(fSize * 0.38);
+    const bw = tw + bPadX * 2;
+    const bh = fSize + bPadY * 2;
+
+    const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
+    let bx, ty;
+    if (align === 'right')       bx = x - bw;
+    else if (align === 'center') bx = x - bw / 2;
+    else                         bx = x;
+    if (baseline === 'bottom')      ty = y - bPadY;
+    else if (baseline === 'middle') ty = y + fSize / 2 - bPadY;
+    else                            ty = y + fSize + bPadY;
+    const by = ty - fSize - bPadY;
+
+    // LCD dark green panel background
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = '#0a1a0a';
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
+    ctx.fill();
+
+    // Scanline / pixel grid overlay for authenticity
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = '#00ff44';
+    for (let ly = by + 2; ly < by + bh - 1; ly += 3) {
+      ctx.fillRect(bx + 1, ly, bw - 2, 1);
+    }
+
+    // Outer LCD bezel border
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = '#1a4a1a';
+    ctx.lineWidth = Math.max(1, scale);
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
+    ctx.stroke();
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = '#00aa44';
+    ctx.lineWidth = Math.max(0.5, scale * 0.6);
+    DigiCamProcessor._roundRect(ctx, bx + 1, by + 1, bw - 2, bh - 2, Math.max(1, fSize * 0.08));
+    ctx.stroke();
+
+    // LCD text
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = fSize * 0.35;
+    ctx.fillStyle = color;
+    ctx.fillText(dateStr, bx + bPadX, ty);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── LCD BLUE ── Casio 蓝底液晶，深海蓝背景板
+  static _timestampLCDBlue(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
+    const fSize = Math.max(12, Math.round(24 * scale));
+    const pad   = Math.max(10, Math.round(16 * scale));
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
+    ctx.save();
+    ctx.font = hasCJK
+      ? `${fSize}px "PingFang SC", "Noto Sans SC", monospace`
+      : `${fSize}px "Courier New", Courier, monospace`;
+    ctx.textBaseline = 'alphabetic';
+    const tw = ctx.measureText(dateStr).width;
+    const bPadX = Math.round(fSize * 0.55);
+    const bPadY = Math.round(fSize * 0.38);
+    const bw = tw + bPadX * 2;
+    const bh = fSize + bPadY * 2;
+
+    const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
+    let bx, ty;
+    if (align === 'right')       bx = x - bw;
+    else if (align === 'center') bx = x - bw / 2;
+    else                         bx = x;
+    if (baseline === 'bottom')      ty = y - bPadY;
+    else if (baseline === 'middle') ty = y + fSize / 2 - bPadY;
+    else                            ty = y + fSize + bPadY;
+    const by = ty - fSize - bPadY;
+
+    // Deep blue LCD background
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#010a1e';
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
+    ctx.fill();
+
+    // Subtle horizontal scan lines
+    ctx.globalAlpha = 0.1;
+    ctx.fillStyle = '#00ccff';
+    for (let ly = by + 2; ly < by + bh - 1; ly += 3) {
+      ctx.fillRect(bx + 1, ly, bw - 2, 1);
+    }
+
+    // Blue bezel border
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#0a1a3a';
+    ctx.lineWidth = Math.max(1, scale);
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
+    ctx.stroke();
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(0.5, scale * 0.6);
+    DigiCamProcessor._roundRect(ctx, bx + 1, by + 1, bw - 2, bh - 2, Math.max(1, fSize * 0.08));
+    ctx.stroke();
+
+    // Top glare reflection strip
+    ctx.globalAlpha = 0.08;
+    const glare = ctx.createLinearGradient(bx, by, bx, by + bh * 0.4);
+    glare.addColorStop(0, 'rgba(180,220,255,1)');
+    glare.addColorStop(1, 'rgba(180,220,255,0)');
+    ctx.fillStyle = glare;
+    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh * 0.4, Math.max(2, fSize * 0.1));
+    ctx.fill();
+
+    // Blue LCD text
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = fSize * 0.4;
+    ctx.fillStyle = color;
+    ctx.fillText(dateStr, bx + bPadX, ty);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── FILM SIG / WHITE ── Fujifilm 胶片签名，斜体细字+装饰线
+  static _timestampFilmSig(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
+    const scale = (w / 800) * (tsScale / 100);
+    const fSize = Math.max(12, Math.round(25 * scale));
+    const pad   = Math.max(10, Math.round(16 * scale));
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u30ff]/.test(dateStr);
+    ctx.save();
+    ctx.font = hasCJK
+      ? `300 italic ${fSize}px "PingFang SC", "Noto Sans SC", sans-serif`
+      : `300 italic ${fSize}px "Helvetica Neue", Arial, sans-serif`;
+    ctx.textBaseline = 'alphabetic';
+    const tw = ctx.measureText(dateStr).width;
+
+    const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
+    let tx, ty;
+    if (align === 'right')       tx = x;
+    else if (align === 'center') tx = x;
+    else                         tx = x;
+    ty = y;
+
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
+
+    // Subtle text shadow for depth
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillText(dateStr, tx + 1.5, ty + 1.5);
+
+    // Very thin decorative line above text (Fujifilm style)
+    ctx.globalAlpha = 0.65;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(0.8, scale * 0.8);
+    const lw2 = Math.min(tw * 0.6, Math.max(20, tw * 0.45));
+    let lx;
+    if (align === 'right')       lx = x - lw2;
+    else if (align === 'center') lx = x - lw2 / 2;
+    else                         lx = x;
+    let ly;
+    if (baseline === 'bottom')      ly = y - fSize - Math.round(fSize * 0.28);
+    else if (baseline === 'middle') ly = y - fSize * 0.5 - Math.round(fSize * 0.28);
+    else                            ly = y - Math.round(fSize * 0.28);
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + lw2, ly); ctx.stroke();
+
+    // Main white text
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = color;
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = fSize * 0.2;
+    ctx.fillText(dateStr, tx, ty);
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
     static _timestampDotMatrix(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
@@ -5043,21 +5407,21 @@ function bindTimestampMode() {
     State.patch('tsMode', mode);
 
     // Automatically set the appropriate color for the selected mode!
-    let defaultColor = '#f97316'; // Default classic orange
+    let defaultColor = '#f97316'; // Default Kodak orange
     if (mode === 'lcd') {
-      defaultColor = '#00ff66'; // LCD Green
+      defaultColor = '#00e855'; // Sony LCD Green
     } else if (mode === 'lcd_blue') {
-      defaultColor = '#00d2ff'; // LCD Blue
+      defaultColor = '#00b8ff'; // Casio LCD Blue
     } else if (mode === 'white') {
-      defaultColor = '#ffffff'; // Pure White
+      defaultColor = '#f0f0f0'; // Fujifilm Film Sig White
     } else if (mode === 'dotmatrix') {
       defaultColor = '#ff5500'; // Dot Matrix Orange-Red
     } else if (mode === 'eightbit') {
       defaultColor = '#ff6600'; // 8-bit Orange
     } else if (mode === 'red_led') {
-      defaultColor = '#ff1e1e'; // Red LED
+      defaultColor = '#ff2200'; // 7-Seg Red LED
     } else if (mode === 'gold') {
-      defaultColor = '#ffd700'; // Champagne Gold
+      defaultColor = '#d4a520'; // Leica Engraved Gold
     }
     State.patch('tsColor', defaultColor);
 
