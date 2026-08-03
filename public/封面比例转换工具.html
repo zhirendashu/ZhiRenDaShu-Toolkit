@@ -152,7 +152,7 @@
         flex: 1;
         background-color: #020202;
         border-radius: var(--radius);
-        border: 1px solid var(--border);
+        border: 1px solid rgba(99, 102, 241, 0.2);
         overflow: hidden;
         display: flex;
         align-items: center;
@@ -160,6 +160,14 @@
         position: relative;
         box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.95);
         min-height: 0;
+        transition: border-color 0.25s ease;
+      }
+      #main-preview-box:hover {
+        border-color: rgba(99, 102, 241, 0.45);
+      }
+      #main-preview-box.dragover {
+        border-color: rgba(99, 102, 241, 0.75);
+        box-shadow: inset 0 0 60px rgba(0,0,0,0.95), 0 0 0 3px rgba(99,102,241,0.12);
       }
       /* 暗房暗角与噪点叠加 */
       #main-preview-box::before {
@@ -194,7 +202,11 @@
 
       #inner-drop-zone {
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 40px);
+        height: calc(100% - 40px);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -202,11 +214,19 @@
         gap: 12px;
         cursor: pointer;
         z-index: 5;
+        border-radius: 20px;
+        border: 2px dashed rgba(99, 102, 241, 0.28) !important;
         background: transparent;
-        transition: var(--transition);
+        transition: border-color 0.25s ease, background 0.25s ease;
       }
-      #inner-drop-zone:hover {
-        background: rgba(255, 36, 66, 0.02);
+      #inner-drop-zone:hover,
+      #inner-drop-zone.dragover {
+        border-color: rgba(99, 102, 241, 0.7) !important;
+        background: rgba(99, 102, 241, 0.04);
+      }
+      /* 加载图片后隐藏虚线区 */
+      #inner-drop-zone.hidden {
+        display: none;
       }
       .dz-icon {
         font-size: 2.5rem;
@@ -1627,21 +1647,32 @@
 
       // 4. 全局拖拽响应 (防闪烁技巧：监听 window 的 dragenter/dragleave 判断)
       let dragCounter = 0;
+      const previewBox = $("main-preview-box");
       window.addEventListener("dragenter", (e) => {
         e.preventDefault();
         dragCounter++;
-        if (dragCounter === 1) dragOverlay.classList.add("visible");
+        if (dragCounter === 1) {
+          dragOverlay.classList.add("visible");
+          if (previewBox) previewBox.classList.add("dragover");
+          if (dropZone && dropZone.style.display !== "none") dropZone.classList.add("dragover");
+        }
       });
       window.addEventListener("dragleave", (e) => {
         e.preventDefault();
         dragCounter--;
-        if (dragCounter === 0) dragOverlay.classList.remove("visible");
+        if (dragCounter === 0) {
+          dragOverlay.classList.remove("visible");
+          if (previewBox) previewBox.classList.remove("dragover");
+          if (dropZone) dropZone.classList.remove("dragover");
+        }
       });
       window.addEventListener("dragover", (e) => e.preventDefault());
       window.addEventListener("drop", (e) => {
         e.preventDefault();
         dragCounter = 0;
         dragOverlay.classList.remove("visible");
+        if (previewBox) previewBox.classList.remove("dragover");
+        if (dropZone) dropZone.classList.remove("dragover");
         handleFiles([...e.dataTransfer.files]);
       });
       
