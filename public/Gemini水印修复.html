@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -292,7 +292,9 @@ function applyRepair(imgData, mask, pos) {
 }
 
 function loadFile(file) {
-    if (!file || !file.type.startsWith('image/')) return;
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('请上传图片文件（JPG / PNG / WebP）'); return; }
+    if (file.size > 20 * 1024 * 1024) { alert(`⚠️ 图片过大（${(file.size/1024/1024).toFixed(1)}MB），建议压缩至 20MB 以内`); return; }
     const reader = new FileReader();
     reader.onload = e => {
         const img = new Image();

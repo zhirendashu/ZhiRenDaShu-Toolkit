@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>照片变扫描件神器 | Look Scanned Photo & Document Studio</title>
+  <!-- Google Fonts Outfit & Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ── 核心设计系统与色彩 (Lucidbloom Dark Mode) ────────────────── */
+    :root {
+      --bg: #090b10;
+      --bg-2: #0f131a;
+      --bg-3: #161c27;
+      --border: #222a3a;
+      --border-2: #2d384d;
+      
+      --text: #f3f4f6;
+      --text-2: #9ca3af;
+      --text-3: #6b7280;
+      
+      --accent: #3b82f6;       /* 扫描蓝 */
+      --accent-glow: rgba(59, 130, 246, 0.18);
+      --cyan: #06b6d4;
+      --amber: #f59e0b;
+      --emerald: #10b981;
+      
+      --r: 12px;
+      --r-sm: 6px;
+      --dur: 0.25s;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ── 滚动条样式 ────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-2);
+    }
+
+    /* ── 顶栏 ─────────────────────────────────────────────────────── */
+    #topbar {
+      height: 56px;
+      background: rgba(9, 11, 16, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
+    }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--text-3);
+      border-left: 1px solid var(--border);
+      padding-left: 8px;
+      margin-left: 4px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ts-btn {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border-2);
+      background: var(--bg-2);
+      color: var(--text-2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--dur) var(--ease);
+    }
+    .ts-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .ts-btn.primary {
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    }
+    .ts-btn.primary:hover {
+      opacity: 0.92;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+    }
+
+    /* ── 主体布局 ──────────────────────────────────────────────────── */
+    #app-container {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 56px);
+      position: relative;
+    }
+
+    /* ── 左侧控制面板 ──────────────────────────────────────────────── */
+    #control-sidebar {
+      width: 330px;
+      background: var(--bg-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .section-header {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      padding: 16px 16px 8px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ctrl-group {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .ctrl-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .ctrl-label-val {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+
+    /* Pill 按钮块 */
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill-btn {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-3);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all var(--dur) var(--ease);
+    }
+    .pill-btn:hover {
+      border-color: var(--border-2);
+      color: var(--text);
+    }
+    .pill-btn.active {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Range 滑块 */
+    .range-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--bg-3);
+      outline: none;
+      transition: background var(--dur) var(--ease);
+    }
+    .range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-glow);
+      transition: transform var(--dur) var(--ease);
+    }
+    .range-input::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Checkbox & Switch */
+    .switch-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .switch-input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* ── 右侧画布预览区域 ─────────────────────────────────────────── */
+    #preview-viewport {
+      flex: 1;
+      background: #05070a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border-2);
+      border-radius: var(--r);
+      padding: 40px 20px;
+      text-align: center;
+      background: rgba(15, 19, 26, 0.6);
+      backdrop-filter: blur(10px);
+      max-width: 480px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all var(--dur) var(--ease);
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .drop-icon {
+      font-size: 2.5rem;
+      color: var(--accent);
+      opacity: 0.8;
+    }
+    .drop-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .drop-sub {
+      font-size: 0.78rem;
+      color: var(--text-3);
+      line-height: 1.5;
+    }
+
+    /* Canvas 容器 */
+    #canvas-wrapper {
+      display: none;
+      max-width: 100%;
+      max-height: 100%;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #main-canvas {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 120px);
+      object-fit: contain;
+    }
+
+    /* 对比遮罩 / 加载提示 */
+    .viewport-overlay-btn {
+      position: absolute;
+      bottom: 24px;
+      background: rgba(15, 19, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-2);
+      color: var(--text);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 100px;
+      cursor: pointer;
+      user-select: none;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      transition: all var(--dur) var(--ease);
+      z-index: 10;
+    }
+    .viewport-overlay-btn:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .loading-spinner {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(9, 11, 16, 0.85);
+      backdrop-filter: blur(12px);
+      padding: 16px 28px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 600;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      z-index: 20;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 移动端响应式布局适配 */
+    @media (max-width: 768px) {
+      #app-container {
+        flex-direction: column-reverse;
+        height: auto;
+      }
+      #control-sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-top: 1px solid var(--border);
+      }
+      #preview-viewport {
+        min-height: 50vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶栏导航 -->
+  <header id="topbar">
+    <div class="topbar-brand">
+      <a href="./index.html" class="ts-btn" style="padding: 4px 10px;" title="返回首页">
+        ‹ 首页
+      </a>
+      <span class="brand-icon">🖨️</span>
+      <span class="brand-name">照片变扫描件神器</span>
+      <span class="brand-sub">Look Scanned Studio</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="ts-btn" id="btn-reselect" style="display:none;" onclick="triggerFileInput()">
+        📂 换图
+      </button>
+      <button class="ts-btn primary" id="btn-export" style="display:none;" onclick="exportImage()">
+        💾 导出高清扫描件
+      </button>
+    </div>
+  </header>
+
+  <!-- 主体工作区 -->
+  <main id="app-container">
+
+    <!-- 控制面板 -->
+    <aside id="control-sidebar">
+      
+      <!-- 快捷预设风格 -->
+      <div class="section-header">
+        <span>⚡ 经典一键预设</span>
+      </div>
+      <div class="ctrl-group">
+        <div class="pill-group" id="preset-pills">
+          <button class="pill-btn active" data-preset="office">🏢 标准办公扫描</button>
+          <button class="pill-btn" data-preset="archive">📜 岁月老旧档案</button>
+          <button class="pill-btn" data-preset="fax">📠 低质传真件</button>
+          <button class="pill-btn" data-preset="copy">🎓 证件复印件</button>
+          <button class="pill-btn" data-preset="color_scan">📷 高清彩扫</button>
+        </div>
+      </div>
+
+      <!-- 模式与色彩调整 -->
+      <div class="section-header">
+        <span>🎨 模式与色彩底色</span>
+      </div>
+      <div class="ctrl-group">
+        <div class="ctrl-label"><span>色彩模式</span></div>
+        <div class="pill-group" id="mode-pills">
+          <button class="pill-btn" data-mode="color">原彩</button>
+          <button class="pill-btn active" data-mode="gray">256级灰度</button>
+          <button class="pill-btn" data-mode="threshold">黑白二值化</button>
+          <button class="pill-btn" data-mode="warm">暖纸档案</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group" id="threshold-group" style="display:none;">
+        <div class="ctrl-label">
+          <span>二值化阈值 (Threshold)</span>
+          <span class="ctrl-label-val" id="val-threshold">128</span>
+        </div>
+        <input type="range" class="range-input" id="input-threshold" min="30" max="220" value="128">
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>对比度 (Contrast)</span>
+          <span class="ctrl-label-val" id="val-contrast">1.15</span>
+        </div>
+        <input type="range" class="range-input" id="input-contrast" min="0.5" max="2.5" step="0.05" value="1.15">
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>亮度 (Brightness)</span>
+          <span class="ctrl-label-val" id="val-brightness">0</span>
+        </div>
+        <input type="range" class="range-input" id="input-brightness" min="-50" max="50" step="1" value="0">
+      </div>
+
+      <!-- 扫描物理几何失真 -->
+      <div class="section-header">
+        <span>📐 扫描几何与歪斜</span>
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>扫描放置倾斜度 (Rotate)</span>
+          <span class="ctrl-label-val" id="val-angle">0.8°</span>
+        </div>
+        <input type="range" class="range-input" id="input-angle" min="-4.0" max="4.0" step="0.1" value="0.8">
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>扫描白边扩展 (Padding)</span>
+          <span class="ctrl-label-val" id="val-padding">25px</span>
+        </div>
+        <input type="range" class="range-input" id="input-padding" min="0" max="80" step="2" value="25">
+      </div>
+
+      <!-- 镜头与噪点瑕疵 -->
+      <div class="section-header">
+        <span>🔍 质感与扫描瑕疵</span>
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>CCD 传感器噪点 (Noise)</span>
+          <span class="ctrl-label-val" id="val-noise">15%</span>
+        </div>
+        <input type="range" class="range-input" id="input-noise" min="0" max="60" step="1" value="15">
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>扫描镜头失焦模糊 (Blur)</span>
+          <span class="ctrl-label-val" id="val-blur">0.6px</span>
+        </div>
+        <input type="range" class="range-input" id="input-blur" min="0" max="3.0" step="0.1" value="0.6">
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>边缘阴影与压痕 (Vignette)</span>
+          <span class="ctrl-label-val" id="val-shadow">35%</span>
+        </div>
+        <input type="range" class="range-input" id="input-shadow" min="0" max="100" step="2" value="35">
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-label">
+          <span>JPEG 低质压缩瑕疵 (Artifacts)</span>
+          <span class="ctrl-label-val" id="val-jpeg">20%</span>
+        </div>
+        <input type="range" class="range-input" id="input-jpeg" min="0" max="80" step="5" value="20">
+      </div>
+
+    </aside>
+
+    <!-- 画布预览区域 -->
+    <section id="preview-viewport">
+      
+      <!-- 隐藏的文件选择器 -->
+      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+
+      <!-- 上传拖拽区域 -->
+      <div class="drop-zone" id="drop-zone" onclick="triggerFileInput()">
+        <div class="drop-icon">🖨️</div>
+        <div class="drop-title">拖拽照片 / 文档到这里上传</div>
+        <div class="drop-sub">支持 PNG, JPG, WEBP 等格式<br>或点击选择本地图片 / 支持 Ctrl+V 粘贴</div>
+      </div>
+
+      <!-- Canvas 渲染容器 -->
+      <div id="canvas-wrapper">
+        <canvas id="main-canvas"></canvas>
+      </div>
+
+      <!-- 按住对比原图按钮 -->
+      <button class="viewport-overlay-btn" id="btn-compare">
+        👁️ 按住查看原图
+      </button>
+
+      <!-- 加载提示 -->
+      <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+        <span>扫描件特效渲染中...</span>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    // ── 全局状态 ──────────────────────────────────────────────────
+    let rawImage = null;
+    let isComparing = false;
+    let renderTimer = null;
+
+    // 默认控制参数
+    const state = {
+      preset: 'office',
+      mode: 'gray',          // color | gray | threshold | warm
+      threshold: 128,
+      contrast: 1.15,
+      brightness: 0,
+      angle: 0.8,
+      padding: 25,
+      noise: 15,
+      blur: 0.6,
+      shadow: 35,
+      jpeg: 20
+    };
+
+    // 预设配置库
+    const PRESETS = {
+      office: { mode: 'gray', contrast: 1.2, brightness: 5, angle: 0.8, padding: 25, noise: 15, blur: 0.6, shadow: 35, jpeg: 20 },
+      archive: { mode: 'warm', contrast: 1.1, brightness: -5, angle: -1.2, padding: 30, noise: 28, blur: 0.9, shadow: 55, jpeg: 35 },
+      fax: { mode: 'threshold', threshold: 135, contrast: 1.6, brightness: 10, angle: 1.5, padding: 20, noise: 35, blur: 1.0, shadow: 40, jpeg: 50 },
+      copy: { mode: 'threshold', threshold: 125, contrast: 1.5, brightness: 0, angle: 0.5, padding: 20, noise: 10, blur: 0.4, shadow: 25, jpeg: 10 },
+      color_scan: { mode: 'color', contrast: 1.05, brightness: 0, angle: 0.6, padding: 25, noise: 12, blur: 0.5, shadow: 30, jpeg: 15 }
+    };
+
+    // ── 初始化与事件绑定 ──────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      initDragAndDrop();
+      initPaste();
+      initControls();
+      initCompareBtn();
+    });
+
+    function triggerFileInput() {
+      document.getElementById('file-input').click();
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) loadImageFromFile(file);
+    }
+
+    function initDragAndDrop() {
+      const dz = document.getElementById('drop-zone');
+      const vp = document.getElementById('preview-viewport');
+
+      ['dragenter', 'dragover'].forEach(name => {
+        vp.addEventListener(name, (e) => {
+          e.preventDefault();
+          dz.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        vp.addEventListener(name, (e) => {
+          e.preventDefault();
+          dz.classList.remove('dragover');
+        });
+      });
+
+      vp.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          loadImageFromFile(file);
+        }
+      });
+    }
+
+    function initPaste() {
+      window.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let item of items) {
+          if (item.type.indexOf('image') !== -1) {
+            const file = item.getAsFile();
+            loadImageFromFile(file);
+            break;
+          }
+        }
+      });
+    }
+
+    function loadImageFromFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          rawImage = img;
+          document.getElementById('drop-zone').style.display = 'none';
+          document.getElementById('canvas-wrapper').style.display = 'block';
+          document.getElementById('btn-reselect').style.display = 'inline-flex';
+          document.getElementById('btn-export').style.display = 'inline-flex';
+          document.getElementById('btn-compare').style.display = 'inline-flex';
+          scheduleRender();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── UI 控制绑定 ────────────────────────────────────────────────
+    function initControls() {
+      // 预设点击
+      document.querySelectorAll('#preset-pills .pill-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#preset-pills .pill-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyPreset(btn.dataset.preset);
+        });
+      });
+
+      // 模式点击
+      document.querySelectorAll('#mode-pills .pill-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#mode-pills .pill-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.mode = btn.dataset.mode;
+          updateUIValues();
+          scheduleRender();
+        });
+      });
+
+      // 滑块绑定
+      const sliders = [
+        { id: 'input-threshold', key: 'threshold', fmt: v => v },
+        { id: 'input-contrast', key: 'contrast', fmt: v => parseFloat(v).toFixed(2) },
+        { id: 'input-brightness', key: 'brightness', fmt: v => v },
+        { id: 'input-angle', key: 'angle', fmt: v => `${parseFloat(v).toFixed(1)}°` },
+        { id: 'input-padding', key: 'padding', fmt: v => `${v}px` },
+        { id: 'input-noise', key: 'noise', fmt: v => `${v}%` },
+        { id: 'input-blur', key: 'blur', fmt: v => `${parseFloat(v).toFixed(1)}px` },
+        { id: 'input-shadow', key: 'shadow', fmt: v => `${v}%` },
+        { id: 'input-jpeg', key: 'jpeg', fmt: v => `${v}%` }
+      ];
+
+      sliders.forEach(item => {
+        const el = document.getElementById(item.id);
+        const valEl = document.getElementById(`val-${item.key}`);
+        if (el) {
+          el.addEventListener('input', (e) => {
+            state[item.key] = parseFloat(e.target.value);
+            if (valEl) valEl.textContent = item.fmt(state[item.key]);
+            scheduleRender();
+          });
+        }
+      });
+    }
+
+    function applyPreset(name) {
+      const p = PRESETS[name];
+      if (!p) return;
+      Object.assign(state, p);
+
+      // 更新 Mode Pills UI
+      document.querySelectorAll('#mode-pills .pill-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === state.mode);
+      });
+
+      updateUIValues();
+      scheduleRender();
+    }
+
+    function updateUIValues() {
+      // 显隐 Threshold 滑块
+      const thGroup = document.getElementById('threshold-group');
+      if (thGroup) thGroup.style.display = (state.mode === 'threshold') ? 'flex' : 'none';
+
+      // 同步各滑块数值与显示文本
+      const map = {
+        'input-threshold': state.threshold,
+        'input-contrast': state.contrast,
+        'input-brightness': state.brightness,
+        'input-angle': state.angle,
+        'input-padding': state.padding,
+        'input-noise': state.noise,
+        'input-blur': state.blur,
+        'input-shadow': state.shadow,
+        'input-jpeg': state.jpeg
+      };
+
+      for (let id in map) {
+        const el = document.getElementById(id);
+        if (el) el.value = map[id];
+      }
+
+      document.getElementById('val-threshold').textContent = state.threshold;
+      document.getElementById('val-contrast').textContent = parseFloat(state.contrast).toFixed(2);
+      document.getElementById('val-brightness').textContent = state.brightness;
+      document.getElementById('val-angle').textContent = `${parseFloat(state.angle).toFixed(1)}°`;
+      document.getElementById('val-padding').textContent = `${state.padding}px`;
+      document.getElementById('val-noise').textContent = `${state.noise}%`;
+      document.getElementById('val-blur').textContent = `${parseFloat(state.blur).toFixed(1)}px`;
+      document.getElementById('val-shadow').textContent = `${state.shadow}%`;
+      document.getElementById('val-jpeg').textContent = `${state.jpeg}%`;
+    }
+
+    // ── 对比功能 ────────────────────────────────────────────────
+    function initCompareBtn() {
+      const btn = document.getElementById('btn-compare');
+      const start = () => { isComparing = true; renderOriginal(); };
+      const end = () => { isComparing = false; scheduleRender(); };
+
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', end);
+      btn.addEventListener('mouseleave', end);
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); start(); });
+      btn.addEventListener('touchend', end);
+    }
+
+    function renderOriginal() {
+      if (!rawImage) return;
+      const canvas = document.getElementById('main-canvas');
+      canvas.width = rawImage.width;
+      canvas.height = rawImage.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(rawImage, 0, 0);
+    }
+
+    // ── 防抖渲染调度器 ────────────────────────────────────────────
+    function scheduleRender() {
+      if (isComparing || !rawImage) return;
+      if (renderTimer) clearTimeout(renderTimer);
+      renderTimer = setTimeout(() => {
+        renderScanEffect();
+      }, 30);
+    }
+
+    // ── 核心扫描件渲染引擎 (Look Scanned Engine) ────────────────────
+    async function renderScanEffect() {
+      if (!rawImage) return;
+
+      const canvas = document.getElementById('main-canvas');
+      const imgW = rawImage.width;
+      const imgH = rawImage.height;
+
+      // 1. 计算带有倾斜角度和 Padding 白边的目标画布尺寸
+      const rad = (state.angle * Math.PI) / 180;
+      const pad = state.padding;
+      
+      const rotatedW = Math.abs(imgW * Math.cos(rad)) + Math.abs(imgH * Math.sin(rad));
+      const rotatedH = Math.abs(imgW * Math.sin(rad)) + Math.abs(imgH * Math.cos(rad));
+      
+      const targetW = Math.ceil(rotatedW + pad * 2);
+      const targetH = Math.ceil(rotatedH + pad * 2);
+
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+
+      // 2. 绘制扫描底纸背景 (Paper Background)
+      if (state.mode === 'warm') {
+        ctx.fillStyle = '#f6f1e3'; // 暖旧档案纸色
+      } else if (state.mode === 'threshold') {
+        ctx.fillStyle = '#ffffff'; // 二值化纯白底
+      } else {
+        ctx.fillStyle = '#fbfbfb'; // 办公室扫描纸色
+      }
+      ctx.fillRect(0, 0, targetW, targetH);
+
+      // 3. 在中间层绘制带旋转倾斜的照片
+      ctx.save();
+      ctx.translate(targetW / 2, targetH / 2);
+      ctx.rotate(rad);
+
+      // 绘制物理边缘微弱沉降暗影
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 3;
+
+      // 如果有失焦模糊，在 Canvas 上应用 filter
+      if (state.blur > 0) {
+        ctx.filter = `blur(${state.blur}px)`;
+      }
+
+      ctx.drawImage(rawImage, -imgW / 2, -imgH / 2, imgW, imgH);
+      ctx.restore();
+
+      // 重置 filter
+      ctx.filter = 'none';
+
+      // 4. 获取 Canvas 像素数据进行调色 / 灰度 / 二值化 / 对比度 / 亮度处理
+      const imgData = ctx.getImageData(0, 0, targetW, targetH);
+      const data = imgData.data;
+      const len = data.length;
+
+      const contrast = state.contrast;
+      const bright = state.brightness;
+      const threshold = state.threshold;
+      const isGray = (state.mode === 'gray');
+      const isThreshold = (state.mode === 'threshold');
+      const isWarm = (state.mode === 'warm');
+
+      for (let i = 0; i < len; i += 4) {
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
+
+        // 亮度 & 对比度
+        r = (r - 128) * contrast + 128 + bright;
+        g = (g - 128) * contrast + 128 + bright;
+        b = (b - 128) * contrast + 128 + bright;
+
+        // 截断范围
+        r = Math.min(255, Math.max(0, r));
+        g = Math.min(255, Math.max(0, g));
+        b = Math.min(255, Math.max(0, b));
+
+        // 灰度计算 (Luminance formula)
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        if (isThreshold) {
+          const val = (gray < threshold) ? 20 : 250; // 带有一点纸张灰度的纯黑白
+          data[i] = val;
+          data[i + 1] = val;
+          data[i + 2] = val;
+        } else if (isGray) {
+          data[i] = gray;
+          data[i + 1] = gray;
+          data[i + 2] = gray;
+        } else if (isWarm) {
+          // 暖纸色调应用
+          data[i] = Math.min(255, gray * 0.98 + 15);
+          data[i + 1] = Math.min(255, gray * 0.92 + 10);
+          data[i + 2] = Math.min(255, gray * 0.80);
+        } else {
+          data[i] = r;
+          data[i + 1] = g;
+          data[i + 2] = b;
+        }
+      }
+
+      // 5. 叠加 CCD 传感器噪点 (Noise)
+      if (state.noise > 0) {
+        const noiseAmount = (state.noise / 100) * 45;
+        for (let i = 0; i < len; i += 4) {
+          const n = (Math.random() - 0.5) * noiseAmount;
+          data[i]     = Math.min(255, Math.max(0, data[i] + n));
+          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + n));
+          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + n));
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+
+      // 6. 叠加扫描仪四角边缘暗影与压痕 (Edge Shadow / Vignette)
+      if (state.shadow > 0) {
+        const shadowAlpha = (state.shadow / 100) * 0.65;
+        const grad = ctx.createRadialGradient(
+          targetW / 2, targetH / 2, Math.max(targetW, targetH) * 0.35,
+          targetW / 2, targetH / 2, Math.max(targetW, targetH) * 0.75
+        );
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.7, `rgba(0,0,0,${shadowAlpha * 0.4})`);
+        grad.addColorStop(1, `rgba(0,0,0,${shadowAlpha})`);
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, targetW, targetH);
+      }
+
+      // 7. JPEG 压缩瑕疵模拟 (JPEG Artifacts via Lossy Re-render)
+      if (state.jpeg > 0) {
+        const quality = Math.max(0.1, 1 - (state.jpeg / 100) * 0.85);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const tempImg = new Image();
+        tempImg.onload = () => {
+          ctx.drawImage(tempImg, 0, 0);
+        };
+        tempImg.src = dataUrl;
+      }
+    }
+
+    // ── 高清导出 ──────────────────────────────────────────────────
+    function exportImage() {
+      const canvas = document.getElementById('main-canvas');
+      if (!canvas || !rawImage) return;
+
+      const link = document.createElement('a');
+      link.download = `Scan_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    }
+  </script>
+</body>
+</html>

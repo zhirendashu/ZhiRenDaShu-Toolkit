@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -34,6 +34,8 @@
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        canvas, #main-canvas, #cvs { touch-action: none; }
 
 
         /* 背景光斑 */
@@ -286,6 +288,7 @@
 /* 2. Artboard / Canvas Card: Elegant 24px Drop Shadow + Subtle 1px White Border */
 #main-canvas, #canvas, .canvas-box, .canvas-container, #ratio-frame, #canvas-container, #display-canvas, .stage {
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    touch-action: none;
 }
 
 /* 3. Transparent Checkerboard Pattern (Only inside the artboards of tools that support transparency) */
@@ -746,6 +749,10 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         // === 切图组装导出 ===
         document.getElementById("download-btn").addEventListener("click", async () => {
             if(!targetImg) return alert("请先上传图片");
+            const downloadBtn = document.getElementById("download-btn");
+            const origText = downloadBtn.textContent;
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = "正在打包...";
             showLoad("切片打包中，请稍候...");
             
             const zip = new JSZip();
@@ -838,6 +845,8 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 alert("打包失败，请尝试刷新重试或采用较小的源图片。");
             } finally {
                 hideLoad();
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = origText;
             }
         });
 

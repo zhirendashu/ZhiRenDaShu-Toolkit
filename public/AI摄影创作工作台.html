@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -771,7 +771,7 @@
         model: document.getElementById('cfg-model').value.trim()
       };
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-      showStatus("✅ 配置已安全保存在本地浏览器", "success");
+      showStatus("✅ Key 已保存至本地浏览器（仅限本设备，不上传至任何服务器）", "success");
     }
 
     function showStatus(text, type = "success") {

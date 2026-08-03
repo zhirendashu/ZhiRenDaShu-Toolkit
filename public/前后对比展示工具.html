@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -755,7 +755,7 @@ select:focus, input[type="text"]:focus {
                 if(state.isPlaying) { vBefore.play(); vAfter.play(); } else { vBefore.pause(); vAfter.pause(); }
             };
             vBefore.ontimeupdate = () => {
-                if(Math.abs(vBefore.currentTime - vAfter.currentTime) > 0.15) vAfter.currentTime = vBefore.currentTime;
+                if(Math.abs(vBefore.currentTime - vAfter.currentTime) > 0.5) vAfter.currentTime = vBefore.currentTime;
                 const p = (vBefore.currentTime / vBefore.duration)*100 || 0;
                 document.getElementById('v-fill').style.width = p+'%';
                 const m=Math.floor(vBefore.currentTime/60), s=Math.floor(vBefore.currentTime%60);
@@ -782,8 +782,13 @@ select:focus, input[type="text"]:focus {
                 gsap.fromTo(state, {splitPos: 0}, {splitPos: 1, duration: dur, ease: "power1.inOut"});
             };
             
-            document.getElementById('export-btn').onclick = () => { triggerMobileSave(cvs.toDataURL('image/jpeg', 0.95), `Comparison-${Date.now()}.jpg`); };
+            document.getElementById('export-btn').onclick = () => { triggerMobileSave(cvs.toDataURL('image/png'), `Comparison-${Date.now()}.png`); };
             document.getElementById('record-btn').onclick = function() {
+                if (!window.MediaRecorder || !cvs.captureStream) {
+                    if (window.showToast) window.showToast('⚠️ 当前浏览器暂不支持视频录制（如 iOS Safari），请使用 Chrome/Edge 桌面版', 'error');
+                    else alert('⚠️ 当前浏览器暂不支持视频录制（如 iOS Safari），请使用 Chrome/Edge 桌面版');
+                    return;
+                }
                 if(!state.isRecording) { generateAutoVideo(); }
                 else { state.isRecording = false; }
             };

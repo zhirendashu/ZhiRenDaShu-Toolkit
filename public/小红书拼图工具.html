@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
@@ -1156,7 +1156,17 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         window.addEventListener("drop", e => { e.preventDefault(); handleFiles([...e.dataTransfer.files]); });
 
         function handleFiles(files) {
-            const imgs = files.filter(f => f.type.startsWith("image/"));
+            const rawImgs = files.filter(f => f.type.startsWith("image/"));
+            if(!rawImgs.length) return;
+            // 修复1.1：20MB 文件大小保护
+            const imgs = [];
+            for (const file of rawImgs) {
+                if (file.size > 20 * 1024 * 1024) {
+                    showToast(`⚠️ "${file.name}" 超过20MB，已跳过`);
+                    continue;
+                }
+                imgs.push(file);
+            }
             if(!imgs.length) return;
             showLoad("处理图片中...");
             let loaded = 0;
@@ -1802,6 +1812,11 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         // === 导出 ===
         document.getElementById("download-btn").addEventListener("click", () => {
             if(!finalCanvasCache) return alert("空画布");
+            // 修复1.2：导出按钮加载状态
+            const dlBtn = document.getElementById("download-btn");
+            const originalText = dlBtn.innerHTML;
+            dlBtn.disabled = true;
+            dlBtn.textContent = '正在渲染...';
             showLoad("处理高清图片...");
             const conf = getOutConfig();
             setTimeout(() => {
@@ -1809,6 +1824,8 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                     const ext = conf.fmt === 'image/png' ? 'png' : 'jpg';
                     saveAs(blob, `植人大树拼图_${Date.now()}.${ext}`);
                     hideLoad();
+                    dlBtn.disabled = false;
+                    dlBtn.innerHTML = originalText;
                 }, conf.fmt, conf.q);
             }, 100);
         });

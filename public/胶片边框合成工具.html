@@ -831,6 +831,7 @@ function initFrameList() {
       : `10 / ${(1/def.aspect * 10).toFixed(0)}`;
 
     const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
     img.src = def.file;
     img.alt = def.label;
     img.loading = 'lazy';
@@ -862,6 +863,7 @@ function selectFrame(def) {
   els.chipFrame.textContent = def.label;
 
   const img = new Image();
+  img.crossOrigin = 'anonymous';
   img.onload = () => {
     state.frameImg = img;
     state.frameDef = def;

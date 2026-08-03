@@ -1729,6 +1729,9 @@
 
             const options = {
                 pixelRatio: 2,
+                cacheBust: true,
+                skipFonts: false,
+                fontEmbedCSS: '',
                 style: {
                     transform: 'scale(1)',
                     borderRadius: '0'
@@ -1753,8 +1756,21 @@
                     chatBody.style.overflowY = originalOverflow;
                 })
                 .catch(function (error) {
-                    console.error('oops, something went wrong!', error);
-                    alert('截图生成失败，请重试！');
+                    console.warn('导出失败:', error);
+                    // 友好 toast 提示
+                    const toast = document.createElement('div');
+                    toast.textContent = '导出失败，请尝试使用桌面浏览器';
+                    Object.assign(toast.style, {
+                        position: 'fixed', bottom: '80px', left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(40,40,40,0.92)', color: '#fff',
+                        padding: '10px 22px', borderRadius: '24px',
+                        fontSize: '14px', zIndex: '99999',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                        pointerEvents: 'none'
+                    });
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3500);
                     saveImageBtn.disabled = false;
                     saveImageBtn.textContent = '保存高清图片';
                     chatBody.style.overflowY = originalOverflow;
