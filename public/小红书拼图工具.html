@@ -628,7 +628,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
             <!-- 输出质量选择 -->
             <div class="panel-card">
-                <div class="panel-title">输出质量</div>
+                <div class="panel-title">输出质量与双版导出</div>
                 <div class="style-grid" id="quality-group" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="style-btn" data-width="2560" data-fmt="image/jpeg" data-q="0.95">高清 2K</div>
                     <div class="style-btn active" data-width="3840" data-fmt="image/jpeg" data-q="0.97">超清 4K</div>
@@ -638,7 +638,8 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
             </div>
 
             <div style="display:flex; flex-direction: column; gap: 10px;">
-                <button class="btn" id="download-btn">⬇ 保存高清拼图</button>
+                <button class="btn btn-gradient" id="download-dual-btn" style="background: linear-gradient(135deg, #FF2442, #f43f5e); font-size: 0.95rem; padding: 14px; box-shadow: 0 4px 20px rgba(255, 36, 66, 0.4); border-radius: 10px; cursor: pointer;">⚡ 一键导出【竖版 + 横版】双封面</button>
+                <button class="btn" id="download-btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-main);">⬇ 仅保存当前单画幅</button>
                 <div style="display:flex; gap:10px;">
                     <button class="btn" id="transfer-btn" style="flex:1; background: #3b82f6;">⇄ 传至转换</button>
                     <button class="btn btn-gradient" id="refine-btn" style="flex:1;">✎ 传至精修</button>
@@ -884,6 +885,8 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         let dragIndex = -1;
         let startX, startY;
         let finalCanvasCache = null;
+        let finalPortraitCanvasCache = null;
+        let finalLandscapeCanvasCache = null;
         let renderTimer = null;
         let customBgImg = null;
 
@@ -901,7 +904,17 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         let hoverSplitKey = null;
 
         // 设置项定义
-        // 提取公共的背景控件和边距控件 HTML
+        // 提取公共的预览模式、背景控件和边距控件 HTML
+        const previewModeHTML = `
+            <div class="control-row" style="background: rgba(255, 36, 66, 0.08); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255, 36, 66, 0.25); margin-bottom: 6px;">
+               <span style="color: #fff; font-weight: 600;">画布预览模式</span>
+               <select id="param-preview-mode" style="width: 55%; font-size: 0.8rem; font-weight: 600; color: #ff6b81; background: rgba(0,0,0,0.5); border: 1px solid rgba(255, 36, 66, 0.3); border-radius: 6px;">
+                   <option value="portrait" selected>📱 竖版 (小红书首图)</option>
+                   <option value="landscape_extended">🖥️ 横版 16:9 (暗房延展)</option>
+               </select>
+            </div>
+        `;
+
         const bgControlHTML = `
             <div class="control-row">
                 <span>背景填充</span>
@@ -934,6 +947,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         // 设置项定义
         const configUI = {
             grid: `
+                ${previewModeHTML}
                 <div class="control-row">
                    <span>画布比例 (Ratio)</span>
                    <select id="param-ratio" style="width: 50%; font-size: 0.8rem;">
@@ -948,12 +962,14 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 ${bgControlHTML}
             `,
             long: `
+                ${previewModeHTML}
                 <div class="control-row" style="color:var(--accent-primary); font-size:0.75rem;">长卷模式自动适应高度，无固定比例</div>
                 <div class="control-row"><span>间距 (Gap)</span><input type="range" id="param-gap" min="0" max="200" value="10"></div>
                 ${padControlHTML}
                 ${bgControlHTML}
             `,
             frame: `
+                ${previewModeHTML}
                 <div class="control-row">
                    <span>画布比例 (Ratio)</span>
                    <select id="param-ratio" style="width: 50%; font-size: 0.8rem;">
@@ -967,6 +983,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 <div class="control-row"><span>文字颜色</span><input type="color" id="param-color" value="#000000"></div>
             `,
             skew: `
+                ${previewModeHTML}
                 <div class="control-row">
                    <span>画布比例 (Ratio)</span>
                    <select id="param-ratio" style="width: 50%; font-size: 0.8rem;">
@@ -978,6 +995,7 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
                 ${bgControlHTML}
             `,
             pip: `
+                ${previewModeHTML}
                 <div class="control-row">
                    <span>底图比例 (Ratio)</span>
                    <select id="param-ratio" style="width: 50%; font-size: 0.8rem;">
@@ -1799,10 +1817,93 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
             // 在最上层叠加绘制复古边框
             drawRetroBorder(ocx, off.width, off.height, borderStyle, borderColor, outerW, gapW, innerW, borderRadiusVal);
 
-            cvs.width = off.width;
-            cvs.height = off.height;
-            ctx.drawImage(off, 0, 0);
-            finalCanvasCache = off;
+            finalPortraitCanvasCache = off;
+
+            const previewModeEl = document.getElementById("param-preview-mode");
+            const previewMode = previewModeEl ? previewModeEl.value : 'portrait';
+
+            if (previewMode === 'landscape_extended') {
+                const landscapeCanvas = generateHorizontalCanvas(off, 1.777);
+                finalLandscapeCanvasCache = landscapeCanvas;
+
+                const offsetX = (landscapeCanvas.width - off.width) / 2;
+                hitboxes.forEach(hb => hb.x += offsetX);
+                splitLines.forEach(l => {
+                    if (l.x !== undefined) l.x += offsetX;
+                    if (l.x1 !== undefined) l.x1 += offsetX;
+                    if (l.x2 !== undefined) l.x2 += offsetX;
+                });
+
+                cvs.width = landscapeCanvas.width;
+                cvs.height = landscapeCanvas.height;
+                ctx.drawImage(landscapeCanvas, 0, 0);
+                finalCanvasCache = landscapeCanvas;
+            } else {
+                finalLandscapeCanvasCache = generateHorizontalCanvas(off, 1.777);
+                cvs.width = off.width;
+                cvs.height = off.height;
+                ctx.drawImage(off, 0, 0);
+                finalCanvasCache = off;
+            }
+        }
+
+        // === 16:9 横版暗房延展渲染引擎 ===
+        function generateHorizontalCanvas(portraitCanvas, targetRatio = 1.777) {
+            if (!portraitCanvas || portraitCanvas.width === 0 || portraitCanvas.height === 0) return portraitCanvas;
+
+            const H_out = portraitCanvas.height;
+            const W_out = Math.round(H_out * targetRatio);
+
+            const hOff = document.createElement("canvas");
+            hOff.width = W_out;
+            hOff.height = H_out;
+            const hCtx = hOff.getContext("2d");
+
+            // 1. 高斯模糊柔化延展背景
+            const blurPx = Math.max(12, Math.round(W_out * 0.025));
+            hCtx.save();
+            hCtx.filter = `blur(${blurPx}px) brightness(0.82)`;
+
+            const srcRatio = portraitCanvas.width / portraitCanvas.height;
+            const boxRatio = W_out / H_out;
+            let sw, sh;
+            if (srcRatio > boxRatio) {
+                sh = portraitCanvas.height;
+                sw = sh * boxRatio;
+            } else {
+                sw = portraitCanvas.width;
+                sh = sw / boxRatio;
+            }
+            const sx = (portraitCanvas.width - sw) / 2;
+            const sy = (portraitCanvas.height - sh) / 2;
+
+            const pad = blurPx * 2;
+            hCtx.drawImage(
+                portraitCanvas,
+                Math.max(0, sx), Math.max(0, sy), Math.min(portraitCanvas.width, sw), Math.min(portraitCanvas.height, sh),
+                -pad, -pad, W_out + pad * 2, H_out + pad * 2
+            );
+            hCtx.restore();
+
+            // 2. 沉浸暗化遮罩
+            hCtx.fillStyle = "rgba(0, 0, 0, 0.18)";
+            hCtx.fillRect(0, 0, W_out, H_out);
+
+            // 3. 中央封面立体悬浮阴影
+            const centerW = portraitCanvas.width;
+            const centerH = portraitCanvas.height;
+            const cx = (W_out - centerW) / 2;
+            const cy = (H_out - centerH) / 2;
+
+            hCtx.save();
+            hCtx.shadowColor = "rgba(0, 0, 0, 0.65)";
+            hCtx.shadowBlur = Math.round(W_out * 0.022);
+            hCtx.shadowOffsetY = Math.round(W_out * 0.008);
+
+            hCtx.drawImage(portraitCanvas, cx, cy, centerW, centerH);
+            hCtx.restore();
+
+            return hOff;
         }
 
         // === 辅助 ===
@@ -1810,6 +1911,41 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         function hideLoad() { loading.style.display="none"; }
 
         // === 导出 ===
+        const downloadDualBtn = document.getElementById("download-dual-btn");
+        if (downloadDualBtn) {
+            downloadDualBtn.addEventListener("click", () => {
+                const portraitCanvas = finalPortraitCanvasCache || finalCanvasCache;
+                if (!portraitCanvas) return alert("空画布");
+
+                const originalText = downloadDualBtn.innerHTML;
+                downloadDualBtn.disabled = true;
+                downloadDualBtn.textContent = '⚡ 正在生成双版本...';
+                showLoad("导出【竖版 3:4 + 横版 16:9】双封面...");
+                const conf = getOutConfig();
+                const timestamp = Date.now();
+                const ext = conf.fmt === 'image/png' ? 'png' : 'jpg';
+
+                setTimeout(() => {
+                    // 1. 保存竖版封面
+                    portraitCanvas.toBlob(blob1 => {
+                        saveAs(blob1, `植人大树拼图_竖版3x4_${timestamp}.${ext}`);
+
+                        // 2. 生成并保存 16:9 横版封面
+                        const landscapeCanvas = finalLandscapeCanvasCache || generateHorizontalCanvas(portraitCanvas, 1.777);
+                        setTimeout(() => {
+                            landscapeCanvas.toBlob(blob2 => {
+                                saveAs(blob2, `植人大树拼图_横版16x9_${timestamp}.${ext}`);
+                                hideLoad();
+                                downloadDualBtn.disabled = false;
+                                downloadDualBtn.innerHTML = originalText;
+                                showToast("✅ 成功一键导出【竖版 3:4】与【横版 16:9】双封面！", "success");
+                            }, conf.fmt, conf.q);
+                        }, 250);
+                    }, conf.fmt, conf.q);
+                }, 100);
+            });
+        }
+
         document.getElementById("download-btn").addEventListener("click", () => {
             if(!finalCanvasCache) return alert("空画布");
             // 修复1.2：导出按钮加载状态
