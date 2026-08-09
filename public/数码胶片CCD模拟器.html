@@ -5818,9 +5818,13 @@ function resetParams() {
 
 function exportCurrent(fmt) {
   const { processedCanvas, imageName, filterId } = State.get();
-  if (!processedCanvas) return;
+  if (!processedCanvas) {
+    if (window.showToast) window.showToast('请先上传或选择照片', 'error');
+    return;
+  }
   const base = (imageName || 'photo').replace(/\.[^.]+$/, '');
-  downloadCanvas(processedCanvas, `digicamfx_${base}_${filterId}.${fmt}`, fmt);
+  const formatStr = (fmt || 'png').toLowerCase();
+  downloadCanvas(processedCanvas, `digicamfx_${base}_${filterId}.${formatStr}`, formatStr);
 }
 
 async function exportAll() {
@@ -5828,25 +5832,85 @@ async function exportAll() {
   if (!items.length) { exportCurrent('jpg'); return; }
   const btn = $('btn-export-all');
   btn.textContent = '处理中…'; btn.disabled = true;
+  if (window.showToast) window.showToast('开始批量导出 JPG...', 'info');
   for (let i = 0; i < items.length; i++) {
     await loadBatchAt(i);
     await new Promise(r => setTimeout(r, 80));
     const base = items[i].name.replace(/\.[^.]+$/, '');
-    downloadCanvas(State.get().processedCanvas, `digicamfx_${base}_${State.get().filterId}.jpg`, 'jpg');
+    await downloadCanvasAsync(State.get().processedCanvas, `digicamfx_${base}_${State.get().filterId}.jpg`, 'jpg');
     await new Promise(r => setTimeout(r, 320));
   }
   btn.textContent = '批量下载'; btn.disabled = false;
   setStatus('批量完成');
+  if (window.showToast) window.showToast('批量 JPG 导出完成！', 'success');
+}
+
+function dataURItoBlob(dataURI) {
+  try {
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
+  } catch (e) {
+    return null;
+  }
 }
 
 function downloadCanvas(canvas, name, fmt) {
-  if (fmt === 'png') {
-    canvas.toBlob(blob => {
-      triggerMobileSave(blob, name);
-    }, 'image/png');
-  } else {
-    triggerMobileSave(canvas.toDataURL('image/jpeg', 0.92), name);
+  const isJpg = (fmt === 'jpg' || fmt === 'jpeg');
+  const mimeType = isJpg ? 'image/jpeg' : 'image/png';
+  const quality = isJpg ? 0.95 : 1.0;
+
+  if (window.showToast) {
+    window.showToast(`正在导出 ${isJpg ? 'JPG' : 'PNG'}...`, 'info');
   }
+
+  const handleBlob = (blob) => {
+    if (!blob) {
+      const dataUrl = canvas.toDataURL(mimeType, quality);
+      blob = dataURItoBlob(dataUrl);
+    }
+    if (blob) {
+      triggerMobileSave(blob, name);
+      if (window.showToast) {
+        window.showToast(`导出成功！已保存 ${isJpg ? 'JPG' : 'PNG'}`, 'success');
+      }
+    } else {
+      if (window.showToast) {
+        window.showToast('导出失败，请重试', 'error');
+      }
+    }
+  };
+
+  try {
+    canvas.toBlob(handleBlob, mimeType, quality);
+  } catch (e) {
+    const dataUrl = canvas.toDataURL(mimeType, quality);
+    handleBlob(dataURItoBlob(dataUrl));
+  }
+}
+
+function downloadCanvasAsync(canvas, name, fmt) {
+  return new Promise((resolve) => {
+    const isJpg = (fmt === 'jpg' || fmt === 'jpeg');
+    const mimeType = isJpg ? 'image/jpeg' : 'image/png';
+    const quality = isJpg ? 0.95 : 1.0;
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        const dataUrl = canvas.toDataURL(mimeType, quality);
+        blob = dataURItoBlob(dataUrl);
+      }
+      if (blob) {
+        triggerMobileSave(blob, name);
+      }
+      resolve();
+    }, mimeType, quality);
+  });
 }
 
 async function triggerMobileSave(blobOrDataUrl, defaultFileName) {
@@ -5855,8 +5919,7 @@ async function triggerMobileSave(blobOrDataUrl, defaultFileName) {
   let blob = blobOrDataUrl;
   if (typeof blobOrDataUrl === 'string') {
     if (blobOrDataUrl.startsWith('data:')) {
-      const res = await fetch(blobOrDataUrl);
-      blob = await res.blob();
+      blob = dataURItoBlob(blobOrDataUrl);
     } else {
       try {
         const res = await fetch(blobOrDataUrl);
