@@ -1805,6 +1805,110 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
         canvas.setActiveObject(text);
       });
 
+      // ⚡ 按字拆分（小红书爆款错落风）
+      const splitCharsBtn = document.getElementById('split-chars-btn');
+      if (splitCharsBtn) {
+        splitCharsBtn.addEventListener('click', () => {
+          const activeObj = canvas.getActiveObject();
+          if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
+            alert('请先在画布上选中你想拆分的文字框！');
+            return;
+          }
+          const fullText = activeObj.text || '';
+          if (!fullText.trim()) return;
+
+          const chars = fullText.replace(/[\r\n\t]/g, '').split('');
+          if (chars.length <= 1) {
+            alert('文字长度太短，无需拆分');
+            return;
+          }
+
+          const startX = activeObj.left;
+          const startY = activeObj.top;
+          const fontSize = activeObj.fontSize || 40;
+          const charWidthEstimate = fontSize * 0.95;
+          const newObjects = [];
+
+          chars.forEach((ch, idx) => {
+            const randomY = (Math.random() - 0.5) * (fontSize * 0.25);
+            const randomSize = Math.round(fontSize * (0.92 + Math.random() * 0.16));
+            const randomAngle = (Math.random() - 0.5) * 8;
+
+            const newCharObj = new fabric.IText(ch, {
+              left: startX + idx * charWidthEstimate,
+              top: startY + randomY,
+              fontSize: randomSize,
+              fontFamily: activeObj.fontFamily,
+              fontWeight: activeObj.fontWeight,
+              fontStyle: activeObj.fontStyle,
+              fill: activeObj.fill,
+              stroke: activeObj.stroke,
+              strokeWidth: activeObj.strokeWidth,
+              shadow: activeObj.shadow ? new fabric.Shadow(activeObj.shadow) : null,
+              backgroundColor: activeObj.backgroundColor,
+              padding: activeObj.padding || 4,
+              angle: randomAngle
+            });
+            canvas.add(newCharObj);
+            newObjects.push(newCharObj);
+          });
+
+          canvas.remove(activeObj);
+          const sel = new fabric.ActiveSelection(newObjects, { canvas: canvas });
+          canvas.setActiveObject(sel);
+          canvas.renderAll();
+          saveCanvasState();
+        });
+      }
+
+      // ⚡ 按行拆分
+      const splitLinesBtn = document.getElementById('split-lines-btn');
+      if (splitLinesBtn) {
+        splitLinesBtn.addEventListener('click', () => {
+          const activeObj = canvas.getActiveObject();
+          if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
+            alert('请先在画布上选中你想拆分的文字框！');
+            return;
+          }
+          const lines = (activeObj.text || '').split('\n').map(s => s.trim()).filter(Boolean);
+          if (lines.length <= 1) {
+            alert('当前文字只有一行，无需按行拆分');
+            return;
+          }
+
+          const startX = activeObj.left;
+          const startY = activeObj.top;
+          const fontSize = activeObj.fontSize || 40;
+          const lineHeight = (activeObj.lineHeight || 1.16) * fontSize;
+          const newObjects = [];
+
+          lines.forEach((lineText, idx) => {
+            const newLineObj = new fabric.IText(lineText, {
+              left: startX,
+              top: startY + idx * lineHeight,
+              fontSize: fontSize,
+              fontFamily: activeObj.fontFamily,
+              fontWeight: activeObj.fontWeight,
+              fontStyle: activeObj.fontStyle,
+              fill: activeObj.fill,
+              stroke: activeObj.stroke,
+              strokeWidth: activeObj.strokeWidth,
+              shadow: activeObj.shadow ? new fabric.Shadow(activeObj.shadow) : null,
+              backgroundColor: activeObj.backgroundColor,
+              padding: activeObj.padding || 4
+            });
+            canvas.add(newLineObj);
+            newObjects.push(newLineObj);
+          });
+
+          canvas.remove(activeObj);
+          const sel = new fabric.ActiveSelection(newObjects, { canvas: canvas });
+          canvas.setActiveObject(sel);
+          canvas.renderAll();
+          saveCanvasState();
+        });
+      }
+
       // 监听选中元素
       canvas.on('selection:created', onSelect);
       canvas.on('selection:updated', onSelect);
@@ -2577,6 +2681,45 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
             shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 10, offsetX: 2, offsetY: 2 })
           });
           return [text];
+        },
+        'xhs-split-cover': (w, h) => {
+          const list = [];
+          const titleText = "小红书爆款封面";
+          const startX = w * 0.12;
+          const startY = h * 0.18;
+          const charW = w * 0.18;
+          const colors = ['#ff2442', '#ffffff', '#fbbf24', '#ffffff', '#3b82f6', '#ffffff', '#ff2442'];
+          const angles = [-4, 3, -5, 2, -3, 4, -2];
+          const bgFills = ['#ffffff', '#ff2442', '#1e293b', '#fbbf24', '#10b981', '#3b82f6', '#f43f5e'];
+
+          for (let i = 0; i < titleText.length; i++) {
+            list.push(new fabric.IText(titleText[i], {
+              left: startX + (i % 4) * (charW * 1.05),
+              top: startY + Math.floor(i / 4) * (w * 0.22) + (i % 2 === 0 ? 0 : -10),
+              fontSize: Math.round(w * 0.12),
+              fontFamily: 'Noto Sans SC',
+              fontWeight: '900',
+              fill: colors[i % colors.length],
+              backgroundColor: bgFills[i % bgFills.length],
+              padding: 8,
+              angle: angles[i % angles.length],
+              shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 15, offsetX: 4, offsetY: 4 })
+            }));
+          }
+
+          list.push(new fabric.IText("✨ 点击选中任意文字可一键按字拆分", {
+            left: w / 2,
+            top: h * 0.82,
+            originX: 'center',
+            fontSize: Math.round(w * 0.042),
+            fontFamily: 'PingFang SC',
+            fontWeight: 'bold',
+            fill: '#ffffff',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: 6
+          }));
+
+          return list;
         }
       };
 
