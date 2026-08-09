@@ -3229,7 +3229,7 @@ class DigiCamProcessor {
     }
   }
 
-  // ── CLASSIC / KODAK ── 黑底橙字背景块，模拟柯达 DC 系列
+  // ── CLASSIC / KODAK ── 经典柯达 DC 橙色时间戳（纯透明悬浮）
   static _timestampKodak(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(13, Math.round(28 * scale));
@@ -3239,55 +3239,33 @@ class DigiCamProcessor {
     ctx.font = hasCJK
       ? `bold ${fSize}px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", monospace`
       : `bold ${fSize}px "Courier New", Courier, monospace`;
-    ctx.textBaseline = 'alphabetic';
-    const metrics = ctx.measureText(dateStr);
-    const tw = metrics.width;
-    const bPad = Math.round(fSize * 0.35);
-    const bw = tw + bPad * 2.2;
-    const bh = fSize + bPad * 1.4;
-
-    // Position
+    
     const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
-    let bx, by;
-    if (align === 'right')       bx = x - bw;
-    else if (align === 'center') bx = x - bw / 2;
-    else                         bx = x;
-    if (baseline === 'bottom')      by = y - bh;
-    else if (baseline === 'middle') by = y - bh / 2;
-    else                            by = y;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
 
-    // Black background block with subtle corner radius
-    ctx.globalAlpha = 0.82;
-    ctx.fillStyle = '#0a0800';
-    const r = Math.max(2, fSize * 0.12);
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, r);
-    ctx.fill();
+    // 黑色微弱文字阴影（确保在浅色底图上依然清晰可见，而非背景黑块）
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#000000';
+    ctx.shadowColor = 'transparent';
+    ctx.fillText(dateStr, x + Math.max(1, scale * 1.5), y + Math.max(1, scale * 1.5));
 
-    // Thin amber border line
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1, scale * 1.2);
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, r);
-    ctx.stroke();
-
-    // Orange text
+    // 橙色发光文字层
     ctx.globalAlpha = 1;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    // Soft glow
     ctx.shadowColor = color;
-    ctx.shadowBlur = fSize * 0.55;
+    ctx.shadowBlur = fSize * 0.7;
     ctx.fillStyle = color;
-    ctx.fillText(dateStr, bx + bPad * 1.1, by + fSize + bPad * 0.35);
-    // Bright center highlight
-    ctx.shadowBlur = fSize * 0.12;
-    ctx.fillStyle = `rgba(255,245,200,0.82)`;
-    ctx.fillText(dateStr, bx + bPad * 1.1, by + fSize + bPad * 0.35);
+    ctx.fillText(dateStr, x, y);
+
+    // 文本中心亮光微调
+    ctx.shadowBlur = fSize * 0.15;
+    ctx.fillStyle = 'rgba(255, 245, 200, 0.88)';
+    ctx.fillText(dateStr, x, y);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  // ── RED LED / 7-SEGMENT ── 真7段数码管，还原 80s 相机 LED 显示
+  // ── RED LED / 7-SEGMENT ── 真7段数码管，80s 相机 LED 发光（纯透明悬浮）
   static _timestampSevenSeg(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const scale = (w / 800) * (tsScale / 100);
     // 7-segment digit definitions: [top,top-right,bot-right,bot,bot-left,top-left,mid]
@@ -3326,29 +3304,24 @@ class DigiCamProcessor {
     else                            startY = y;
 
     ctx.save();
-    // Background panel — dark with subtle transparency
-    const bPad = Math.round(digitH * 0.22);
-    ctx.globalAlpha = 0.88;
-    ctx.fillStyle = '#100000';
-    DigiCamProcessor._roundRect(ctx, startX - bPad, startY - bPad * 0.7, totalW + bPad * 2, digitH + bPad * 1.4, Math.max(3, segT * 1.5));
-    ctx.fill();
-    ctx.globalAlpha = 1;
 
-    // Draw dim inactive segments first (ghost effect)
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.07;
+    // 绘制微弱发光阴影层，保证在亮背景上也能清晰识别
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = segT * 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
     let cx = startX;
     chars.forEach((c, i) => {
       const cw = charWidths[i];
-      DigiCamProcessor._drawSevenSeg(ctx, cx, startY, cw, digitH, segT, [1,1,1,1,1,1,1]);
+      const segs = SEG7[c] || SEG7[' '];
+      DigiCamProcessor._drawSevenSeg(ctx, cx + 1, startY + 1, cw, digitH, segT, segs);
       cx += cw + gap;
     });
-    ctx.globalAlpha = 1;
 
-    // Glow pass
+    // 核心红色/发光管段绘制
     ctx.shadowColor = color;
-    ctx.shadowBlur = segT * 5;
+    ctx.shadowBlur = segT * 4.5;
     ctx.fillStyle = color;
+    ctx.globalAlpha = 0.95;
     cx = startX;
     chars.forEach((c, i) => {
       const cw = charWidths[i];
@@ -3357,9 +3330,9 @@ class DigiCamProcessor {
       cx += cw + gap;
     });
 
-    // Bright core
+    // 数码管白热发光中心核心
     ctx.shadowBlur = segT * 1.2;
-    ctx.fillStyle = 'rgba(255,200,180,0.92)';
+    ctx.fillStyle = 'rgba(255,230,220,0.92)';
     cx = startX;
     chars.forEach((c, i) => {
       const cw = charWidths[i];
@@ -3450,7 +3423,7 @@ class DigiCamProcessor {
     ctx.restore();
   }
 
-  // ── LCD GREEN ── Sony / Casio 绿色 LCD 背景屏风格
+  // ── LCD GREEN ── Sony / Casio 绿色 LCD 数字发光（纯透明悬浮）
   static _timestampLCDGreen(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(12, Math.round(24 * scale));
@@ -3460,61 +3433,27 @@ class DigiCamProcessor {
     ctx.font = hasCJK
       ? `${fSize}px "PingFang SC", "Noto Sans SC", monospace`
       : `${fSize}px "Courier New", Courier, monospace`;
-    ctx.textBaseline = 'alphabetic';
-    const tw = ctx.measureText(dateStr).width;
-    const bPadX = Math.round(fSize * 0.55);
-    const bPadY = Math.round(fSize * 0.38);
-    const bw = tw + bPadX * 2;
-    const bh = fSize + bPadY * 2;
 
     const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
-    let bx, ty;
-    if (align === 'right')       bx = x - bw;
-    else if (align === 'center') bx = x - bw / 2;
-    else                         bx = x;
-    if (baseline === 'bottom')      ty = y - bPadY;
-    else if (baseline === 'middle') ty = y + fSize / 2 - bPadY;
-    else                            ty = y + fSize + bPadY;
-    const by = ty - fSize - bPadY;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
 
-    // LCD dark green panel background
-    ctx.globalAlpha = 0.92;
-    ctx.fillStyle = '#0a1a0a';
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
-    ctx.fill();
+    // 暗底衬影
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#000000';
+    ctx.fillText(dateStr, x + 1, y + 1);
 
-    // Scanline / pixel grid overlay for authenticity
-    ctx.globalAlpha = 0.12;
-    ctx.fillStyle = '#00ff44';
-    for (let ly = by + 2; ly < by + bh - 1; ly += 3) {
-      ctx.fillRect(bx + 1, ly, bw - 2, 1);
-    }
-
-    // Outer LCD bezel border
-    ctx.globalAlpha = 0.6;
-    ctx.strokeStyle = '#1a4a1a';
-    ctx.lineWidth = Math.max(1, scale);
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
-    ctx.stroke();
-    ctx.globalAlpha = 0.3;
-    ctx.strokeStyle = '#00aa44';
-    ctx.lineWidth = Math.max(0.5, scale * 0.6);
-    DigiCamProcessor._roundRect(ctx, bx + 1, by + 1, bw - 2, bh - 2, Math.max(1, fSize * 0.08));
-    ctx.stroke();
-
-    // LCD text
-    ctx.globalAlpha = 1;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
+    // 绿色液晶荧光字
+    ctx.globalAlpha = 0.95;
     ctx.shadowColor = color;
-    ctx.shadowBlur = fSize * 0.35;
+    ctx.shadowBlur = fSize * 0.6;
     ctx.fillStyle = color;
-    ctx.fillText(dateStr, bx + bPadX, ty);
+    ctx.fillText(dateStr, x, y);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  // ── LCD BLUE ── Casio 蓝底液晶，深海蓝背景板
+  // ── LCD BLUE ── Casio 蓝底液晶数字发光（纯透明悬浮）
   static _timestampLCDBlue(ctx, w, h, dateStr, color, pos = 'bot-right', tsScale = 100) {
     const scale = (w / 800) * (tsScale / 100);
     const fSize = Math.max(12, Math.round(24 * scale));
@@ -3524,65 +3463,22 @@ class DigiCamProcessor {
     ctx.font = hasCJK
       ? `${fSize}px "PingFang SC", "Noto Sans SC", monospace`
       : `${fSize}px "Courier New", Courier, monospace`;
-    ctx.textBaseline = 'alphabetic';
-    const tw = ctx.measureText(dateStr).width;
-    const bPadX = Math.round(fSize * 0.55);
-    const bPadY = Math.round(fSize * 0.38);
-    const bw = tw + bPadX * 2;
-    const bh = fSize + bPadY * 2;
 
     const { x, y, align, baseline } = DigiCamProcessor._stampPosition(w, h, pos, fSize, pad);
-    let bx, ty;
-    if (align === 'right')       bx = x - bw;
-    else if (align === 'center') bx = x - bw / 2;
-    else                         bx = x;
-    if (baseline === 'bottom')      ty = y - bPadY;
-    else if (baseline === 'middle') ty = y + fSize / 2 - bPadY;
-    else                            ty = y + fSize + bPadY;
-    const by = ty - fSize - bPadY;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
 
-    // Deep blue LCD background
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = '#010a1e';
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
-    ctx.fill();
+    // 暗底衬影
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#000000';
+    ctx.fillText(dateStr, x + 1, y + 1);
 
-    // Subtle horizontal scan lines
-    ctx.globalAlpha = 0.1;
-    ctx.fillStyle = '#00ccff';
-    for (let ly = by + 2; ly < by + bh - 1; ly += 3) {
-      ctx.fillRect(bx + 1, ly, bw - 2, 1);
-    }
-
-    // Blue bezel border
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = '#0a1a3a';
-    ctx.lineWidth = Math.max(1, scale);
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh, Math.max(2, fSize * 0.1));
-    ctx.stroke();
-    ctx.globalAlpha = 0.35;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(0.5, scale * 0.6);
-    DigiCamProcessor._roundRect(ctx, bx + 1, by + 1, bw - 2, bh - 2, Math.max(1, fSize * 0.08));
-    ctx.stroke();
-
-    // Top glare reflection strip
-    ctx.globalAlpha = 0.08;
-    const glare = ctx.createLinearGradient(bx, by, bx, by + bh * 0.4);
-    glare.addColorStop(0, 'rgba(180,220,255,1)');
-    glare.addColorStop(1, 'rgba(180,220,255,0)');
-    ctx.fillStyle = glare;
-    DigiCamProcessor._roundRect(ctx, bx, by, bw, bh * 0.4, Math.max(2, fSize * 0.1));
-    ctx.fill();
-
-    // Blue LCD text
-    ctx.globalAlpha = 1;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
+    // 蓝色液晶荧光字
+    ctx.globalAlpha = 0.95;
     ctx.shadowColor = color;
-    ctx.shadowBlur = fSize * 0.4;
+    ctx.shadowBlur = fSize * 0.6;
     ctx.fillStyle = color;
-    ctx.fillText(dateStr, bx + bPadX, ty);
+    ctx.fillText(dateStr, x, y);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
