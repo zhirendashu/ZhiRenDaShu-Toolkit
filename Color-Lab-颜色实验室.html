@@ -693,11 +693,12 @@
       width: 100%;
       -webkit-appearance: none;
       appearance: none;
-      height: 6px;
-      border-radius: 3px;
+      height: 7px;
+      border-radius: 4px;
       background: linear-gradient(to right, #3b82f6, #475569 50%, #eab308);
       outline: none;
       cursor: pointer;
+      transition: background 0.4s ease;
     }
 
     .lab-slider::-webkit-slider-thumb {
@@ -767,11 +768,24 @@
 
     .wheel-sector {
       cursor: pointer;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transition: all 0.3s ease;
     }
 
     .wheel-sector:hover {
-      filter: brightness(1.2);
+      filter: brightness(1.25);
+    }
+
+    .wheel-sector.active-target {
+      filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,255,255,0.4));
+      stroke: #ffffff;
+      stroke-width: 2.5px;
+    }
+
+    .wheel-sector.active-comp {
+      filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,255,255,0.3));
+      stroke: rgba(255,255,255,0.8);
+      stroke-width: 2px;
+      stroke-dasharray: 4 2;
     }
 
     .wheel-center-hud {
@@ -806,25 +820,6 @@
       font-size: 0.95rem;
     }
 
-    /* 互补色连线指示器 */
-    .wheel-pointer-axis {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 280px;
-      height: 2px;
-      transform: translate(-50%, -50%) rotate(90deg);
-      pointer-events: none;
-      transition: transform 0.8s var(--ease-out-expo);
-    }
-
-    .axis-line {
-      width: 100%;
-      height: 100%;
-      background: dashed rgba(255, 255, 255, 0.3);
-      position: relative;
-    }
-
     .wheel-info-panel {
       display: flex;
       flex-direction: column;
@@ -844,6 +839,7 @@
       padding: 20px;
       position: relative;
       overflow: hidden;
+      transition: var(--transition-smooth);
     }
 
     .relation-card::before {
@@ -854,6 +850,7 @@
       right: 0;
       height: 3px;
       background: var(--card-color, #ffffff);
+      transition: background 0.4s ease;
     }
 
     .card-meta {
@@ -869,6 +866,7 @@
       font-weight: 700;
       font-size: 1.4rem;
       margin-bottom: 4px;
+      transition: color 0.4s ease;
     }
 
     .card-role {
@@ -887,24 +885,26 @@
     .sim-preview-box {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       margin-bottom: 20px;
     }
 
     .sim-swatch {
-      width: 80px;
-      height: 80px;
+      width: 90px;
+      height: 90px;
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      transition: background-color 0.1s linear;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-strong);
+      transition: background-color 0.15s ease, filter 0.15s ease;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0,0,0,0.5);
+      position: relative;
+      flex-shrink: 0;
     }
 
     .sim-stats {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .stat-row {
@@ -912,21 +912,21 @@
       justify-content: space-between;
       align-items: center;
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.82rem;
     }
 
     .stat-bar-wrapper {
       width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 3px;
+      height: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
       overflow: hidden;
-      margin-top: 4px;
+      margin-top: 5px;
     }
 
     .stat-bar-fill {
       height: 100%;
-      transition: width 0.1s linear;
+      transition: width 0.15s ease, background 0.4s ease;
     }
 
     /* ==========================================================================
@@ -1064,7 +1064,6 @@
       font-size: 0.92rem;
     }
 
-    /* 色相通道切换器 */
     .hue-selector-row {
       display: flex;
       gap: 8px;
@@ -1110,7 +1109,6 @@
       margin-bottom: 24px;
     }
 
-    /* 评分卡模态/抽屉 */
     .result-modal {
       display: none;
       margin-top: 24px;
@@ -1138,122 +1136,340 @@
     .score-badge.low { color: #f87171; }
 
     /* ==========================================================================
-       9. 实验 05: 摄影后期速查表 (CHEAT SHEET)
+       9. 实验 05: 摄影后期速查表 (图2级极简精工美学卡片)
        ========================================================================== */
-    .cheat-table-wrapper {
-      width: 100%;
-      overflow-x: auto;
-      background: var(--bg-surface);
+    .cheat-container-v2 {
+      background: #0d0d11;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
       margin-bottom: 40px;
     }
 
-    .cheat-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.92rem;
+    @media (max-width: 768px) {
+      .cheat-container-v2 {
+        padding: 24px 16px;
+      }
     }
 
-    .cheat-table th {
+    .cheat-header-v2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 28px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .cheat-head-left h3 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .cheat-head-left p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+    }
+
+    .cheat-head-left p span {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    /* 右上角色彩互补关系图示 */
+    .comp-relation-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 20px;
+    }
+
+    .comp-relation-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .comp-relation-diagram {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .dot-big {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    /* 搜索过滤栏 */
+    .table-search-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 8px 18px;
+      margin-bottom: 20px;
+    }
+
+    .table-search-input {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .table-search-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* 速查表表格 */
+    .cheat-matrix-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      text-align: left;
+    }
+
+    .cheat-matrix-table th {
       font-family: var(--font-mono);
       font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-dim);
-      padding: 18px 24px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(255, 255, 255, 0.015);
     }
 
-    .cheat-table td {
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border-subtle);
+    .cheat-row-v2 {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .cheat-row-v2:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .cheat-row-v2 td {
+      padding: 18px 18px;
+      vertical-align: middle;
+    }
+
+    .cheat-row-v2 td:first-child {
+      border-top-left-radius: var(--radius-md);
+      border-bottom-left-radius: var(--radius-md);
+    }
+
+    .cheat-row-v2 td:last-child {
+      border-top-right-radius: var(--radius-md);
+      border-bottom-right-radius: var(--radius-md);
+    }
+
+    /* 单元格排版 */
+    .cell-color-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .cell-color-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
+    }
+
+    .cell-color-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cell-color-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text-main);
+    }
+
+    .cell-color-en {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+
+    .cell-action {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cell-action-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    .cell-action-desc {
+      font-size: 0.85rem;
       color: var(--text-muted);
     }
 
-    .cheat-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .cheat-table tr:hover td {
-      background: rgba(255, 255, 255, 0.02);
-      color: var(--text-main);
-    }
-
-    .color-cell {
-      display: inline-flex;
+    .cell-app-scenario {
+      display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+    }
+
+    .cell-app-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .cell-app-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cell-app-primary {
       font-family: var(--font-display);
-      font-weight: 700;
+      font-weight: 600;
+      font-size: 0.95rem;
       color: var(--text-main);
     }
 
-    .color-pill {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      display: inline-block;
+    .cell-app-condition {
+      font-size: 0.8rem;
+      color: var(--text-dim);
     }
 
-    .principle-cards {
+    /* 底部双总结卡片 */
+    .cheat-bottom-cards {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr 1.1fr;
       gap: 20px;
-      margin-bottom: 48px;
+      margin-top: 32px;
     }
 
     @media (max-width: 768px) {
-      .principle-cards {
+      .cheat-bottom-cards {
         grid-template-columns: 1fr;
       }
     }
 
-    .principle-card {
-      background: var(--bg-surface);
+    .card-tip-box {
+      background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 28px 24px;
-      position: relative;
+      padding: 24px;
     }
 
-    .principle-num {
-      font-family: var(--font-mono);
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: var(--text-dim);
-      margin-bottom: 12px;
-    }
-
-    .principle-text {
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 1.1rem;
-      line-height: 1.45;
-      color: var(--text-main);
-    }
-
-    .disclaimer-card {
-      background: rgba(255, 255, 255, 0.02);
-      border-left: 3px solid var(--text-dim);
-      padding: 24px 28px;
-      border-radius: 0 var(--radius-md) var(--radius-md) 0;
-    }
-
-    .disclaimer-title {
+    .tip-box-title {
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 1rem;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #facc15;
+    }
+
+    .tip-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .tip-list li::before {
+      content: '• ';
+      color: var(--text-dim);
+    }
+
+    .core-pairs-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .core-pairs-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 16px;
+      text-align: center;
       color: var(--text-main);
     }
 
-    .disclaimer-text {
-      font-size: 0.9rem;
+    .core-pairs-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .core-pair-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pair-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pair-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    .pair-label {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
       color: var(--text-muted);
-      line-height: 1.7;
+      font-weight: 600;
     }
 
     /* ==========================================================================
@@ -1454,13 +1670,13 @@
     </section>
 
     <!-- ========================================================================
-         02 互补色轮: 知识建立模块
+         02 互补色轮: 知识建立模块 (联动强化版)
          ======================================================================== -->
     <section id="exp2">
       <div class="section-tag">02 · KNOWLEDGE CORE</div>
       <h2 class="section-title">找到它的互补色</h2>
       <p class="section-subtitle">
-        在色轮上，处于 180° 直径正相对的两种颜色即为「互补色」。点击任意颜色，观察其对侧的污染对应关系。
+        在色轮上，处于 180° 直径正相对的两种颜色即为「互补色」。点击任意扇区，下方滑块与仿真色块将实时动态联动！
       </p>
 
       <div class="exp2-container">
@@ -1476,7 +1692,7 @@
             </div>
           </div>
           <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); margin-top: 20px;">
-            点击色轮扇区以切换目标色
+            点击色轮任意扇区以切换目标色
           </div>
         </div>
 
@@ -1496,29 +1712,29 @@
             </div>
           </div>
 
-          <!-- 纯度与污染度动态仿真 -->
+          <!-- 纯度与污染度动态仿真器 -->
           <div class="purity-simulator">
             <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase;">
               实时纯度仿真 (Purity Simulator)
             </div>
 
             <div class="sim-preview-box">
-              <div class="sim-swatch" id="simSwatch" style="background-color: #2563eb;"></div>
+              <div class="sim-swatch" id="simSwatch" style="background-color: #3b82f6;"></div>
               <div class="sim-stats">
                 <div>
                   <div class="stat-row">
-                    <span class="text-dim">互补色污染 (Contamination)</span>
-                    <span id="statPollutionText" style="color: #facc15;">20%</span>
+                    <span class="text-dim" id="statPollutionLabel">互补色污染 (Contamination)</span>
+                    <span id="statPollutionText" style="color: #eab308; font-weight: 700;">20%</span>
                   </div>
                   <div class="stat-bar-wrapper">
-                    <div class="stat-bar-fill" id="statPollutionBar" style="width: 20%; background: #facc15;"></div>
+                    <div class="stat-bar-fill" id="statPollutionBar" style="width: 20%; background: #eab308;"></div>
                   </div>
                 </div>
 
                 <div>
                   <div class="stat-row">
-                    <span class="text-dim">目标色纯度 (Apparent Purity)</span>
-                    <span id="statPurityText" style="color: #60a5fa;">85%</span>
+                    <span class="text-dim" id="statPurityLabel">目标色纯度 (Apparent Purity)</span>
+                    <span id="statPurityText" style="color: #3b82f6; font-weight: 700;">85%</span>
                   </div>
                   <div class="stat-bar-wrapper">
                     <div class="stat-bar-fill" id="statPurityBar" style="width: 85%; background: #3b82f6;"></div>
@@ -1529,7 +1745,7 @@
 
             <div class="slider-box" style="margin-top: 0; padding-top: 0; border-top: none;">
               <div class="slider-header">
-                <span class="slider-label">互补色污染注入量</span>
+                <span class="slider-label" id="simSliderLabel">黄色污染注入量</span>
                 <span class="slider-value" id="simSliderVal" style="color: #fff;">20%</span>
               </div>
               <input type="range" min="0" max="100" value="20" class="lab-slider" id="simSlider" oninput="handleSimSlider(this.value)">
@@ -1690,107 +1906,395 @@
     </section>
 
     <!-- ========================================================================
-         05 摄影后期互补色速查表
+         05 摄影后期速查表 (图2级精工极简版 · 速度查找)
          ======================================================================== -->
     <section id="exp5">
       <div class="section-tag">05 · REFERENCE TABLE</div>
-      <h2 class="section-title">摄影后期速查表</h2>
-      <p class="section-subtitle">
-        在调色遇到瓶颈时，翻开这张对照表。永远先检查目标色的对角线。
-      </p>
+      
+      <div class="cheat-container-v2">
+        <div class="cheat-header-v2">
+          <div class="cheat-head-left">
+            <h3>颜色不是加出来的</h3>
+            <p>想让一种颜色更纯，先<span>减掉它的互补色（污染色）</span></p>
+          </div>
 
-      <div class="cheat-table-wrapper">
-        <table class="cheat-table">
-          <thead>
-            <tr>
-              <th>目标颜色</th>
-              <th>优先检查的污染色</th>
-              <th>典型摄影应用场景</th>
-              <th>调色建议思路</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <div class="color-cell">
-                  <span class="color-pill" style="background: #3b82f6;"></span>
-                  <span>蓝 (Blue)</span>
-                </div>
-              </td>
-              <td><span style="color: #facc15; font-family: var(--font-mono); font-weight: 600;">黄 (Yellow)</span></td>
-              <td>天空、海面、水景、蓝调时刻</td>
-              <td>降低黄色饱和度/明度，让蓝天不再发灰浑浊</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="color-cell">
-                  <span class="color-pill" style="background: #22c55e;"></span>
-                  <span>绿 (Green)</span>
-                </div>
-              </td>
-              <td><span style="color: #ec4899; font-family: var(--font-mono); font-weight: 600;">品红 (Magenta)</span></td>
-              <td>草地、森林树木、苔藓植物</td>
-              <td>减除暗部或叶片高光的品红杂色，还原清透绿意</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="color-cell">
-                  <span class="color-pill" style="background: #f97316;"></span>
-                  <span>橙 / 肤色 (Orange)</span>
-                </div>
-              </td>
-              <td><span style="color: #06b6d4; font-family: var(--font-mono); font-weight: 600;">青 / 蓝 (Cyan/Blue)</span></td>
-              <td>人像肤色、夕阳落日、暖调街景</td>
-              <td>剥离面部阴影中的暗沉青蓝死色，呈现健康血色</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="color-cell">
-                  <span class="color-pill" style="background: #ef4444;"></span>
-                  <span>红 (Red)</span>
-                </div>
-              </td>
-              <td><span style="color: #06b6d4; font-family: var(--font-mono); font-weight: 600;">青 (Cyan)</span></td>
-              <td>红花、红墙建筑、红色灯光</td>
-              <td>削弱青色泛光，让红色的冲击力与密度更高</td>
-            </tr>
-            <tr>
-              <td>
-                <div class="color-cell">
-                  <span class="color-pill" style="background: #ec4899;"></span>
-                  <span>洋红 / 紫 (Magenta)</span>
-                </div>
-              </td>
-              <td><span style="color: #22c55e; font-family: var(--font-mono); font-weight: 600;">绿 / 黄绿 (Green)</span></td>
-              <td>霓虹夜景、晚霞紫云、花朵</td>
-              <td>扣掉暗部发霉般的黄绿色杂光，使霓虹紫通透发光</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <!-- 右上角互补关系图示 -->
+          <div class="comp-relation-badge">
+            <span class="comp-relation-title">色彩互补关系</span>
+            <div class="comp-relation-diagram">
+              <span class="dot-big" style="background: #22c55e;"></span>
+              <span style="color: rgba(255,255,255,0.4);">⟷</span>
+              <span class="dot-big" style="background: #ef4444;"></span>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">互补色 (对立色)</span>
+          </div>
+        </div>
 
-      <!-- 核心心法卡片 -->
-      <div class="principle-cards">
-        <div class="principle-card">
-          <div class="principle-num">01</div>
-          <div class="principle-text">目标颜色不纯，<br>先找污染色。</div>
+        <!-- 速度搜索与过滤栏 -->
+        <div class="table-search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-dim);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="tableSearchInput" class="table-search-input" placeholder="速度查找：输入颜色或场景（如：天空、树叶、肤色、夕阳、红花、霓虹）..." oninput="filterCheatTable(this.value)">
         </div>
-        <div class="principle-card">
-          <div class="principle-num">02</div>
-          <div class="principle-text">互补色往往是<br>最值得检查的污染来源。</div>
-        </div>
-        <div class="principle-card">
-          <div class="principle-num">03</div>
-          <div class="principle-text">调色不只是“加什么”，<br>更是“减什么”。</div>
-        </div>
-      </div>
 
-      <!-- 免责声明 -->
-      <div class="disclaimer-card">
-        <div class="disclaimer-title">摄影哲学提醒 · 互补色不是万能公式</div>
-        <p class="disclaimer-text">
-          摄影中的颜色通常由环境光、漫反射与多种色相共同组成。这里的互补关系，是帮助你在调色受阻时快速找到「污染目标颜色的成分」，而不是告诉你必须机械套用。真正的色彩美感，永远源于摄影师对现实光影的敏锐感知。
-        </p>
+        <!-- 8 组核心互补对照矩阵 -->
+        <div style="overflow-x: auto;">
+          <table class="cheat-matrix-table" id="cheatMatrixTable">
+            <thead>
+              <tr>
+                <th style="width: 22%;">想让它更纯</th>
+                <th style="width: 25%;">优先减少 (污染色)</th>
+                <th style="width: 25%;">效果</th>
+                <th style="width: 28%;">摄影中常见应用</th>
+              </tr>
+            </thead>
+            <tbody id="cheatTableBody">
+              <!-- 1. 蓝色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(7)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #2563eb;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">蓝色</span>
+                      <span class="cell-color-en">BLUE</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #facc15;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">黄色</span>
+                      <span class="cell-color-en">YELLOW</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #60a5fa;">⬇ 减少黄色</span>
+                    <span class="cell-action-desc">蓝色更纯净、通透</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🏔️</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">天空、水面、蓝色建筑</span>
+                      <span class="cell-app-condition">天空发灰、发黄时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 2. 绿色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(4)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #22c55e;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">绿色</span>
+                      <span class="cell-color-en">GREEN</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #ec4899;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">品红</span>
+                      <span class="cell-color-en">MAGENTA</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #4ade80;">⬇ 减少品红</span>
+                    <span class="cell-action-desc">绿色更干净、自然</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🍃</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">树叶、草地、植物</span>
+                      <span class="cell-app-condition">绿色发脏、发紫时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 3. 红色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(0)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #ef4444;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">红色</span>
+                      <span class="cell-color-en">RED</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #06b6d4;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">青色</span>
+                      <span class="cell-color-en">CYAN</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #f87171;">⬇ 减少青色</span>
+                    <span class="cell-action-desc">红色更鲜艳、纯粹</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🌹</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">红花、红衣、霓虹灯</span>
+                      <span class="cell-app-condition">红色发暗、发灰时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 4. 黄色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(2)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #facc15;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">黄色</span>
+                      <span class="cell-color-en">YELLOW</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #2563eb;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">蓝色</span>
+                      <span class="cell-color-en">BLUE</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #facc15;">⬇ 减少蓝色</span>
+                    <span class="cell-action-desc">黄色更明亮、通透</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">☀️</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">阳光、黄墙、秋叶</span>
+                      <span class="cell-app-condition">黄色发脏、发灰时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 5. 橙色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(1)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #f97316;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">橙色</span>
+                      <span class="cell-color-en">ORANGE</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #06b6d4;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">蓝色 / 青色</span>
+                      <span class="cell-color-en">BLUE / CYAN</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #fb923c;">⬇ 减少蓝色或青色</span>
+                    <span class="cell-action-desc">橙色更温暖、有质感</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🌅</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">夕阳、肤色、建筑</span>
+                      <span class="cell-app-condition">橙色被冷色污染时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 6. 紫色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(9)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #a855f7;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">紫色</span>
+                      <span class="cell-color-en">PURPLE</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #facc15;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">黄色</span>
+                      <span class="cell-color-en">YELLOW</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #c084fc;">⬇ 减少黄色</span>
+                    <span class="cell-action-desc">紫色更饱满、纯净</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🌸</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">紫色花朵、灯光、服装</span>
+                      <span class="cell-app-condition">紫色发灰、发脏时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 7. 青色 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(6)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #06b6d4;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">青色</span>
+                      <span class="cell-color-en">CYAN</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #ef4444;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">红色</span>
+                      <span class="cell-color-en">RED</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #22d3ee;">⬇ 减少红色</span>
+                    <span class="cell-action-desc">青色更清澈、干净</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🌊</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">水面、湖泊、青色天空</span>
+                      <span class="cell-app-condition">青色发灰、发暗时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 8. 洋红 -->
+              <tr class="cheat-row-v2" onclick="quickSelectFromTable(10)">
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #ec4899;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">洋红</span>
+                      <span class="cell-color-en">MAGENTA</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-color-block">
+                    <span class="cell-color-circle" style="background: #22c55e;"></span>
+                    <div class="cell-color-info">
+                      <span class="cell-color-title">绿色</span>
+                      <span class="cell-color-en">GREEN</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-action">
+                    <span class="cell-action-badge" style="color: #f472b6;">⬇ 减少绿色</span>
+                    <span class="cell-action-desc">洋红更明亮、纯净</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-app-scenario">
+                    <span class="cell-app-icon">🎥</span>
+                    <div class="cell-app-text">
+                      <span class="cell-app-primary">霓虹灯、花朵、灯光</span>
+                      <span class="cell-app-condition">洋红被绿色污染时</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 底部双卡片 -->
+        <div class="cheat-bottom-cards">
+          <!-- 💡 使用提示 -->
+          <div class="card-tip-box">
+            <div class="tip-box-title">
+              <span>💡</span>
+              <span>使用提示</span>
+            </div>
+            <ul class="tip-list">
+              <li>不是绝对公式，互补色关系是帮助你找到“污染色”的思路。</li>
+              <li>调整时建议小幅度，观察整体画面变化。</li>
+              <li>结合明度、饱和度一起调整，效果更自然。</li>
+            </ul>
+          </div>
+
+          <!-- 记住三组核心互补关系 -->
+          <div class="core-pairs-box">
+            <div class="core-pairs-title">记住三组核心互补关系</div>
+            <div class="core-pairs-row">
+              <div class="core-pair-item">
+                <div class="pair-dots">
+                  <span class="pair-dot" style="background: #ef4444;"></span>
+                  <span style="color: var(--text-dim); font-size: 0.75rem;">⟷</span>
+                  <span class="pair-dot" style="background: #06b6d4;"></span>
+                </div>
+                <span class="pair-label">红 ↔ 青</span>
+              </div>
+
+              <div class="core-pair-item">
+                <div class="pair-dots">
+                  <span class="pair-dot" style="background: #22c55e;"></span>
+                  <span style="color: var(--text-dim); font-size: 0.75rem;">⟷</span>
+                  <span class="pair-dot" style="background: #ec4899;"></span>
+                </div>
+                <span class="pair-label">绿 ↔ 品红</span>
+              </div>
+
+              <div class="core-pair-item">
+                <div class="pair-dots">
+                  <span class="pair-dot" style="background: #3b82f6;"></span>
+                  <span style="color: var(--text-dim); font-size: 0.75rem;">⟷</span>
+                  <span class="pair-dot" style="background: #facc15;"></span>
+                </div>
+                <span class="pair-label">蓝 ↔ 黄</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -2001,17 +2505,17 @@
       // 02 色轮
       colors: [
         { name: '红色 Red', code: 'R', hex: '#ef4444', compHex: '#06b6d4', compName: '青色 Cyan', angle: 0 },
-        { name: '橙色 Orange', code: 'O', hex: '#f97316', compHex: '#3b82f6', compName: '蓝色 Blue', angle: 30 },
-        { name: '黄色 Yellow', code: 'Y', hex: '#eab308', compHex: '#a855f7', compName: '紫色 Purple', angle: 60 },
-        { name: '黄绿 Lime', code: 'YG', hex: '#84cc16', compHex: '#ec4899', compName: '洋红 Magenta', angle: 90 },
-        { name: '绿色 Green', code: 'G', hex: '#22c55e', compHex: '#f43f5e', compName: '品红/红 Rose', angle: 120 },
+        { name: '橙色 Orange', code: 'O', hex: '#f97316', compHex: '#06b6d4', compName: '青/蓝 Cyan/Blue', angle: 30 },
+        { name: '黄色 Yellow', code: 'Y', hex: '#facc15', compHex: '#2563eb', compName: '蓝色 Blue', angle: 60 },
+        { name: '黄绿 Lime', code: 'YG', hex: '#84cc16', compHex: '#a855f7', compName: '紫色 Purple', angle: 90 },
+        { name: '绿色 Green', code: 'G', hex: '#22c55e', compHex: '#ec4899', compName: '品红 Magenta', angle: 120 },
         { name: '青绿 Teal', code: 'BG', hex: '#14b8a6', compHex: '#ef4444', compName: '红色 Red', angle: 150 },
         { name: '青色 Cyan', code: 'C', hex: '#06b6d4', compHex: '#ef4444', compName: '红色 Red', angle: 180 },
-        { name: '蓝色 Blue', code: 'B', hex: '#3b82f6', compHex: '#eab308', compName: '黄色 Yellow', angle: 210 },
-        { name: '深蓝 Indigo', code: 'IB', hex: '#6366f1', compHex: '#eab308', compName: '橙黄 Amber', angle: 240 },
-        { name: '紫色 Purple', code: 'P', hex: '#a855f7', compHex: '#84cc16', compName: '黄绿 Lime', angle: 270 },
+        { name: '蓝色 Blue', code: 'B', hex: '#2563eb', compHex: '#facc15', compName: '黄色 Yellow', angle: 210 },
+        { name: '深蓝 Indigo', code: 'IB', hex: '#4f46e5', compHex: '#facc15', compName: '黄色 Yellow', angle: 240 },
+        { name: '紫色 Purple', code: 'P', hex: '#a855f7', compHex: '#facc15', compName: '黄色 Yellow', angle: 270 },
         { name: '洋红 Magenta', code: 'M', hex: '#ec4899', compHex: '#22c55e', compName: '绿色 Green', angle: 300 },
-        { name: '玫瑰 Rose', code: 'RS', hex: '#f43f5e', compHex: '#14b8a6', compName: '青绿 Teal', angle: 330 }
+        { name: '玫瑰 Rose', code: 'RS', hex: '#f43f5e', compHex: '#22c55e', compName: '绿色 Green', angle: 330 }
       ],
       selectedColorIndex: 7, // 默认 Blue
       simPollution: 20,
@@ -2108,10 +2612,8 @@
       ctxB.scale(dpr, dpr);
       ctxA.scale(dpr, dpr);
 
-      // Before: 原图（带 45 点黄色浑浊）
       PhotoEngine.drawSkyScene(ctxB, rect.width, rect.height, 45, 0, 0);
 
-      // After: 依据用户操作动态呈现
       let yellowP = 45 + State.exp1YellowVal;
       let blueP = 0;
       let satP = 0;
@@ -2168,7 +2670,7 @@
     }
 
     /* ==========================================================================
-       E. 实验 02 色轮绘制与互动 (INTERACTIVE COLOR WHEEL)
+       E. 实验 02 色轮绘制与完全动态联动 (INTERACTIVE COLOR WHEEL)
        ========================================================================== */
     function renderColorWheel() {
       const svg = document.getElementById('colorWheelSvg');
@@ -2178,6 +2680,8 @@
       const cx = 200, cy = 200, rOuter = 180, rInner = 110;
       const count = State.colors.length;
       const step = 360 / count;
+
+      const compIndex = (State.selectedColorIndex + 6) % count;
 
       State.colors.forEach((color, i) => {
         const startAngle = (i * step - step / 2 - 90) * (Math.PI / 180);
@@ -2197,15 +2701,20 @@
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', d);
         path.setAttribute('fill', color.hex);
-        path.setAttribute('class', 'wheel-sector');
-        path.style.opacity = (i === State.selectedColorIndex || i === (State.selectedColorIndex + 6) % count) ? '1' : '0.35';
+        
+        let cls = 'wheel-sector';
+        if (i === State.selectedColorIndex) cls += ' active-target';
+        if (i === compIndex) cls += ' active-comp';
+        path.setAttribute('class', cls);
+        
+        path.style.opacity = (i === State.selectedColorIndex || i === compIndex) ? '1' : '0.35';
         path.onclick = () => selectColorWheelSector(i);
         svg.appendChild(path);
       });
 
-      // 绘制互补轴连线
+      // 绘制互补轴连线与端点脉冲圆点
       const selColor = State.colors[State.selectedColorIndex];
-      const compColor = State.colors[(State.selectedColorIndex + 6) % count];
+      const compColor = State.colors[compIndex];
       const lineAngle = (State.selectedColorIndex * step - 90) * (Math.PI / 180);
 
       const lx1 = cx + (rOuter - 10) * Math.cos(lineAngle);
@@ -2220,9 +2729,22 @@
       line.setAttribute('y2', ly2);
       line.setAttribute('stroke', '#ffffff');
       line.setAttribute('stroke-width', '2');
-      line.setAttribute('stroke-dasharray', '4 4');
+      line.setAttribute('stroke-dasharray', '5 4');
       line.style.pointerEvents = 'none';
       svg.appendChild(line);
+
+      // 端点小圆点
+      [ {x: lx1, y: ly1, color: selColor.hex}, {x: lx2, y: ly2, color: compColor.hex} ].forEach(pt => {
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', pt.x);
+        dot.setAttribute('cy', pt.y);
+        dot.setAttribute('r', '5');
+        dot.setAttribute('fill', pt.color);
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '2');
+        dot.style.pointerEvents = 'none';
+        svg.appendChild(dot);
+      });
     }
 
     function selectColorWheelSector(index) {
@@ -2230,16 +2752,25 @@
       const sel = State.colors[index];
       const comp = State.colors[(index + 6) % State.colors.length];
 
+      // HUD
       document.getElementById('hudTargetName').innerText = sel.code;
       document.getElementById('hudTargetName').style.color = sel.hex;
 
+      // 目标卡片
       document.getElementById('targetColorName').innerText = sel.name;
       document.getElementById('targetColorName').style.color = sel.hex;
       document.getElementById('targetCard').style.setProperty('--card-color', sel.hex);
 
+      // 互补卡片
       document.getElementById('compColorName').innerText = comp.name;
       document.getElementById('compColorName').style.color = comp.hex;
       document.getElementById('compCard').style.setProperty('--card-color', comp.hex);
+
+      // 动态滑块与指示条颜色更新！
+      const slider = document.getElementById('simSlider');
+      slider.style.background = `linear-gradient(to right, ${sel.hex}, rgba(255,255,255,0.15) 50%, ${comp.hex})`;
+      
+      document.getElementById('simSliderLabel').innerText = `${comp.name.split(' ')[0]}污染注入量`;
 
       renderColorWheel();
       updateSimPurity();
@@ -2251,6 +2782,13 @@
       updateSimPurity();
     }
 
+    function hexToRgb(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+      const num = parseInt(hex, 16);
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    }
+
     function updateSimPurity() {
       const sel = State.colors[State.selectedColorIndex];
       const comp = State.colors[(State.selectedColorIndex + 6) % State.colors.length];
@@ -2258,15 +2796,34 @@
       const pollution = State.simPollution;
       const purity = Math.max(10, 100 - pollution * 1.1);
 
-      document.getElementById('statPollutionText').innerText = pollution + '%';
-      document.getElementById('statPollutionBar').style.width = pollution + '%';
+      // 污染条
+      const pollText = document.getElementById('statPollutionText');
+      const pollBar = document.getElementById('statPollutionBar');
+      pollText.innerText = pollution + '%';
+      pollText.style.color = comp.hex;
+      pollBar.style.width = pollution + '%';
+      pollBar.style.background = comp.hex;
 
-      document.getElementById('statPurityText').innerText = Math.round(purity) + '%';
-      document.getElementById('statPurityBar').style.width = purity + '%';
+      // 纯度条
+      const purText = document.getElementById('statPurityText');
+      const purBar = document.getElementById('statPurityBar');
+      purText.innerText = Math.round(purity) + '%';
+      purText.style.color = sel.hex;
+      purBar.style.width = purity + '%';
+      purBar.style.background = sel.hex;
+
+      // 动态色彩混合算法：目标色混入互补色
+      const rgb1 = hexToRgb(sel.hex);
+      const rgb2 = hexToRgb(comp.hex);
+      const t = pollution / 100 * 0.65; // 最大混入 65% 杂色
+
+      const mixedR = Math.round(rgb1.r * (1 - t) + rgb2.r * t);
+      const mixedG = Math.round(rgb1.g * (1 - t) + rgb2.g * t);
+      const mixedB = Math.round(rgb1.b * (1 - t) + rgb2.b * t);
 
       const swatch = document.getElementById('simSwatch');
-      swatch.style.backgroundColor = sel.hex;
-      swatch.style.filter = `saturate(${purity}%) brightness(${100 - pollution * 0.3}%)`;
+      swatch.style.backgroundColor = `rgb(${mixedR}, ${mixedG}, ${mixedB})`;
+      swatch.style.filter = `saturate(${purity}%) brightness(${100 - pollution * 0.25}%)`;
     }
 
     /* ==========================================================================
@@ -2380,7 +2937,6 @@
       });
       window.addEventListener('mouseup', () => { isDragging = false; });
 
-      // 移动端 Touch
       viewport.addEventListener('touchstart', (e) => {
         isDragging = true;
         onMove(e.touches[0].clientX);
@@ -2501,7 +3057,29 @@
     }
 
     /* ==========================================================================
-       I. 窗口尺寸自适应与启动
+       I. 速查表与色轮快速联动 & 搜索过滤 (SPEED LOOKUP)
+       ========================================================================== */
+    function quickSelectFromTable(colorIndex) {
+      selectColorWheelSector(colorIndex);
+      // 平滑滚动到色轮实验区
+      document.getElementById('exp2').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function filterCheatTable(keyword) {
+      keyword = keyword.trim().toLowerCase();
+      const rows = document.querySelectorAll('#cheatTableBody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (!keyword || text.includes(keyword)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    /* ==========================================================================
+       J. 窗口尺寸自适应与启动
        ========================================================================== */
     window.addEventListener('load', () => {
       initCanvases();
