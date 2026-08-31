@@ -800,22 +800,554 @@
     .photo-viewport {
       position: relative;
       width: 100%;
-      aspect-ratio: 16 / 10;
+      height: 360px;
       border-radius: var(--radius-md);
       overflow: hidden;
       background: #000000;
       border: 1px solid var(--border-subtle);
+      cursor: default;
+    }
+
+    .photo-viewport.picker-active {
+      cursor: crosshair;
     }
 
     .photo-canvas {
       width: 100%;
       height: 100%;
-      object-fit: contain;
       display: block;
+    }
+
+    /* 拾色器浮动气泡 */
+    .picker-bubble {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(0,0,0,0.3);
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -120%);
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .picker-bubble.active {
+      display: block;
+    }
+
+    /* 拾色器按钮组 */
+    .picker-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .picker-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .picker-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-main);
+      border-color: var(--border-strong);
+    }
+
+    .picker-btn.active-picker {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: #8b5cf6;
+      color: #c4b5fd;
+    }
+
+    /* 颜色分析结果面板 */
+    .color-analyze-panel {
+      display: none;
+      margin-top: 16px;
+      background: #0e0e14;
+      border: 2px solid #8b5cf6;
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      animation: fadeIn 0.3s var(--ease-out-expo);
+    }
+
+    .color-analyze-panel.visible {
+      display: block;
+    }
+
+    .analyze-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .analyze-swatch {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      border: 2px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+
+    .analyze-arrow {
+      font-size: 1.5rem;
+      color: var(--text-dim);
+    }
+
+    .analyze-comp-swatch {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      border: 2px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+
+    .analyze-meta {
+      flex: 1;
+    }
+
+    .analyze-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .analyze-hex {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .analyze-recipe {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-top: 12px;
+    }
+
+    .recipe-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8b5cf6;
+      margin-bottom: 10px;
+    }
+
+    .recipe-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.88rem;
+    }
+
+    .recipe-row:last-child {
+      border-bottom: none;
+    }
+
+    .recipe-channel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .recipe-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .recipe-action {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .recipe-action.reduce {
+      color: #f87171;
+    }
+
+    .recipe-action.boost {
+      color: #4ade80;
+    }
+
+
+    /* ==========================================================================
+       新手友好优化 - 症状快查 (SYMPTOM QUICK LOOKUP)
+       ========================================================================== */
+    .symptom-section {
+      margin-bottom: 28px;
+    }
+
+    .symptom-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .symptom-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .symptom-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .symptom-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .symptom-card:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+
+    .symptom-card.active-symptom {
+      border-color: var(--symptom-color, #3b82f6);
+      background: rgba(59, 130, 246, 0.08);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+    }
+
+    .symptom-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    .symptom-problem {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .symptom-hint {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    /* 操作步骤白话引导卡 */
+    .lab-guide-steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .guide-step {
+      flex: 1;
+      padding: 12px 14px;
+      text-align: center;
+      border-right: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .guide-step:last-child {
+      border-right: none;
+    }
+
+    .guide-step-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .guide-step-text {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .guide-step-arrow {
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      z-index: 2;
+      background: var(--bg-surface);
+      padding: 2px;
+    }
+
+    /* 自动诊断卡 */
+    .auto-diagnose-card {
+      display: none;
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      margin-top: 14px;
+      animation: fadeIn 0.4s var(--ease-out-expo);
+    }
+
+    .auto-diagnose-card.visible {
+      display: block;
+    }
+
+    .diagnose-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .diagnose-icon {
+      font-size: 1.3rem;
+    }
+
+    .diagnose-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #10b981;
+    }
+
+    .diagnose-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .diagnose-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .diagnose-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .diagnose-item-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .diagnose-item-val {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .diagnose-action-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* 白话调色步骤（拾色器面板） */
+    .recipe-plain-steps {
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: rgba(139, 92, 246, 0.06);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: var(--radius-md);
+    }
+
+    .recipe-plain-title {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #a78bfa;
+      margin-bottom: 10px;
+    }
+
+    .plain-step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .plain-step-row:last-child {
+      border-bottom: none;
+    }
+
+    .plain-step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .plain-step-text strong {
+      color: var(--text-main);
+    }
+
+    /* 场景说明文字 */
+    .scene-caption {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      display: none;
+    }
+
+    .scene-caption.visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .scene-caption strong {
+      color: var(--text-main);
+    }
+
+    /* 新手词汇表浮层 */
+    .glossary-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 4px 10px;
+      transition: var(--transition-smooth);
+      text-decoration: none;
+      background: transparent;
+      margin-left: auto;
+    }
+
+    .glossary-toggle:hover {
+      color: var(--text-main);
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .glossary-panel {
+      display: none;
+      margin-top: 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .glossary-panel.open {
+      display: block;
+    }
+
+    .glossary-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 14px;
+      color: var(--text-main);
+    }
+
+    .glossary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .glossary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .glossary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,0.04);
+      gap: 10px;
+    }
+
+    .glossary-plain {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .glossary-tech {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #60a5fa;
+      white-space: nowrap;
     }
 
     /* 直方图显示区 */
     .histogram-card {
+
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
@@ -1088,7 +1620,7 @@
     }
 
     .compare-layer.layer-after {
-      clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+      clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
     }
 
     .compare-divider {
@@ -1259,6 +1791,63 @@
         点击任意行，下方将<strong>自动呼出粗暴直观的减法操作台</strong>，拖动滑块直接观察颜色如何由脏变纯！
       </p>
 
+      <!-- ★ 新手症状快查 -->
+      <div class="symptom-section">
+        <div style="display:flex; align-items:center; margin-bottom:12px;">
+          <div class="symptom-label">📌 你的照片哪里不对？点击症状直达解决方案</div>
+          <button class="glossary-toggle" onclick="toggleGlossary()" id="glossaryToggleBtn">📖 新手词汇表</button>
+        </div>
+        <div class="symptom-grid">
+          <div class="symptom-card" style="--symptom-color:#3b82f6" onclick="triggerSymptom(0,'blue')">
+            <div class="symptom-icon">🏔️</div>
+            <div class="symptom-problem">天空发黄/发浑</div>
+            <div class="symptom-hint">晴天拍照天空偏暖？→ 减黄色</div>
+          </div>
+          <div class="symptom-card" style="--symptom-color:#22c55e" onclick="triggerSymptom(1,'green')">
+            <div class="symptom-icon">🍃</div>
+            <div class="symptom-problem">绿植发脏/偏紫</div>
+            <div class="symptom-hint">树叶颜色像塑料？→ 减品红</div>
+          </div>
+          <div class="symptom-card" style="--symptom-color:#ef4444" onclick="triggerSymptom(2,'red')">
+            <div class="symptom-icon">🌹</div>
+            <div class="symptom-problem">红花显暗/发灰</div>
+            <div class="symptom-hint">花色不鲜艳？→ 减青色</div>
+          </div>
+          <div class="symptom-card" style="--symptom-color:#facc15" onclick="triggerSymptom(3,'yellow')">
+            <div class="symptom-icon">☀️</div>
+            <div class="symptom-problem">阳光/秋叶偏冷</div>
+            <div class="symptom-hint">暖色调不够暖？→ 减蓝色</div>
+          </div>
+          <div class="symptom-card" style="--symptom-color:#f97316" onclick="triggerSymptom(4,'orange')">
+            <div class="symptom-icon">🌅</div>
+            <div class="symptom-problem">肤色/夕阳偏青</div>
+            <div class="symptom-hint">皮肤偏冷发灰？→ 减青蓝</div>
+          </div>
+          <div class="symptom-card" style="--symptom-color:#ec4899" onclick="triggerSymptom(7,'magenta')">
+            <div class="symptom-icon">🎥</div>
+            <div class="symptom-problem">霓虹/花色被污染</div>
+            <div class="symptom-hint">洋红被绿光压制？→ 减绿色</div>
+          </div>
+        </div>
+
+        <!-- 词汇表浮层 -->
+        <div class="glossary-panel" id="glossaryPanel">
+          <div class="glossary-title">📚 新手调色词汇速查（你说的 vs 软件里叫什么）</div>
+          <div class="glossary-grid">
+            <div class="glossary-item"><span class="glossary-plain">照片灰蒙蒙、雾蒙蒙</span><span class="glossary-tech">去雾 / De-Haze</span></div>
+            <div class="glossary-item"><span class="glossary-plain">颜色太脏、发浑</span><span class="glossary-tech">减互补色饱和度</span></div>
+            <div class="glossary-item"><span class="glossary-plain">皮肤偏青偏绿</span><span class="glossary-tech">HSL 青色/绿色 -30</span></div>
+            <div class="glossary-item"><span class="glossary-plain">夕阳不够红不够暖</span><span class="glossary-tech">色温 +200 / 减青蓝</span></div>
+            <div class="glossary-item"><span class="glossary-plain">绿植像塑料/死色</span><span class="glossary-tech">HSL 品红 -35 明度 +10</span></div>
+            <div class="glossary-item"><span class="glossary-plain">天空太黄/有雾气</span><span class="glossary-tech">HSL 黄色饱和度 -40</span></div>
+            <div class="glossary-item"><span class="glossary-plain">照片对比太低、没有层次</span><span class="glossary-tech">对比度 / Contrast +25</span></div>
+            <div class="glossary-item"><span class="glossary-plain">红花看起来很暗很黑</span><span class="glossary-tech">HSL 红色明度 +15</span></div>
+            <div class="glossary-item"><span class="glossary-plain">整体偏冷/偏蓝</span><span class="glossary-tech">色温向右（暖色）</span></div>
+            <div class="glossary-item"><span class="glossary-plain">整体偏绿/偏黄</span><span class="glossary-tech">色调向右（洋红方向）</span></div>
+          </div>
+        </div>
+      </div>
+
       <div class="cheat-container-v2">
         <div class="cheat-header-v2">
           <div class="cheat-head-left">
@@ -1306,7 +1895,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #60a5fa;">⬇ 减黄色</div>
+                  <div class="cell-action-badge" style="color: #facc15;">⬇ 减黄色</div>
                   <div class="cell-action-desc">通透纯净、无浊气</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1335,7 +1924,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #4ade80;">⬇ 减品红</div>
+                  <div class="cell-action-badge" style="color: #ec4899;">⬇ 减品红</div>
                   <div class="cell-action-desc">清爽生机、昭和绿</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1364,7 +1953,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #f87171;">⬇ 减青色</div>
+                  <div class="cell-action-badge" style="color: #06b6d4;">⬇ 减青色</div>
                   <div class="cell-action-desc">鲜艳纯粹、饱满</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1393,7 +1982,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #facc15;">⬇ 减蓝色</div>
+                  <div class="cell-action-badge" style="color: #2563eb;">⬇ 减蓝色</div>
                   <div class="cell-action-desc">明亮灿烂、通透</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1422,7 +2011,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #fb923c;">⬇ 减青蓝</div>
+                  <div class="cell-action-badge" style="color: #06b6d4;">⬇ 减青蓝</div>
                   <div class="cell-action-desc">温暖高级、通透</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1451,7 +2040,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #c084fc;">⬇ 减黄色</div>
+                  <div class="cell-action-badge" style="color: #facc15;">⬇ 减黄色</div>
                   <div class="cell-action-desc">饱满神秘、纯净</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1480,7 +2069,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #22d3ee;">⬇ 减红色</div>
+                  <div class="cell-action-badge" style="color: #ef4444;">⬇ 减红色</div>
                   <div class="cell-action-desc">清澈透亮、水灵</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1509,7 +2098,7 @@
                   </div>
                 </td>
                 <td>
-                  <div class="cell-action-badge" style="color: #f472b6;">⬇ 减绿色</div>
+                  <div class="cell-action-badge" style="color: #22c55e;">⬇ 减绿色</div>
                   <div class="cell-action-desc">极具冲击力、透亮</div>
                 </td>
                 <td class="hide-on-mobile">
@@ -1530,6 +2119,22 @@
             </div>
             <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
               污染源：<strong id="labCompName" style="color: #facc15;">黄色 (Yellow)</strong>
+            </div>
+          </div>
+
+          <!-- 白话三步调色逻辑 -->
+          <div class="lab-guide-steps">
+            <div class="guide-step">
+              <div class="guide-step-num">Step 1 · 目标主体</div>
+              <div class="guide-step-text" id="guideStep1">想让【蓝色】更通透</div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">Step 2 · 找出杂色</div>
+              <div class="guide-step-text" id="guideStep2">画面混入了【黄色】杂光</div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">Step 3 · 减法消除</div>
+              <div class="guide-step-text" id="guideStep3">向左拖动滑条【减去黄色】</div>
             </div>
           </div>
 
@@ -1595,16 +2200,44 @@
         <div class="photo-stage-grid">
           <!-- 实时渲染画布 -->
           <div>
-            <div class="photo-viewport">
+            <div class="photo-viewport" id="photoViewport">
               <canvas id="userPhotoCanvas" class="photo-canvas"></canvas>
+              <!-- 拾色器悬浮气泡 -->
+              <div class="picker-bubble" id="pickerBubble"></div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 12px;">
+            <div class="picker-toolbar">
               <button class="btn-primary" style="flex: 1; min-height: 42px; font-size: 0.88rem;" onclick="applyAutoDehaze()">
                 ⚡ 一键智能减灰 (Auto De-haze)
               </button>
               <button class="btn-secondary" style="min-height: 42px; font-size: 0.88rem;" onclick="resetPhotoFilters()">
                 重置
               </button>
+              <button class="picker-btn" id="pickerBtn" onclick="togglePickerMode()" title="点击拾色器，然后在图片上点击任意位置">
+                🎨 拾色分析
+              </button>
+            </div>
+            <!-- 颜色分析结果面板 -->
+            <div class="color-analyze-panel" id="colorAnalyzePanel">
+              <div class="analyze-header">
+                <div class="analyze-swatch" id="analyzeSwatch"></div>
+                <div class="analyze-meta" id="analyzeMeta">
+                  <div class="analyze-title">点击图片上任意颜色区域</div>
+                  <div class="analyze-hex">拾取像素 → 自动计算互补色 → 给出调色方案</div>
+                </div>
+                <div class="analyze-arrow">→</div>
+                <div class="analyze-comp-swatch" id="analyzeCompSwatch"></div>
+              </div>
+
+              <!-- 新手白话操作指南 -->
+              <div class="recipe-plain-steps" id="recipePlainSteps" style="display:none;">
+                <div class="recipe-plain-title">💡 新手调色口诀（在 Lightroom 中这样调）：</div>
+                <div id="plainStepsContent"></div>
+              </div>
+
+              <div class="analyze-recipe" id="analyzeRecipe">
+                <div class="recipe-title">🎛️ 专业参数 (Lightroom / Camera Raw)</div>
+                <div id="recipeRows"></div>
+              </div>
             </div>
           </div>
 
@@ -1621,6 +2254,27 @@
                 <span>◀ 阴影 (Shadows)</span>
                 <span>中间调 (Midtones)</span>
                 <span>高光 (Highlights) ▶</span>
+              </div>
+            </div>
+
+            <!-- ★ 照片智能诊断卡 -->
+            <div class="auto-diagnose-card" id="autoDiagnoseCard">
+              <div class="diagnose-header">
+                <span class="diagnose-icon">🔬</span>
+                <span class="diagnose-title">照片色偏智能诊断报告</span>
+              </div>
+              <div class="diagnose-body">
+                <div class="diagnose-item">
+                  <div class="diagnose-item-label">检测到主要色偏</div>
+                  <div class="diagnose-item-val" id="diagDominantColor" style="color: #facc15;">黄色暖雾</div>
+                </div>
+                <div class="diagnose-item">
+                  <div class="diagnose-item-label">通透度预估</div>
+                  <div class="diagnose-item-val" id="diagClarityScore" style="color: #ef4444;">偏灰 52%</div>
+                </div>
+              </div>
+              <div class="diagnose-action-row" id="diagActionSuggestion">
+                💡 <strong>新手一键建议：</strong>检测到画面混入较多黄色杂光，建议在 HSL 中将<strong>黄色饱和度降低 -35</strong>，天空与高光立即通透！
               </div>
             </div>
 
@@ -1740,6 +2394,11 @@
           <span class="compare-badge" id="sceneAfterBadge" style="color: #60a5fa;">AFTER · 减去互补色 (通透)</span>
         </div>
       </div>
+
+      <!-- 实战场景新手白话说明 -->
+      <div class="scene-caption visible" id="sceneCaption">
+        💡 <strong>☁️ 晴空场景说明：</strong>晴天拍出的天空容易因为空气中灰尘反光产生黄色雾气。在调色软件中无需拉爆蓝色饱和度，只需在 HSL 中把<strong>黄色饱和度往左拉 -40</strong>，纯净通透的蔚蓝天空即可瞬间重现！
+      </div>
     </section>
   </main>
 
@@ -1813,15 +2472,49 @@
       document.getElementById('labCompName').innerText = pair.compName;
       document.getElementById('labCompName').style.color = pair.compHex;
 
-      document.getElementById('superSliderDesc').innerText = `向左减少${pair.compName.split(' ')[0]}污染（减${pair.compName.split(' ')[0]}让${pair.targetName.split(' ')[0]}更纯）`;
+      // 更新三步白话引导
+      const tName = pair.targetName.split(' ')[0];
+      const cName = pair.compName.split(' ')[0];
+      const s1 = document.getElementById('guideStep1');
+      const s2 = document.getElementById('guideStep2');
+      const s3 = document.getElementById('guideStep3');
+      if (s1) s1.innerHTML = `想让【<span style="color:${pair.targetHex}">${tName}</span>】更通透`;
+      if (s2) s2.innerHTML = `画面混入了【<span style="color:${pair.compHex}">${cName}</span>】杂光`;
+      if (s3) s3.innerHTML = `向左拖动滑条【<span style="color:${pair.compHex}">减去${cName}</span>】`;
+
+      document.getElementById('superSliderDesc').innerText = `向左减少${cName}污染（减${cName}让${tName}更纯）`;
       
       const slider = document.getElementById('superRangeSlider');
-      slider.style.background = `linear-gradient(to right, ${pair.targetHex}, rgba(255,255,255,0.1) 50%, ${pair.compHex})`;
+      slider.style.background = `linear-gradient(to right, rgba(20,20,30,0.8), ${pair.compHex})`;
       slider.value = pair.defaultVal;
 
       document.getElementById('labConclusionBar').innerHTML = `💡 <strong>核心逻辑：</strong>${pair.note}`;
 
       updateLabSwatchDisplay(pair.defaultVal);
+    }
+
+    // 症状快查联动
+    function triggerSymptom(rowIndex, tag) {
+      // 高亮对应卡片
+      document.querySelectorAll('.symptom-card').forEach(card => card.classList.remove('active-symptom'));
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active-symptom');
+      }
+      selectQuickRow(rowIndex);
+      const panel = document.getElementById('directLabPanel');
+      if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // 新手词汇表切换
+    function toggleGlossary() {
+      const p = document.getElementById('glossaryPanel');
+      const btn = document.getElementById('glossaryToggleBtn');
+      if (p) {
+        const isOpen = p.classList.toggle('open');
+        if (btn) btn.innerText = isOpen ? '✕ 收起词汇表' : '📖 新手词汇表';
+      }
     }
 
     function handleSuperSlider(val) {
@@ -1850,17 +2543,15 @@
       swBefore.style.filter = `saturate(55%) brightness(85%)`;
 
       // After: 根据 slider 减杂色
-      const factor = (80 + subVal) / 80; // 0 ~ 1 (subVal 越小越纯)
+      const factor = (80 + subVal) / 80; // 0~1（subVal 越小越纯）
       const afterR = Math.round(rgb1.r * (1 - factor * 0.4) + rgb2.r * (factor * 0.4));
       const afterG = Math.round(rgb1.g * (1 - factor * 0.4) + rgb2.g * (factor * 0.4));
       const afterB = Math.round(rgb1.b * (1 - factor * 0.4) + rgb2.b * (factor * 0.4));
-
       const purity = Math.min(100, Math.round(60 + (Math.abs(subVal) / 80) * 40));
 
       const swAfter = document.getElementById('swatchAfter');
       swAfter.style.backgroundColor = `rgb(${afterR}, ${afterG}, ${afterB})`;
       swAfter.style.filter = `saturate(${purity}%) brightness(${90 + (purity - 60) * 0.25}%)`;
-
       document.getElementById('swatchAfterTag').innerText = `通透纯净度 ${purity}%`;
       document.getElementById('swatchAfterTag').style.color = pair.targetHex;
     }
@@ -1910,121 +2601,143 @@
       reader.readAsDataURL(file);
     }
 
-    function createDefaultDemoImage() {
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = 640;
-      tempCanvas.height = 400;
-      const ctx = tempCanvas.getContext('2d');
-
-      // 绘制一张默认的发灰风景 Demo
-      const grad = ctx.createLinearGradient(0, 0, 0, 400);
-      grad.addColorStop(0, '#64748b');
-      grad.addColorStop(0.6, '#94a3b8');
-      grad.addColorStop(1, '#475569');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 640, 400);
-
-      // 山丘
-      ctx.fillStyle = '#4b5563';
-      ctx.beginPath();
-      ctx.moveTo(0, 400);
-      ctx.lineTo(0, 240);
-      ctx.lineTo(260, 160);
-      ctx.lineTo(440, 220);
-      ctx.lineTo(640, 140);
-      ctx.lineTo(640, 400);
-      ctx.fill();
-
-      // 泛灰薄雾层
-      ctx.fillStyle = 'rgba(200, 210, 225, 0.45)';
-      ctx.fillRect(0, 0, 640, 400);
-
-      const img = new Image();
-      img.onload = () => {
-        userImageObj = img;
-        updatePhotoEngine();
-      };
-      img.src = tempCanvas.toDataURL();
-    }
+    // 全局：拾色器状态 & offCanvas 引用（用于像素采样）
+    let isPickerMode = false;
+    let lastOffCanvas = null;
+    let lastOffDrawRect = null;
 
     function updatePhotoEngine() {
       if (!userImageObj) return;
 
-      const canvas = document.getElementById('userPhotoCanvas');
-      const ctx = canvas.getContext('2d');
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width * (window.devicePixelRatio || 1);
-      canvas.height = rect.height * (window.devicePixelRatio || 1);
+      const canvas   = document.getElementById('userPhotoCanvas');
+      const ctx      = canvas.getContext('2d');
+      const viewport = document.getElementById('photoViewport');
+      const vpRect   = viewport.getBoundingClientRect();
+      const dpr      = window.devicePixelRatio || 1;
+
+      canvas.width  = vpRect.width  * dpr;
+      canvas.height = vpRect.height * dpr;
 
       const dehazeVal = parseInt(document.getElementById('sliderDehaze').value);
-      const hiVal = parseInt(document.getElementById('sliderHighlights').value);
-      const shVal = parseInt(document.getElementById('sliderShadows').value);
+      const hiVal     = parseInt(document.getElementById('sliderHighlights').value);
+      const shVal     = parseInt(document.getElementById('sliderShadows').value);
 
-      document.getElementById('valDehaze').innerText = (dehazeVal > 0 ? '+' : '') + dehazeVal;
-      document.getElementById('valHighlights').innerText = (hiVal > 0 ? '+' : '') + hiVal;
-      document.getElementById('valShadows').innerText = (shVal > 0 ? '+' : '') + shVal;
+      document.getElementById('valDehaze').innerText     = (dehazeVal > 0 ? '+' : '') + dehazeVal;
+      document.getElementById('valHighlights').innerText = (hiVal     > 0 ? '+' : '') + hiVal;
+      document.getElementById('valShadows').innerText    = (shVal     > 0 ? '+' : '') + shVal;
 
-      // 离屏渲染与像素级减灰处理
+      // ── 离屏渲染（保持原始比例）──
+      const imgAspect = userImageObj.width / userImageObj.height;
+      const offW = Math.min(userImageObj.width, 1200);
+      const offH = Math.round(offW / imgAspect);
       const offCanvas = document.createElement('canvas');
-      offCanvas.width = 400;
-      offCanvas.height = Math.round(400 * (userImageObj.height / userImageObj.width));
+      offCanvas.width  = offW;
+      offCanvas.height = offH;
       const offCtx = offCanvas.getContext('2d');
-      offCtx.drawImage(userImageObj, 0, 0, offCanvas.width, offCanvas.height);
+      offCtx.drawImage(userImageObj, 0, 0, offW, offH);
 
-      const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-      const data = imgData.data;
-
-      const contrastFactor = (259 * (dehazeVal + 100)) / (100 * (259 - dehazeVal));
-
-      const rHist = new Array(256).fill(0);
-      const gHist = new Array(256).fill(0);
-      const bHist = new Array(256).fill(0);
+      const imgData = offCtx.getImageData(0, 0, offW, offH);
+      const data    = imgData.data;
+      const cf      = (259 * (dehazeVal + 100)) / (100 * (259 - dehazeVal));
+      const rHist   = new Array(256).fill(0);
+      const gHist   = new Array(256).fill(0);
+      const bHist   = new Array(256).fill(0);
 
       for (let i = 0; i < data.length; i += 4) {
-        let r = data[i];
-        let g = data[i+1];
-        let b = data[i+2];
-
-        // 1. 减灰对比度拉伸
-        r = contrastFactor * (r - 128) + 128;
-        g = contrastFactor * (g - 128) + 128;
-        b = contrastFactor * (b - 128) + 128;
-
-        // 2. 高光与阴影调节
+        let r = data[i], g = data[i+1], b = data[i+2];
+        r = cf * (r - 128) + 128;
+        g = cf * (g - 128) + 128;
+        b = cf * (b - 128) + 128;
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
         if (lum > 128) {
-          const hiRatio = (lum - 128) / 128;
-          r += hiVal * hiRatio;
-          g += hiVal * hiRatio;
-          b += hiVal * hiRatio;
+          const ratio = (lum - 128) / 128;
+          r += hiVal * ratio; g += hiVal * ratio; b += hiVal * ratio;
         } else {
-          const shRatio = (128 - lum) / 128;
-          r += shVal * shRatio;
-          g += shVal * shRatio;
-          b += shVal * shRatio;
+          const ratio = (128 - lum) / 128;
+          r += shVal * ratio; g += shVal * ratio; b += shVal * ratio;
         }
-
         r = Math.max(0, Math.min(255, Math.round(r)));
         g = Math.max(0, Math.min(255, Math.round(g)));
         b = Math.max(0, Math.min(255, Math.round(b)));
+        data[i] = r; data[i+1] = g; data[i+2] = b;
+        rHist[r]++; gHist[g]++; bHist[b]++;
+      }
+      offCtx.putImageData(imgData, 0, 0);
+      lastOffCanvas = offCanvas;
 
-        data[i] = r;
-        data[i+1] = g;
-        data[i+2] = b;
+      // ── Contain 模式绘制（letterbox，不变形）──
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cW    = canvas.width, cH = canvas.height;
+      const scale = Math.min(cW / offW, cH / offH);
+      const drawW = offW * scale, drawH = offH * scale;
+      const drawX = (cW - drawW) / 2, drawY = (cH - drawH) / 2;
+      ctx.drawImage(offCanvas, drawX, drawY, drawW, drawH);
+      lastOffDrawRect = { x: drawX, y: drawY, w: drawW, h: drawH, imgW: offW, imgH: offH, dpr };
 
-        rHist[r]++;
-        gHist[g]++;
-        bHist[b]++;
+      drawHistogram(rHist, gHist, bHist);
+
+      // ★ 自动色偏智能诊断
+      diagnosePhotoColors(rHist, gHist, bHist);
+    }
+
+    // 智能色偏诊断
+    function diagnosePhotoColors(rHist, gHist, bHist) {
+      const card = document.getElementById('autoDiagnoseCard');
+      if (!card) return;
+      card.classList.add('visible');
+
+      let rSum = 0, gSum = 0, bSum = 0, totalPx = 0;
+      for (let i = 0; i < 256; i++) {
+        rSum += rHist[i] * i;
+        gSum += gHist[i] * i;
+        bSum += bHist[i] * i;
+        totalPx += rHist[i];
+      }
+      if (totalPx === 0) return;
+
+      const rAvg = rSum / totalPx;
+      const gAvg = gSum / totalPx;
+      const bAvg = bSum / totalPx;
+
+      let dominant = '正常通透';
+      let domColor = '#10b981';
+      let suggestion = '画面色彩平衡良好。可通过上方滑块微调高光和阴影提升层次。';
+
+      if (rAvg > bAvg + 20 && gAvg > bAvg + 10) {
+        dominant = '黄色 / 暖雾污染';
+        domColor = '#facc15';
+        suggestion = '检测到画面混入较多<strong>黄色暖雾杂光</strong>。建议在 HSL 中将<strong>黄色饱和度降低 -30 ~ -45</strong>，让天空与高光瞬间清澈！';
+      } else if (gAvg > rAvg + 15 && gAvg > bAvg + 15) {
+        dominant = '绿色 / 杂光污染';
+        domColor = '#22c55e';
+        suggestion = '检测到画面偏绿。建议在<strong>色调(Tint)向洋红方向轻推 +5 ~ +8</strong>，或降低绿色明度，消除塑料感。';
+      } else if (bAvg > rAvg + 20 && bAvg > gAvg + 10) {
+        dominant = '青蓝 / 冷光死色';
+        domColor = '#3b82f6';
+        suggestion = '检测到暗部有<strong>青蓝色冷光污染</strong>。建议将<strong>色温(Temp)向暖色轻推 +100 ~ +200</strong>，人物肤色与暖调将更加通透。';
+      } else if (rAvg > gAvg + 20 && bAvg > gAvg + 15) {
+        dominant = '品红 / 紫边污染';
+        domColor = '#ec4899';
+        suggestion = '检测到<strong>品红/紫边杂色</strong>。建议在 HSL 中降低<strong>品红与紫色饱和度 -35</strong>，植被边缘更自然。';
       }
 
-      offCtx.putImageData(imgData, 0, 0);
+      // 中间调堆积程度计算（灰度）
+      let midCount = 0;
+      for (let i = 80; i < 176; i++) {
+        midCount += rHist[i] + gHist[i] + bHist[i];
+      }
+      const midRatio = Math.round((midCount / (totalPx * 3)) * 100);
+      const clarityTxt = midRatio > 55 ? `中间调堆积 ${midRatio}% (偏灰)` : `对比通透度优秀 (${100 - midRatio}%)`;
+      const clarityColor = midRatio > 55 ? '#f87171' : '#4ade80';
 
-      // 绘制到主显示画布
-      ctx.drawImage(offCanvas, 0, 0, canvas.width, canvas.height);
-
-      // 绘制直方图
-      drawHistogram(rHist, gHist, bHist);
+      document.getElementById('diagDominantColor').innerText = dominant;
+      document.getElementById('diagDominantColor').style.color = domColor;
+      document.getElementById('diagClarityScore').innerText = clarityTxt;
+      document.getElementById('diagClarityScore').style.color = clarityColor;
+      document.getElementById('diagActionSuggestion').innerHTML = `💡 <strong>新手一键建议：</strong>${suggestion}`;
     }
+
+
 
     function drawHistogram(rHist, gHist, bHist) {
       const hCanvas = document.getElementById('histCanvas');
@@ -2073,6 +2786,251 @@
       document.getElementById('sliderHighlights').value = 0;
       document.getElementById('sliderShadows').value = 0;
       updatePhotoEngine();
+    }
+
+    /* ==========================================================================
+       C2. 拾色器（COLOR PICKER）+ 互补色分析引擎
+       ========================================================================== */
+    function togglePickerMode() {
+      isPickerMode = !isPickerMode;
+      const btn      = document.getElementById('pickerBtn');
+      const viewport = document.getElementById('photoViewport');
+      const panel    = document.getElementById('colorAnalyzePanel');
+
+      if (isPickerMode) {
+        btn.classList.add('active-picker');
+        btn.innerHTML = '✅ 点击图片采色';
+        viewport.classList.add('picker-active');
+        panel.classList.add('visible');
+        document.getElementById('analyzeSwatch').style.background     = 'rgba(255,255,255,0.1)';
+        document.getElementById('analyzeCompSwatch').style.background = 'rgba(255,255,255,0.1)';
+        document.getElementById('analyzeMeta').innerHTML =
+          '<div class="analyze-title">👆 在图片上点击任意区域</div>' +
+          '<div class="analyze-hex">拾取像素颜色 → 自动计算互补色 → 生成调色方案</div>';
+        document.getElementById('recipeRows').innerHTML = '';
+      } else {
+        btn.classList.remove('active-picker');
+        btn.innerHTML = '🎨 拾色分析';
+        viewport.classList.remove('picker-active');
+        hideBubble();
+      }
+    }
+
+    function hideBubble() {
+      const b = document.getElementById('pickerBubble');
+      if (b) b.classList.remove('active');
+    }
+
+    function initPickerMode() {
+      const viewport = document.getElementById('photoViewport');
+      const bubble   = document.getElementById('pickerBubble');
+
+      viewport.addEventListener('mousemove', (e) => {
+        if (!isPickerMode || !lastOffCanvas) return;
+        const vRect = viewport.getBoundingClientRect();
+        const mx = e.clientX - vRect.left;
+        const my = e.clientY - vRect.top;
+        bubble.style.left = mx + 'px';
+        bubble.style.top  = my + 'px';
+        bubble.classList.add('active');
+        const rgb = sampleCanvasColor(mx, my);
+        if (rgb) bubble.style.background = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+      });
+
+      viewport.addEventListener('mouseleave', () => {
+        if (isPickerMode) hideBubble();
+      });
+
+      viewport.addEventListener('click', (e) => {
+        if (!isPickerMode || !lastOffCanvas) return;
+        const vRect = viewport.getBoundingClientRect();
+        const mx = e.clientX - vRect.left;
+        const my = e.clientY - vRect.top;
+        const rgb = sampleCanvasColor(mx, my);
+        if (rgb) {
+          analyzePickedColor(rgb.r, rgb.g, rgb.b);
+          isPickerMode = false;
+          const btn = document.getElementById('pickerBtn');
+          btn.classList.remove('active-picker');
+          btn.innerHTML = '🎨 再次拾色';
+          viewport.classList.remove('picker-active');
+          hideBubble();
+        }
+      });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (!isPickerMode || !lastOffCanvas) return;
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        const vRect = viewport.getBoundingClientRect();
+        const mx = touch.clientX - vRect.left;
+        const my = touch.clientY - vRect.top;
+        const rgb = sampleCanvasColor(mx, my);
+        if (rgb) {
+          analyzePickedColor(rgb.r, rgb.g, rgb.b);
+          isPickerMode = false;
+          const btn = document.getElementById('pickerBtn');
+          btn.classList.remove('active-picker');
+          btn.innerHTML = '🎨 再次拾色';
+          viewport.classList.remove('picker-active');
+          hideBubble();
+        }
+      }, { passive: false });
+    }
+
+    function sampleCanvasColor(mx, my) {
+      if (!lastOffCanvas || !lastOffDrawRect) return null;
+      const d = lastOffDrawRect;
+      const physX = mx * d.dpr;
+      const physY = my * d.dpr;
+      if (physX < d.x || physX > d.x + d.w || physY < d.y || physY > d.y + d.h) return null;
+      const offX = Math.round(((physX - d.x) / d.w) * d.imgW);
+      const offY = Math.round(((physY - d.y) / d.h) * d.imgH);
+      const px = lastOffCanvas.getContext('2d').getImageData(
+        Math.max(0, Math.min(d.imgW - 1, offX)),
+        Math.max(0, Math.min(d.imgH - 1, offY)),
+        1, 1
+      ).data;
+      return { r: px[0], g: px[1], b: px[2] };
+    }
+
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+      return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+
+    function hslToRgb(h, s, l) {
+      h /= 360; s /= 100; l /= 100;
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1; if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+      return { r: Math.round(r*255), g: Math.round(g*255), b: Math.round(b*255) };
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getHueName(h) {
+      const zones = [
+        { name: '红色',  hex: '#ef4444', min: 345, max: 361 },
+        { name: '红色',  hex: '#ef4444', min: 0,   max: 15  },
+        { name: '橙色',  hex: '#f97316', min: 15,  max: 45  },
+        { name: '黄色',  hex: '#facc15', min: 45,  max: 75  },
+        { name: '黄绿',  hex: '#84cc16', min: 75,  max: 105 },
+        { name: '绿色',  hex: '#22c55e', min: 105, max: 150 },
+        { name: '青绿',  hex: '#14b8a6', min: 150, max: 180 },
+        { name: '青色',  hex: '#06b6d4', min: 180, max: 210 },
+        { name: '蓝色',  hex: '#3b82f6', min: 210, max: 255 },
+        { name: '蓝紫',  hex: '#6366f1', min: 255, max: 285 },
+        { name: '紫色',  hex: '#a855f7', min: 285, max: 315 },
+        { name: '洋红',  hex: '#ec4899', min: 315, max: 345 },
+      ];
+      for (const z of zones) {
+        if (h >= z.min && h < z.max) return z;
+      }
+      return zones[0];
+    }
+
+    function analyzePickedColor(r, g, b) {
+      const pickedHex  = rgbToHex(r, g, b);
+      const hsl        = rgbToHsl(r, g, b);
+      const compH      = (hsl.h + 180) % 360;
+      const compRgb    = hslToRgb(compH, Math.min(hsl.s * 1.1, 100), hsl.l);
+      const compHex    = rgbToHex(compRgb.r, compRgb.g, compRgb.b);
+      const pickedName = getHueName(hsl.h);
+      const compName   = getHueName(compH);
+
+      document.getElementById('analyzeSwatch').style.background     = pickedHex;
+      document.getElementById('analyzeCompSwatch').style.background = compHex;
+      document.getElementById('analyzeMeta').innerHTML =
+        `<div class="analyze-title" style="color:${pickedHex};">已拾取：${pickedName.name} ${pickedHex.toUpperCase()}</div>` +
+        `<div class="analyze-hex" style="margin-top:4px;">互补色（污染源）：<span style="color:${compHex};font-weight:700;">${compName.name} ${compHex.toUpperCase()}</span></div>` +
+        `<div class="analyze-hex" style="margin-top:2px;">色相 ${Math.round(hsl.h)}° · 饱和度 ${Math.round(hsl.s)}% · 亮度 ${Math.round(hsl.l)}%</div>`;
+
+      const recipe = generateLightroomRecipe(hsl, compH, compName, pickedName);
+      document.getElementById('recipeRows').innerHTML = recipe.map(item => `
+        <div class="recipe-row">
+          <div class="recipe-channel">
+            <div class="recipe-dot" style="background:${item.color};"></div>
+            <span>${item.label}</span>
+          </div>
+          <div class="recipe-action ${item.val < 0 ? 'reduce' : 'boost'}">${item.val > 0 ? '+' : ''}${item.val}</div>
+        </div>
+      `).join('');
+
+      // 新手白话三步口诀
+      const plainSteps = document.getElementById('recipePlainSteps');
+      const plainContent = document.getElementById('plainStepsContent');
+      if (plainSteps && plainContent) {
+        plainSteps.style.display = 'block';
+        plainContent.innerHTML = `
+          <div class="plain-step-row">
+            <div class="plain-step-num">1</div>
+            <div class="plain-step-text">打开 Lightroom/ACR 的 <strong>HSL / 颜色混合器</strong> 面板</div>
+          </div>
+          <div class="plain-step-row">
+            <div class="plain-step-num">2</div>
+            <div class="plain-step-text">点击 <strong>【${compName.name}】</strong>，将 <strong>饱和度滑块向左拉到 -35 ~ -50</strong>（减去污染杂色）</div>
+          </div>
+          <div class="plain-step-row">
+            <div class="plain-step-num">3</div>
+            <div class="plain-step-text">点击 <strong>【${pickedName.name}】</strong>，将 <strong>饱和度向右轻推 +15 ~ +25</strong>，通透感大功告成！</div>
+          </div>
+        `;
+      }
+    }
+
+    function generateLightroomRecipe(hsl, compH, compName, pickedName) {
+      const sat       = Math.round(hsl.s);
+      const reduceStr = Math.max(-65, Math.round(-sat * 0.65));
+      const boostStr  = Math.min(+45, Math.round(sat  * 0.4));
+      const recipe    = [];
+
+      // 1. 减掉互补色饱和度（核心操作）
+      recipe.push({ label: `HSL · ${compName.name} 饱和度 (Saturation)`, color: compName.hex, val: Math.max(-70, Math.round(reduceStr * 1.2)) });
+      // 2. 减掉互补色明度（压暗杂色）
+      recipe.push({ label: `HSL · ${compName.name} 明度 (Luminance)`,    color: compName.hex, val: Math.max(-35, Math.round(reduceStr * 0.5)) });
+      // 3. 提升目标色饱和度
+      recipe.push({ label: `HSL · ${pickedName.name} 饱和度 (Saturation)`, color: pickedName.hex, val: Math.min(+50, Math.round(boostStr * 1.3)) });
+      // 4. 色温/色调微调方向
+      const h = hsl.h;
+      if (h >= 180 && h <= 300) {
+        recipe.push({ label: '色温 (Temp) · 向暖色轻推', color: '#f97316', val: +8 });
+      } else {
+        recipe.push({ label: '色调 (Tint) · 向绿色轻推（剥离洋红）', color: '#22c55e', val: -5 });
+      }
+      // 5. 清晰度
+      recipe.push({ label: '清晰度 (Clarity)', color: '#94a3b8', val: +12 });
+
+      return recipe;
     }
 
     /* ==========================================================================
@@ -2156,11 +3114,23 @@
     /* ==========================================================================
        E. 摄影实战场景对比 (SCENARIOS)
        ========================================================================== */
+    const SceneCaptions = {
+      sky: '💡 <strong>☁️ 晴空场景说明：</strong>晴天拍出的天空容易因为空气中灰尘反光产生黄色雾气。在调色软件中无需拉爆蓝色饱和度，只需在 HSL 中把<strong>黄色饱和度往左拉 -40</strong>，纯净通透的蔚蓝天空即可瞬间重现！',
+      nature: '💡 <strong>🌿 植物场景说明：</strong>树林、草地容易因为高光紫边或地面漫反射混入品红杂色，导致绿色看起来发灰、发脏像假塑料。在 HSL 中<strong>减掉品红饱和度 -35</strong>，树叶立刻呈现清爽高级的昭和绿！',
+      portrait: '💡 <strong>👤 人像场景说明：</strong>户外或阴天人像容易被环境冷光/反光污染导致皮肤发青、发暗死气沉沉。只需将<strong>色温轻推偏暖 +150</strong>，并在 HSL 中<strong>降低青色饱和度 -40</strong>，通透红润的气色瞬间浮现！',
+      sunset: '💡 <strong>🌇 夕阳场景说明：</strong>晚霞暖橙色最容易被阴影中的青蓝色冷光压制。不要盲目提高全局饱和度，在 HSL 中<strong>将青蓝杂色饱和度降低 -45</strong>，夕阳的浓郁与落日辉光便能纯粹绽放！',
+      neon: '💡 <strong>🌃 霓虹场景说明：</strong>夜景赛博朋克洋红霓虹管极易被路面绿光污染发浑。在 HSL 中<strong>减掉绿色饱和度 -50</strong>，洋红招牌的视觉冲击力立刻拉满！'
+    };
+
     function switchScene(key) {
       currentSceneKey = key;
       document.querySelectorAll('.scene-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('onclick').includes(key));
       });
+      const caption = document.getElementById('sceneCaption');
+      if (caption && SceneCaptions[key]) {
+        caption.innerHTML = SceneCaptions[key];
+      }
       renderSceneCanvases();
     }
 
@@ -2184,16 +3154,25 @@
 
       // 绘制 Demo 对比
       if (currentSceneKey === 'sky') {
-        // Before: 黄雾杂光蓝天
+        // Before: 黄雾杂光蓝天  After: 减黄通透蓝天
         drawSkyDemo(ctxB, w, h, 40);
-        // After: 减黄通透蓝天
         drawSkyDemo(ctxA, w, h, 0);
       } else if (currentSceneKey === 'nature') {
+        // Before: 品红污染绿植  After: 减品红清爽绿植
         drawNatureDemo(ctxB, w, h, 45);
         drawNatureDemo(ctxA, w, h, 0);
-      } else {
-        drawSkyDemo(ctxB, w, h, 35);
-        drawSkyDemo(ctxA, w, h, 0);
+      } else if (currentSceneKey === 'portrait') {
+        // Before: 青色冷光污染肤色  After: 减青通透暖肤
+        drawPortraitDemo(ctxB, w, h, 50);
+        drawPortraitDemo(ctxA, w, h, 0);
+      } else if (currentSceneKey === 'sunset') {
+        // Before: 青蓝冷光压制晚霞  After: 减青蓝暖橙通透
+        drawSunsetDemo(ctxB, w, h, 50);
+        drawSunsetDemo(ctxA, w, h, 0);
+      } else if (currentSceneKey === 'neon') {
+        // Before: 绿光污染洋红霓虹  After: 减绿色洋红冲击
+        drawNeonDemo(ctxB, w, h, 55);
+        drawNeonDemo(ctxA, w, h, 0);
       }
 
       updateSceneDivider(sceneDividerPos);
@@ -2215,11 +3194,157 @@
       ctx.fillRect(0, 0, w, h);
     }
 
+    // 肤色场景：暖橙肤色被青色冷光污染
+    function drawPortraitDemo(ctx, w, h, cyanContamination) {
+      // 背景（浅暖色调）
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+      bgGrad.addColorStop(0, `rgb(${220 - cyanContamination * 0.3}, ${180 - cyanContamination * 0.2}, ${160 - cyanContamination * 0.1})`);
+      bgGrad.addColorStop(1, `rgb(${200 - cyanContamination * 0.2}, ${160 - cyanContamination * 0.15}, ${140})`);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // 人物椭圆（肤色核心区）
+      const cx = w * 0.5, cy = h * 0.42;
+      const rx = w * 0.22, ry = h * 0.3;
+      const skinGrad = ctx.createRadialGradient(cx, cy - ry * 0.2, ry * 0.05, cx, cy, Math.max(rx, ry));
+      // Before：青色冷光拉灰肤色；After：干净暖橙肤色
+      const r = Math.round(230 - cyanContamination * 0.8);
+      const g = Math.round(175 - cyanContamination * 0.4);
+      const b = Math.round(140 + cyanContamination * 0.9);
+      skinGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`);
+      skinGrad.addColorStop(1, `rgb(${r - 25}, ${g - 20}, ${b})`);
+      ctx.fillStyle = skinGrad;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 底部衣物（深色）
+      ctx.fillStyle = `rgba(${40 + cyanContamination * 0.3}, ${50 + cyanContamination * 0.5}, ${70 + cyanContamination * 0.5}, 1)`;
+      ctx.fillRect(cx - rx * 1.2, h * 0.72, rx * 2.4, h * 0.28);
+
+      // 左上角光晕（Before 时显示青色冷光）
+      if (cyanContamination > 0) {
+        const glowGrad = ctx.createRadialGradient(w * 0.15, h * 0.15, 0, w * 0.15, h * 0.15, w * 0.35);
+        glowGrad.addColorStop(0, `rgba(0, ${180 + cyanContamination}, ${220 + cyanContamination * 0.3}, 0.35)`);
+        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    // 夕阳场景：晚霞暖橙被青蓝冷光压制
+    function drawSunsetDemo(ctx, w, h, cyanBlueContamination) {
+      // 天空渐变（从深橙红 → 暖橙 → 浅金黄）
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.65);
+      const r1 = Math.round(200 - cyanBlueContamination * 0.6);
+      const g1 = Math.round(80 - cyanBlueContamination * 0.5);
+      const b1 = Math.round(20 + cyanBlueContamination * 1.8);
+      skyGrad.addColorStop(0,   `rgb(${r1}, ${g1}, ${b1})`);
+      skyGrad.addColorStop(0.4, `rgb(${230 - cyanBlueContamination * 0.5}, ${120 - cyanBlueContamination * 0.3}, ${30 + cyanBlueContamination * 1.2})`);
+      skyGrad.addColorStop(1,   `rgb(${255 - cyanBlueContamination * 0.4}, ${190 - cyanBlueContamination * 0.2}, ${80 + cyanBlueContamination * 0.8})`);
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h * 0.65);
+
+      // 地平线辉光
+      const glowGrad = ctx.createRadialGradient(w * 0.5, h * 0.65, 0, w * 0.5, h * 0.65, w * 0.6);
+      glowGrad.addColorStop(0, `rgba(${255}, ${160 - cyanBlueContamination * 0.8}, ${30 + cyanBlueContamination}, 0.8)`);
+      glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(0, h * 0.3, w, h * 0.5);
+
+      // 水面 / 地面
+      const groundGrad = ctx.createLinearGradient(0, h * 0.65, 0, h);
+      groundGrad.addColorStop(0, `rgb(${100 - cyanBlueContamination * 0.3}, ${60 - cyanBlueContamination * 0.2}, ${40 + cyanBlueContamination * 0.6})`);
+      groundGrad.addColorStop(1, `rgb(${40}, ${30}, ${30 + cyanBlueContamination * 0.3})`);
+      ctx.fillStyle = groundGrad;
+      ctx.fillRect(0, h * 0.65, w, h * 0.35);
+
+      // 太阳圆盘
+      const sunR = Math.min(w, h) * 0.08;
+      const sunGrad = ctx.createRadialGradient(w * 0.5, h * 0.6, 0, w * 0.5, h * 0.6, sunR * 2);
+      sunGrad.addColorStop(0,   `rgba(255, ${220 - cyanBlueContamination}, ${80 + cyanBlueContamination * 0.5}, 1)`);
+      sunGrad.addColorStop(0.4, `rgba(255, ${160 - cyanBlueContamination}, ${20 + cyanBlueContamination}, 0.7)`);
+      sunGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = sunGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Before 时叠加一层青蓝冷雾
+      if (cyanBlueContamination > 0) {
+        const fogGrad = ctx.createLinearGradient(0, 0, 0, h);
+        fogGrad.addColorStop(0, `rgba(${30}, ${120}, ${200}, ${cyanBlueContamination / 200})`);
+        fogGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = fogGrad;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    // 霓虹场景：洋红霓虹招牌被环境绿光污染
+    function drawNeonDemo(ctx, w, h, greenContamination) {
+      // 夜晚深色背景
+      ctx.fillStyle = `rgb(${8 + greenContamination * 0.15}, ${10 + greenContamination * 0.2}, ${18})`;
+      ctx.fillRect(0, 0, w, h);
+
+      // 招牌底部阴影区
+      const shadowGrad = ctx.createLinearGradient(0, h * 0.5, 0, h);
+      shadowGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      shadowGrad.addColorStop(1, `rgba(${greenContamination * 0.2}, ${greenContamination * 0.4}, 10, 0.7)`);
+      ctx.fillStyle = shadowGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // 主招牌：洋红霓虹管
+      const neonPink = {
+        r: Math.round(236 - greenContamination * 0.6),
+        g: Math.round(40 + greenContamination * 0.9),
+        b: Math.round(120 - greenContamination * 0.3)
+      };
+
+      // 霓虹管发光效果（多个矩形条）
+      const bars = [
+        { x: 0.15, y: 0.18, w: 0.7, h: 0.055 },
+        { x: 0.15, y: 0.38, w: 0.7, h: 0.055 },
+        { x: 0.15, y: 0.58, w: 0.7, h: 0.055 },
+      ];
+
+      bars.forEach(bar => {
+        // 外发光
+        const glowGrad = ctx.createRadialGradient(
+          w * (bar.x + bar.w / 2), h * (bar.y + bar.h / 2), 0,
+          w * (bar.x + bar.w / 2), h * (bar.y + bar.h / 2),
+          Math.max(w * bar.w, h * bar.h) * 0.8
+        );
+        glowGrad.addColorStop(0, `rgba(${neonPink.r}, ${neonPink.g}, ${neonPink.b}, 0.6)`);
+        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(w * bar.x - w * 0.1, h * bar.y - h * 0.08, w * (bar.w + 0.2), h * (bar.h + 0.16));
+
+        // 管芯
+        ctx.fillStyle = `rgb(${Math.min(255, neonPink.r + 15)}, ${Math.min(255, neonPink.g + 20)}, ${Math.min(255, neonPink.b + 30)})`;
+        ctx.fillRect(w * bar.x, h * bar.y, w * bar.w, h * bar.h);
+      });
+
+      // Before 时叠加环境绿光污染
+      if (greenContamination > 0) {
+        const greenGlow = ctx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, w * 0.7);
+        greenGlow.addColorStop(0, `rgba(0, ${150 + greenContamination}, 40, ${greenContamination / 160})`);
+        greenGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = greenGlow;
+        ctx.fillRect(0, 0, w, h);
+
+        // 地面绿色反光
+        const floorGlow = ctx.createLinearGradient(0, h * 0.7, 0, h);
+        floorGlow.addColorStop(0, `rgba(0, ${100 + greenContamination}, 20, ${greenContamination / 220})`);
+        floorGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = floorGlow;
+        ctx.fillRect(0, h * 0.7, w, h * 0.3);
+      }
+    }
+
     function updateSceneDivider(percent) {
       const layer = document.getElementById('sceneLayerAfter');
       const divider = document.getElementById('sceneDivider');
       if (!layer || !divider) return;
-      layer.style.clipPath = `polygon(0 0, ${percent}% 0, ${percent}% 100%, 0 100%)`;
+      // AFTER 层显示在右侧（滑块右边），与 BEFORE/AFTER 标签位置一致
+      layer.style.clipPath = `polygon(${percent}% 0, 100% 0, 100% 100%, ${percent}% 100%)`;
       divider.style.left = `${percent}%`;
     }
 
@@ -2244,11 +3369,34 @@
     /* ==========================================================================
        F. 启动初始化
        ========================================================================== */
+    function createDefaultDemoImage() {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 640; tempCanvas.height = 400;
+      const ctx = tempCanvas.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 400);
+      grad.addColorStop(0,   '#64748b');
+      grad.addColorStop(0.6, '#94a3b8');
+      grad.addColorStop(1,   '#475569');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 640, 400);
+      ctx.fillStyle = '#4b5563';
+      ctx.beginPath();
+      ctx.moveTo(0, 400); ctx.lineTo(0, 240); ctx.lineTo(260, 160);
+      ctx.lineTo(440, 220); ctx.lineTo(640, 140); ctx.lineTo(640, 400);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(200, 210, 225, 0.45)';
+      ctx.fillRect(0, 0, 640, 400);
+      const img = new Image();
+      img.onload = () => { userImageObj = img; updatePhotoEngine(); };
+      img.src = tempCanvas.toDataURL();
+    }
+
     window.addEventListener('load', () => {
       selectQuickRow(0);
       renderColorWheel();
       createDefaultDemoImage();
       initDropzone();
+      initPickerMode();
       initSplitInteractions();
       renderSceneCanvases();
     });
