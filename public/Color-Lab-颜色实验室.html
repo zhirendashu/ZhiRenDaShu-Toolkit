@@ -522,10 +522,37 @@
 
     @media (max-width: 768px) {
       .cheat-row-v2 td {
-        padding: 12px 8px;
+        padding: 10px 6px;
       }
       .hide-on-mobile {
         display: none !important;
+      }
+      /* 移动端三列宽度重分配：目标色 | 污染色 | 减法操作 */
+      .cheat-matrix-table th:nth-child(1),
+      .cheat-matrix-table td:nth-child(1) {
+        width: 38%;
+      }
+      .cheat-matrix-table th:nth-child(2),
+      .cheat-matrix-table td:nth-child(2) {
+        width: 34%;
+      }
+      .cheat-matrix-table th:nth-child(3),
+      .cheat-matrix-table td:nth-child(3) {
+        width: 28%;
+      }
+      /* 移动端色块圆圈缩小，节省横向空间 */
+      .cell-color-circle {
+        width: 22px;
+        height: 22px;
+      }
+      .cell-color-block {
+        gap: 6px;
+      }
+      .cell-color-title {
+        font-size: 0.82rem;
+      }
+      .cell-color-en {
+        font-size: 0.62rem;
       }
     }
 
@@ -563,6 +590,7 @@
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 0.9rem;
+      white-space: nowrap;      /* 防止文字竖排换行 */
     }
 
     .cell-action-desc {
