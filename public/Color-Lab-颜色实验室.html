@@ -74,7 +74,8 @@
       background: var(--bg);
       overflow-x: hidden;
       position: relative;
-      padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 20px));
+      padding-bottom: 40px; /* Chrome 61 基线：固定值 */
+      padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 20px)); /* 增强：现代内核安全区 */
     }
 
     /* 极简网格底纹 */
@@ -1701,24 +1702,36 @@
     }
 
     /* Split View 对比视窗 */
+    /* Chrome 61 基线：固定最小高度保证可见 */
     .compare-viewport {
       position: relative;
       width: 100%;
-      aspect-ratio: 16 / 10;
-      min-height: 200px;           /* iOS 14- fallback */
+      min-height: 200px;
       border-radius: var(--radius-md);
       overflow: hidden;
       border: 1px solid var(--border-subtle);
       background: #000;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: none;          /* 允许横向拖动分割条 */
+      touch-action: none;
+    }
+
+    /* 增强层：支持 aspect-ratio 的内核（Chrome 88+）使用比例盒 */
+    @supports (aspect-ratio: 1) {
+      .compare-viewport {
+        aspect-ratio: 16 / 10;
+        min-height: 200px; /* 安全兜底 */
+      }
     }
 
     @media (max-width: 768px) {
       .compare-viewport {
-        aspect-ratio: 4 / 3;
         min-height: 220px;
+      }
+      @supports (aspect-ratio: 1) {
+        .compare-viewport {
+          aspect-ratio: 4 / 3;
+        }
       }
     }
 
